@@ -723,6 +723,7 @@ HELPER FUNCTIONS
 
 function formatContent(obj)
 {
+	console.log(obj);
 	Logger.log("Formatting content")
 
 	let content = "";
@@ -770,6 +771,7 @@ function formatText(value)
 	{
 		let new_value = value.trim().replaceAll("\\n", "<br/>");
 		formatted = `<span>${new_value}</span>`
+		console.log(formatted);
 	}
 	return formatted;
 }

@@ -98,7 +98,7 @@ class Question
 	// Format content
 	format_content(value)
 	{
-		let formatted = value.replace("\"", "\`\`");
+		let formatted = value.replaceAll(/((^|\s))\"/g, "$1&#8220;").replaceAll(/\"/g, "&#8221;")
 		return formatted
 		// formatted = formatted.
 	}
