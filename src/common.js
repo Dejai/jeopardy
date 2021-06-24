@@ -109,6 +109,19 @@ const mydoc = {
 		element.innerHTML = content;
 	},
 
+	// Add a test banner to indicate this is a test run;
+	addTestBanner: function(content=undefined){
+
+		let default_content = `TEST`
+
+		let banner = document.createElement("div");
+		banner.setAttribute("style", "text-align:center;background-color:red; color:white;font-size:200%;");
+		banner.textContent = (content != undefined) ? content : default_content;
+
+		let body = document.querySelector("body");
+		body.insertBefore(banner, body.firstChild);
+	},
+
 	// Show content based on query selector
 	showContent: function(selector){
 		this._toggleClass(selector, "remove", "hidden");

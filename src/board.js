@@ -56,8 +56,8 @@ function loadGameParams()
 		IS_TEST_RUN = (query_map.hasOwnProperty("test") && query_map["test"]==1) ? true : false;
 		CURR_GAME_ID = (query_map.hasOwnProperty("gameid")) ? query_map["gameid"] : undefined;
 
+		if(IS_TEST_RUN){ mydoc.addTestBanner(); }
 		
-
 		load_game_from_trello();
 	}
 	else
