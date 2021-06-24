@@ -65,6 +65,21 @@ var USE_DEFAULT_RULES = true;
 			MyTrello.get_cards(MyTrello.admin_list_id, function(data){
 				response = JSON.parse(data.responseText);
 
+				response.sort(function(a,b){
+					aName = a["name"].toLowerCase();
+					bName = b["name"].toLowerCase();
+
+					if(aName < b["name"])
+					{
+						return -1;
+					}
+					if(aName > bName)
+					{
+						return 1;
+					}
+					return 0;
+				});
+
 				let options = "";
 
 				let game_id    = undefined;
