@@ -61,6 +61,9 @@
 	.rule_entry { margin-bottom:2%; padding:2%; border:1px dashed white; }
 	#type_of_rules { color:red; text-decoration:underline; }
 	.rule_builtin_note { color:red; font-style:italic; }
+
+	#settings_table thead tr th { border-bottom:2px solid white; }
+	#settings_table tbody tr td { text-align:center; padding:1%; }
 /* HOST Views*/
 	#host_instructions { text-align:left; }
 	#host_instructions li { margin-bottom:3%; }

@@ -387,26 +387,152 @@ var USE_DEFAULT_RULES = true;
 		});
 	}
 
-	// Load the game settings
-	function loadGameSettings(settingJSON=undefined)
+	//
+	// Get the rules formatted to display on the page
+	function get_formatted_rules(savedSettings)
 	{
-		// Setup the setting fields on the page
-		let setting_rows = "";
-		Settings.settingOptions.forEach(function(obj){
-			setting_rows += formatSetting(obj);
+		// The HTML that will be returned 
+		let rulesFormatted = "";
+
+		let ruleKeys = Object.keys(Rules);
+		ruleKeys.forEach(function(rule){
+
+			// The ID for the select input of this rule
+			let ruleInputID = rule.replaceAll(" ", "");
+			
+			let optionElements = "";
+			let options = Rules[rule];
+			let setting = {};
+
+			// Get the individual setting that matches this key
+			savedSettings.forEach(function(savedSetting){
+				if(savedSetting["name"] == rule){
+					setting = savedSetting
+				}
+			});
+
+			// Loop through all the options
+			options.forEach(function(option){
+
+				let ruleID = option["id"];
+				let label = option["label"];
+				let rule = option["rule"];
+				let type = option["type"];
+
+				let selectedAttribute = (setting != undefined && (setting["option"] == ruleID) ) ? "selected" : "";
+				let customValue = setting["value"] ?? "";
+
+				optionElements += `<option value="${ruleID}" data-rule="${rule}" data-type="${type}" data-custom-value="${customValue}" ${selectedAttribute}>${label}</option>`
+			});	
+
+			inputElement = `<select id="${ruleInputID}" data-rule-name="${rule}" class="ruleOption" onChange="onRuleOptionChange(event)">
+								${optionElements}
+							</select>`
+
+			// Set the row element to be returned;
+			let row = `<tr>
+							<th>${rule}</th>
+							<td>
+								${inputElement}
+								<p class="hidden">
+									<input type="text" placeholder="Enter custom \${VALUE} name="customValue"/>
+								</p>
+							</td>
+							<td>
+								<input type="text" placeholder="Enter custom \${VALUE} name="customValue" class="hidden"/>
+							</td>
+						</tr>`;
+
+			rulesFormatted += row;
 		});
-		document.getElementById("settings_table_body").innerHTML = setting_rows;
 
+		return rulesFormatted;
+	}
 
-		// Get the current settings
-		let settings = Settings.GetSettings(settingJSON);
-		settings.forEach(function(obj){
-			name = obj["name"];
-			value = obj["value"];
+	// Ensures the custom values are set/visible after loading rules
+	function get_formatted_rules_customValue()
+	{
+		let selects = document.querySelectorAll(".ruleOption");
 
-			document.getElementById(name).value = value;
+		selects.forEach(function(select){
+
+			let selectedOption = get_selected_optionObject(select);
+
+			if(selectedOption.isCustom)
+			{
+				let hiddenInput = get_hidden_input(select);
+				hiddenInput.value = selectedOption.customValue;
+				hiddenInput.classList.remove('hidden');
+			}
 		});
 	}
+
+	// Get the hidden input reserved for custom values.
+	function get_hidden_input(selectEle)
+	{
+		let sibling = selectEle.nextElementSibling;
+		let parent = selectEle.parentElement; // this would be the <td>
+		let parentSibling = parent.nextElementSibling; // this would be the last <td> (with the hidden input);
+		let hiddenInput = parentSibling.firstElementChild; // the hidden input;
+
+		return hiddenInput;
+	}
+
+	// Get the selected game <option> element; Returns an object with the element and whether it allows for custom
+	function get_selected_optionObject(selectEle)
+	{
+		let selectedOption = selectEle.querySelector("option:checked");
+
+		let type = selectedOption.getAttribute("data-type");
+		let attest = type.includes("custom");
+	
+		let customValue = selectedOption.getAttribute("data-custom-value");
+
+		let optionObject = { 
+								"element": selectedOption, 
+								"isCustom": attest,
+								"customValue": customValue
+							};
+
+		return optionObject;
+	}
+
+	// Load the game settings
+	function loadGameSettings(settingsJSON=undefined)
+	{
+		console.log(settingsJSON);
+
+		let table_body = document.getElementById("settings_table_body")
+
+		table_body.innerHTML = get_formatted_rules(settingsJSON);
+
+		// Ensure custom values are visible as well.
+		get_formatted_rules_customValue()
+	}
+
+	// Listener for when the user changes an option on the settings section
+	function onRuleOptionChange(event)
+	{
+		let sourceEle = event.srcElement;
+		// let sibling = sourceEle.nextElementSibling;
+		// let parent = sourceEle.parentElement; // this would be the <td>
+		// let parentSibling = parent.nextElementSibling; // this would be the last <td> (with the hidden input);
+		let hiddenInput = get_hidden_input(sourceEle);
+		//  parentSibling.firstElementChild; // the hidden input;
+
+		// Check if selected option is custom
+		let isCustom = selectedOptionHasCustomValue(sourceEle);
+
+		if(isCustom)
+		{
+			hiddenInput.classList.remove("hidden");
+		}
+		else
+		{
+			hiddenInput.classList.add("hidden");
+		}
+	}
+
 
 	// Handler for saving the game components
 	function save_game()
@@ -475,33 +601,46 @@ var USE_DEFAULT_RULES = true;
 	{
 		try
 		{
-			// Get elements
-			let answering = document.getElementById("Answering Questions");
-			let selecting = document.getElementById("Selecting Questions");
-			let time = document.getElementById("Time to Answer Questions");
-			let wager = document.getElementById("Final Jeopardy Wager");
+			// Get all rule elements
+			let ruleOptions = document.querySelectorAll(".ruleOption");
 
-			// Get values (or defaults);
-			let answering_value = mydoc.isValidValue(answering.value) ? answering.value : "Everybody Gets a Chance"
-			let selecting_value = mydoc.isValidValue(answering.value) ? selecting.value : "Everybody Gets a Chance";
-			let time_value = mydoc.isValidValue(answering.value) ? time.value : "15";
-			let wager_value = mydoc.isValidValue(answering.value) ? wager.value : "Max Wager is Highest Score";
+			let savedRules = [];
 
-			Settings.currentSettings = [
-				{ "name": "Answering Questions", "value": answering_value},
-				{ "name": "Selecting Questions", "value": selecting_value},
-				{ "name": "Time to Answer Questions", "value": time_value },
-				{ "name": "Final Jeopardy Wager", "value": wager_value}
-			];
-			
-			// update to the rules given by the user
-			let settingsJSONString = JSON.stringify(Settings.currentSettings);
-			MyTrello.update_card_description(CURR_GAME_ID, settingsJSONString);
+			ruleOptions.forEach(function(input){
+
+				let ruleName = input.getAttribute("data-rule-name");
+				let ruleOptionValue = input.value;
+
+				let ruleObj = {"name": `${ruleName}`, "option": ruleOptionValue};
+
+				let isCustom = selectedOptionHasCustomValue(input);
+
+				if(isCustom)
+				{
+					let hiddenInput = get_hidden_input(input);
+					ruleObj["value"] = hiddenInput.value;
+				}
+				savedRules.push(ruleObj);
+			});
+
+			let savedRulesJSON = JSON.stringify(savedRules);
+			MyTrello.update_card_description(CURR_GAME_ID, savedRulesJSON);
+
 		}
 		catch(error)
 		{
 			console.log(error);
 		}
+	}
+
+	// Takes in a <select> and checks if the current option has a data-type with custom in the wording
+	function selectedOptionHasCustomValue(sourceEle)
+	{
+		let selectedOption = sourceEle.querySelector("option:checked");
+
+		let type = selectedOption.getAttribute("data-type");
+		let attest = type.includes("custom");
+		return attest;
 	}
 
 

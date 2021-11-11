@@ -7,169 +7,76 @@ This object stores the setting and rule configuration for the game
 const Settings = {
 
 	currentSettings : [
-		{ "name": "Answering Questions", "value": "Everybody Gets a Chance"},
-		{ "name": "Selecting Questions", "value": "Everybody Gets a Chance"},
-		{ "name": "Time to Answer Questions", "value": "15"},
-		{ "name": "Final Jeopardy Wager", "value":"Max Wager is Highest Score"}
+		{ "name": "Answering Questions", "option": 1 },
+		{ "name": "Selecting Questions", "option": 1 },
+		{ "name": "Time to Answer Questions", "option": 2, "value": 20 },
+		{ "name": "Final Jeopardy Wager", "option": 1 }
 	],
 
-	currentRules: [],
-
+	// Gets the settings (w/ rules) for the game
 	GetSettings: function(jsonObj=undefined){
-		this.currentSettings = (jsonObj != undefined) ? jsonObj : this.currentSettings;
+		
+		console.log("Is JSONOBJ passed in?");
+		console.log(jsonObj);
+
+		this.currentSettings  = (jsonObj != undefined) ? jsonObj : this.currentSettings;
+		
+		//update the settings to include the rules
+		this.SetRules(); 
+		
 		return this.currentSettings;
 	},
 
-	GetRules: function(){
+	// Get the individual rule from the Rules object;
+	GetRule: function(ruleName, ruleOptionID, ruleValue=undefined){
 
-		this.currentSettings.forEach(function(obj){
-			name = obj["name"];
-			type = Settings.GetSettingType(name);
-			value = obj["value"];
-
-			rule = Rules.getRule(type, name, value);
-
-			if(rule!= undefined)
-			{
-				Settings.currentRules.push(rule);
-			}
-		});
-		console.log(this.currentRules);
-		return this.currentRules;
-	},
-
-	GetSettingType: function(name){
-		let type = "";
-		this.settingOptions.forEach(function(obj){
-			if(obj["name"].toLowerCase() == name.toLowerCase()){
-				type = obj["type"];
-			}
-		});	
-		return type;
-	},
-
-	settingOptions: [
-			{
-				"name": "Answering Questions",
-				"type": "select",
-				"builtin": true,
-				"options":["Everybody Gets a Chance", "First to Buzz-in"]
-			},
-			{
-				"name": "Selecting Questions",
-				"type": "select",
-				"builtin": true,
-				"options":["Everybody Gets a Chance", "Who Gets it Right"]
-			},
-			{
-				"name": "Time to Answer Questions",
-				"type": "number",
-				"builtin": false,
-				"options":[]
-			},
-			{
-				"name": "Final Jeopardy Wager",
-				"type": "select",
-				"builtin": true,
-				"options":["Max Wager is Highest Score"]
-			},
-	]
-}
-
-
-
-const Rules = {
-
-	getRule: function(type, name, value){
-
-		let ruleObj = undefined;
-		switch(type)
+		let optionIndex = Number(ruleOptionID-1);
+		console.log(optionIndex);
+		let ruleObj = {};
+		if(Rules.hasOwnProperty(ruleName))
 		{
-			case "number":
-				if(this._ruleExists(name))
-				{
-					ruleObj = this.ruleSet[name];
-					ruleObj["rule"] = ruleObj["rule"].replace("${VALUE}",value);
-				}
-				break;
-			case "select":
-				if(this._ruleExists(name, value))
-				{
-					ruleObj = this.ruleSet[name][value];
-				}
-				break;
-			default:
-				break;
+			ruleObj = Rules[ruleName][optionIndex];
+
+			// Merge value i fpresent;
+			if(ruleObj != undefined && ruleValue != undefined)
+			{
+				ruleObj = this._mergeRuleValue(ruleObj, ruleValue);
+			}
 		}
 		return ruleObj;
 	},
 
-	_ruleExists: function(name, value=undefined){
-		try
-		{
+	// Takes the current settings and adds the rules to each setting
+	SetRules: function(){
 
-			isValid = false;
-			if(value == undefined)
+		// Updates the current settings to include Rule
+		this.currentSettings.forEach(function(obj){
+			let ruleName = obj["name"];
+			let ruleOption = Number(obj["option"]) ?? 1;
+			let ruleValue = obj["value"] ?? undefined;
+
+			rule = Settings.GetRule(ruleName, ruleOption, ruleValue);
+
+			if(rule!= undefined)
 			{
-				return this.ruleSet.hasOwnProperty(name);
+				obj["rule"] = rule;
 			}
-			else if (value != undefined)
-			{
-				return (this.ruleSet.hasOwnProperty(name) && this.ruleSet[name].hasOwnProperty(value))
-			}
-		}
-		catch(error)
-		{
-			Logger.log(error);
-			return false;
-		}
+		});
 	},
 
-
-	ruleSet: {
-
-		"Answering Questions": {
-			"Everybody Gets a Chance": {
-				"rule":"Everyone gets a chance to answer every question!",
-				"subRules":["For each question, every team gets a chance to answer.",
-							"Including the \"Daily Double\" questions"
-							]
-			},
-			"First to Buzz-in": {
-				"rule":"The first person to buzz in after the question is asked, gets to answer the question first.",
-				"subRules":["If the person who buzzes doesn't get it correct, the next person to buzz in gets to answer",
-							"NOTE: The game doesn't have any buzz-in feature, so you'll have to use your own buzzers"
-							]
-			},
-		},
-
-		"Selecting Questions": {
-			"Everybody Gets a Chance": {
-				"rule":"Everyone gets a chance to pick a question from the board.",
-				"subRules":["The game will automatically cycle through the list of teams"]
-			},
-			"Who Gets it Right": {
-				"rule":"The first person to buzz-in AND get the question correct gets to pick the next question",
-				"subRules":[]
-			},
-		},
-
-		"Time to Answer Questions": {
-			"rule":"You've got ${VALUE} seconds to answer the question!",
-			"subRules":["That's how long you get to deliberate for each question.",
-					"Time starts after the question is read"
-					]
-		},
-
-		"Final Jeopardy Wager" : {
-			"Max Wager is Highest Score" : {
-				"rule":"For FINAL JEOPARDY, you can wager as much as the HIGHEST OVERALL SCORE!",
-				"subRules":["The max amount that you can wager is based on the highest overall score!",
-							"So, you could come from behind &amp; beat the team in the lead &#128578;",
-							"Or, you could lose it all and end up with negative points. &#128579;"
-							]
-			}
+	// Merge custom values into the Rule description
+	_mergeRuleValue: function(ruleObject, value) {
+		
+		let updatedObject = ruleObject;
+		if(value != undefined)
+		{
+			updatedObject["label"] = updatedObject["label"].replace("${VALUE}",value);
+			updatedObject["rule"] = updatedObject["rule"].replace("${VALUE}",value);
 		}
+		return updatedObject;
 	}
+};
 
-}
+// let setting = Settings.GetSettings();
+// console.log("My settings w/ rules");
+// console.log(setting);

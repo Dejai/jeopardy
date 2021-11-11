@@ -138,9 +138,8 @@ function load_game_from_trello()
 
 			// Load the game settings & rules
 			let gameSettings = Settings.GetSettings(myajax.GetJSON(response["desc"]));
-			let gameRules = Settings.GetRules();
-			console.log(Settings);
-			load_game_rules(gameRules);
+			// let gameRules = Settings.GetRules();
+			load_game_rules(gameSettings);
 
 			// Get the published URL from the card custom field
 			MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2){
@@ -823,28 +822,32 @@ function formatURL(value)
 	return formatted;
 }
 
-function formatRules(rulesJSON)
+function formatRules(settingsJSON)
 {
-	console.log("RULES JSON");
-	console.log(rulesJSON);
+	console.log("SETTINGS JSON");
+	console.log(settingsJSON);
 
-	if(rulesJSON != undefined && rulesJSON.length > 0)
+	if(settingsJSON != undefined && settingsJSON.length > 0)
 	{
 		rulesListItems = "";
 
-		rulesJSON.forEach(function(obj){
-			let rule = obj["rule"];
-			let subRules = obj["subRules"];
+		settingsJSON.forEach(function(setting){
+
+			// let name = setting["label"];
+			let ruleObj = setting["rule"];
+
+			let rule = ruleObj["rule"];
+			let subRules = ruleObj["subRules"];
 
 			ruleElement = `<strong class='rule'>${rule}</strong>`
-			subeRulesElements = "";
+			subRulesElements = "";
 			
 			subRules.forEach(function(sub){
-				subeRulesElements += `<li class='subrule'>${sub}</li>`
+				subRulesElements += `<li class='subrule'>${sub}</li>`
 			});
 
 			// Create the overall rule item; Append to the list
-			rulesListItems += `<li class='rule_item'>${ruleElement}<ul>${subeRulesElements}</ul></li>`
+			rulesListItems += `<li class='rule_item'>${ruleElement}<ul>${subRulesElements}</ul></li>`
 		});
 
 		// Set the rules

@@ -94,11 +94,23 @@
 					<input id="game_files" type="file" name="game_files" accept="image/*, audio/*" multiple onchange="add_media()" class="pointer">
 				</form>
 			</div>
-			<div class="edit_game_subsection hidden">
+			<div class="edit_game_subsection">
 				<h2>Game Settings</h2>
 				<p>Configure the settings that you want to use for your game.</p>
 				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
-				<table id="settings_table_body" style="width:100%;">
+				<table id="settings_table" style="width:100%;">
+					<colgroup>
+						<col style="width:25%;"/>
+						<col style="width:25%;"/>
+						<col style="width:30%;"/>
+					</colgroup>
+					<thead>
+						<tr>
+							<th>Rule Name</th>
+							<th>Options</th>
+							<th>Custom Value <br/>(if applicable)</th>
+						</tr>
+					</thead>
 					<tbody id="settings_table_body"></tbody>
 				</table>
 			</div>
@@ -112,6 +124,7 @@
 </body>
 	<!-- Common Code -->
 	<script src="../src/common.js"></script>
+	<script src="../src/rules.js"></script>
 	<script src="../src/settings.js"></script>
 	<!-- My Trello code -->
 	<script src="../src/trello.js"></script>
