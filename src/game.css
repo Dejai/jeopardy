@@ -36,6 +36,7 @@
 	.identify_yourself:hover{background-color:blue; color:yellow; }
 
 /* ANSWERS PAGE*/
+	.highlight_team_value { color:orange; }
 	#team_code { color:orange; }
 	#game_code { color:orange; }
 	.submitted_answer{ color:limegreen; }

@@ -1,8 +1,13 @@
 
+/*********** INSTANCE VARIABLES *****************************************/ 
 
-/*********************************************************************************
-	PLAYER: GETTING STARTED
-**********************************************************************************/ 
+	var GAME_LIST_ID = "";
+	var TEAM_ID = undefined;
+	var TEAM_SCORES = {};
+
+	var touchEvent = "ontouchstart" in window ? "touchstart" : "click";
+
+/*********** PLAYER: GETTING STARTED *****************************************/ 
 
 	mydoc.ready(function(){
 		// Check for existing player if on player screen
@@ -14,7 +19,11 @@
 			if(query_map.hasOwnProperty("teamid"))
 			{
 				let card_id = query_map["teamid"]
+				TEAM_ID = card_id;
 				get_existing_team(card_id);
+
+				document.getElementById("refresh_scores").addEventListener(touchEvent, onGetLatestScores);
+				pollScores(); // poll for scores;
 			} 
 			else 
 			{
@@ -32,22 +41,27 @@
 		MyTrello.get_lists(function(data)
 		{
 			Logger.log(data);
+
+			let game_code = "";
 			let matching_list = undefined;
 
 			response = JSON.parse(data.responseText);
-			response.forEach(function(obj)
+			for(var idx = 0; idx < response.length; idx++)
 			{
-				let game_name = obj["name"];
-				if(game_name.toUpperCase() == code.toUpperCase())
+				obj = response[idx];
+
+				if(obj["name"].toUpperCase() != code.toUpperCase() )
 				{
-					matching_list = obj["id"];
+					continue;
 				}
-			});
+				// if we get here, then must be matching;
+				game_code = obj["name"];
+				matching_list = obj["id"];
+			}
 
 			if (matching_list != undefined)
 			{
-				MyTrello.set_current_game_list(matching_list);
-				Logger.log("Setting current team list ID: " + MyTrello.current_game_list_id);
+				GAME_LIST_ID = matching_list;
 				disable_step_one();
 				mydoc.showContent("#enter_team_name_section");
 			}
@@ -58,24 +72,21 @@
 		});
 	}
 
-
 	// Loads existing team if card ID was already included or found
 	function get_existing_team(card_id)
 	{
 		MyTrello.get_single_card(card_id, function(data){
 			response = JSON.parse(data.responseText);
-			// console.log("GOT CARD");
 			team_id = response["id"];
 			team_name = response["name"];
+			GAME_LIST_ID = response["idList"];
 			show_team_page(team_name, team_id);
 		});
 	}
 
 
 
-/*********************************************************************************
-	SECTION VISIBILITY 
-**********************************************************************************/ 
+/************* SECTION VISIBILITY ***************************************/ 
 
 	// Disables the button and input once a game is found;
 	function disable_step_one(){
@@ -104,9 +115,7 @@
 		mydoc.showContent("#wager" );
 	}
 
-/*********************************************************************************
-	TEAM ACTIONS
-**********************************************************************************/ 
+/*************** TEAM ACTIONS *******************************************/ 
 
 	function create_team()
 	{
@@ -120,7 +129,7 @@
 		let existing_team_id = undefined;
 		
 		// Check for existing cards before creating a new card; Match on name
-		MyTrello.get_cards(MyTrello.current_game_list_id, function(data){
+		MyTrello.get_cards(GAME_LIST_ID, function(data){
 
 			response = JSON.parse(data.responseText);
 			response.forEach(function(obj)
@@ -135,24 +144,27 @@
 			if(existing_team_id != undefined)
 			{
 				Logger.log("Loading Existing Card");
-				load_url = "http://" + location.host + location.pathname + "?teamid=" + existing_team_id;
-				location.replace(load_url);
+				loadTeamUrl(existing_team_id);
 			}
 			else
 			{
 				Logger.log("Creating new card");
-				MyTrello.create_card(MyTrello.current_game_list_id, team_name, function(data)
+				MyTrello.create_card(GAME_LIST_ID, team_name, function(data)
 				{
 					response = JSON.parse(data.responseText);
 					team_id = response["id"];
-
-					load_url = "http://" + location.host + location.pathname + "?teamid=" + team_id;
-					location.replace(load_url);
-
+					loadTeamUrl(team_id);
 				});
 			}
 
 		}, Logger.errorHandler);
+	}
+
+	function loadTeamUrl(teamID)
+	{
+		var loadUrl =`http://${location.host}${location.pathname}?teamid=${teamID}`;
+		//  "http://" + location.host + location.pathname + "?teamid=" + team_id + ""
+		location.replace(loadUrl);
 	}
 
 	function submit_answer()
@@ -189,7 +201,6 @@
 		}
 	}
 
-
 	// Prevent the page accidentally closing
 	function onClosePage(event)
 	{
@@ -197,3 +208,89 @@
 		event.returnValue='';
 	}
 
+
+/*************** POLLING FOR SCORES *******************************************/ 
+
+	// Polls for the latest score every 30 seconds;
+	function pollScores()
+	{
+		pollScore = setInterval((obj) =>{
+			Logger.log("Polling for score");
+			onGetLatestScores();
+
+		}, 60000); 
+	}
+
+	// Polls the list of cards in the list and gets their scores
+	function onGetLatestScores()
+	{
+		setSyncingDetails("Refreshing", "red");
+
+		// Get the cards in the list
+		MyTrello.get_cards(GAME_LIST_ID, function(data){
+			response = JSON.parse(data.responseText);
+
+			response.forEach(function(obj)
+			{
+
+				// Set the team code;
+				let teamCode = obj["id"];
+
+				// Set the default team score to 0;
+				TEAM_SCORES[teamCode] = 0;
+				
+				// Get the wager value from the wager field; Set in field
+				MyTrello.get_card_custom_fields(teamCode, function(data){
+					
+					response = JSON.parse(data.responseText);
+					for(var idx = 0; idx < response.length; idx++)
+					{
+						let obj = response[idx];
+
+						// skip any field that is not the wager field
+						if(obj["idCustomField"] != MyTrello.custom_field_score) continue;
+
+						let valueObject = obj["value"] ?? {};
+						let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+						
+						// Set the wager value
+						value = Number(value.trim());
+						value = isNaN(value) ? 0 : value;
+						TEAM_SCORES[teamCode] = value; 
+					}
+				});
+			});
+		}, Logger.errorHandler);
+
+		setTimeout(() =>{
+			setLatestScores();
+		}, 2000);
+	}
+
+	// Displayes the latest scores on the team page;
+	function setLatestScores()
+	{
+
+		let your_score = TEAM_SCORES[TEAM_ID];
+		let high_score = Math.max(...Object.values(TEAM_SCORES));
+
+		// Set the scores;
+		document.getElementById("team_score").innerText = your_score;
+		document.getElementById("highest_score").innerText = high_score;
+
+		// document.getElementById("score-sync").style.display = "inline";
+		setSyncingDetails("Synced!", "limegreen");
+
+		setTimeout(function(){
+			setSyncingDetails("Refresh Scores", "white");
+			// document.getElementById("score-sync").style.display = "none";
+		}, 2000);
+	}
+
+	// Set syncing details
+	function setSyncingDetails(message, iconColor)
+	{
+		refreshScores = document.getElementById("refresh_scores");
+		refreshScores.innerHTML = `&nbsp; ${message}`;
+		refreshScores.style.color = iconColor;
+	}

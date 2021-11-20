@@ -37,13 +37,23 @@
 			<input id="team_name" type="text" name="team_name">
 			<br/><br/>
 			<button id="create_team_button" type="submit" value="Enter" class="button_mash" onclick="create_team()">
-				Create Team
+				Create/Load Team
 			</button><br/>
 			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden">
 		</div>
 
 		<div id="enter_answers_section" class="hidden">
-			<h2>Team:<br/><span id="team_code">Team Name</span></h2>
+			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
+			<h4>				
+				Your Score: <span id="team_score" class="highlight_team_value">0</span>
+				&nbsp;
+				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
+				<br/><br/>
+				<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;text-decoration:none;font-size:smaller">
+					&nbsp; Refresh Scores
+				</span>
+				<br/><span style="font-size:60%">(automatic refresh every 60 seconds)</span>
+			</h4>
 
 			<input id="team_card_id" type="text" name="team_card_id" value="" hidden>
 			<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">

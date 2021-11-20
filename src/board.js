@@ -624,7 +624,7 @@
 		// Show Content
 		mydoc.showContent("#final_jeopardy_audio");
 		mydoc.showContent("#final_jeopardy_row");
-		mydoc.showContent("#highest_score_wager");
+		// mydoc.showContent("#highest_score_wager");
 		mydoc.showContent(".wager_row");
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -634,11 +634,11 @@
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
 
-		var team_scores = document.querySelectorAll("span.team_score");
-		let highest_score  = (team_scores.length > 0) ? team_scores[0].innerText : "0";
-		document.getElementById("highest_score_value").innerText = highest_score;
+		// var team_scores = document.querySelectorAll("span.team_score");
+		// let highest_score  = (team_scores.length > 0) ? team_scores[0].innerText : "0";
+		// document.getElementById("highest_score_value").innerText = highest_score;
 
-		Logger.log("Highest score: " + highest_score);
+		// Logger.log("Highest score: " + highest_score);
 
 	}
 
