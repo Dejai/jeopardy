@@ -6,19 +6,18 @@ This object stores the setting and rule configuration for the game
 
 const Settings = {
 
-	currentSettings : [
-		{ "name": "Answering Questions", "option": 1 },
-		{ "name": "Selecting Questions", "option": 1 },
-		{ "name": "Time to Answer Questions", "option": 2, "value": 20 },
-		{ "name": "Final Jeopardy Wager", "option": 1 }
-	],
+	// currentSettings : [
+	// 	{ "name": "Answering Questions", "option": 1 },
+	// 	{ "name": "Selecting Questions", "option": 1 },
+	// 	{ "name": "Time to Answer Questions", "option": 2, "value": 20 },
+	// 	{ "name": "Final Jeopardy Wager", "option": 1 }
+	// ],
+
+	currentSettings: [],
 
 	// Gets the settings (w/ rules) for the game
 	GetSettings: function(jsonObj=undefined){
 		
-		console.log("Is JSONOBJ passed in?");
-		console.log(jsonObj);
-
 		this.currentSettings  = (jsonObj != undefined) ? jsonObj : this.currentSettings;
 		
 		//update the settings to include the rules
@@ -31,7 +30,6 @@ const Settings = {
 	GetRule: function(ruleName, ruleOptionID, ruleValue=undefined){
 
 		let optionIndex = Number(ruleOptionID-1);
-		console.log(optionIndex);
 		let ruleObj = {};
 		if(Rules.hasOwnProperty(ruleName))
 		{
@@ -76,7 +74,3 @@ const Settings = {
 		return updatedObject;
 	}
 };
-
-// let setting = Settings.GetSettings();
-// console.log("My settings w/ rules");
-// console.log(setting);

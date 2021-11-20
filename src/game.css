@@ -112,6 +112,8 @@
 	.team_score { padding:1% }
 	.team_name { border-bottom:2px solid black; }
 
+	.setTeamDirectly { cursor: pointer; }
+
 	/* OLDER */
 	#teams_block { margin:60%;  margin:auto; border-top:1px solid white; padding-top:1%; }
 	.team_section { border:1px solid black; margin:auto; display:inline-block; margin-right:3%;}

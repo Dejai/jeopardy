@@ -48,6 +48,25 @@ const Rules =
 		}
 	],
 
+	"Who Goes First?":[
+		{
+			"id": 1,
+			"label": "Random Player",
+			"type": "select",
+			"rule": "The first player is picked randomly.",
+			"subRules": ["The player will be picked from the players loaded when the game is Started", "All players should enter game code and setup their team name before clicking \"Start Game\""],
+			"suggestion": ""
+		},
+		{
+			"id": 2,
+			"label": "Host Selects Player",
+			"type": "select",
+			"rule": "The host will select the player who goes first.",
+			"subRules": ["The player will be picked from the players loaded when the game is Started", "All players should enter game code and setup their team name before clicking \"Start Game\""],
+			"suggestion": ""
+		}
+	],
+
 	"Time to Answer Questions": [
 		{
 			"id": 1,
