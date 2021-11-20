@@ -468,7 +468,6 @@
 	function onCloseQuestion()
 	{
 		window.scrollTo(0,0); // Scroll back to the top of the page;
-		// onUpdateScore();
 		document.getElementById("answer_block").classList.add("hidden");
 		document.getElementById("correct_block").classList.add("hidden");
 		document.getElementById("question_view").classList.add("hidden");
@@ -576,27 +575,6 @@
 		{
 			nextRound.classList.remove("hidden");
 		}
-	}
-
-	// Updates the turn to the next player
-	function onUpdateTurn()
-	{
-		let setting = SETTINGS_MAPPING["Selecting Questions"];
-		let mode = setting.option;
-
-		switch(mode)
-		{
-			case "1":
-				setCurrentPlayer(CURRENT_TEAM_IDX+1); //Increase index by +1
-				break;
-			case "2":
-				let teamDetails = getTeamDetails(LAST_TEAM_CORRECT);
-				let teamName = teamDetails["name"];
-				setCurrentPlayerByName(teamName);
-				break;
-			default:
-				setCurrentPlayer(CURRENT_TEAM_IDX); // default is to keep the same index;
-		}	
 	}
 
 	// Show the next set of questions in the second round
@@ -774,6 +752,27 @@
 		
 		// Update the leader board
 		updateLeader();
+	}
+
+	// Updates the turn to the next player
+	function onUpdateTurn()
+	{
+		let setting = SETTINGS_MAPPING["Selecting Questions"];
+		let mode = setting.option;
+
+		switch(mode)
+		{
+			case "1":
+				setCurrentPlayer(CURRENT_TEAM_IDX+1); //Increase index by +1
+				break;
+			case "2":
+				teamDetails = getTeamDetails(LAST_TEAM_CORRECT);
+				teamName = teamDetails["name"];
+				setCurrentPlayerByName(teamName);
+				break;
+			default:
+				setCurrentPlayer(CURRENT_TEAM_IDX); // default is to keep the same index;
+		}	
 	}
 
 
@@ -1413,7 +1412,6 @@
 			let idx = Math.floor(Math.random() * numTeams);
 			setCurrentPlayer(idx); // Set that index as the current player
 		}
-
 		// Hide the buttons to set team directly
 		hideSetTeamButton();
 	}
@@ -1423,8 +1421,9 @@
 	{
 		let numTeams  = TEAMS_ADDED.length;
 
-		let new_index = (idx > numTeams) ? 0 : idx;
-
+		// Reset to 0 if the index is out of range; 
+		let new_index = (idx >= numTeams) ? 0 : idx;
+		
 		if(new_index != -1)
 		{
 			mydoc.showContent("#current_turn_section");

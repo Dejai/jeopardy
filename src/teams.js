@@ -274,6 +274,9 @@
 		let your_score = TEAM_SCORES[TEAM_ID];
 		let high_score = Math.max(...Object.values(TEAM_SCORES));
 
+		your_score = IsNaN(your_score) ? 0 : your_score;
+		high_score = IsNaN(high_score) ? 0 : high_score;
+
 		// Set the scores;
 		document.getElementById("team_score").innerText = your_score;
 		document.getElementById("highest_score").innerText = high_score;

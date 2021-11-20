@@ -44,7 +44,7 @@ const Rules =
 			"type": "select",
 			"rule":"The first person to buzz-in AND get the question correct gets to pick the next question",
 			"subRules":["If nobody gets the current question correct, the last person to got a question correct continues picking."],
-			"suggestion": ""
+			"suggestion": "If using this setting, the 'Answering Questions' setting should be 'First to Buzz!'"
 		}
 	],
 
