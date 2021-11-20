@@ -177,12 +177,21 @@
 		try
 		{
 			formatRules(rules);
+
+			// Set the default timer
+			let setting = SETTINGS_MAPPING["Time to Answer Questions"];
+			if(setting.hasOwnProperty("customValue"))
+			{
+				let time = Number(setting["customValue"]);
+				time = isNaN(time) ? Timer.getTimerDefault() : time;
+				Timer.setTimerDefault(time);
+			}
+
 		}
 		catch(error)
 		{
 			Logger.log(error);
 			set_loading_results("Sorry, something went wrong!\n\n"+error);
-
 		}
 	}
 
@@ -404,21 +413,12 @@
 		// Get the question key from the clicked cell
 		let key = cell.getAttribute("data-jpd-quest-key");
 
-		let proceed = true;
-		if(CURRENT_QUESTION_KEY == key)
-		{
-			proceed = confirm("This question has already been presented. Re-open?") == 1;
-		}
-
-		// If proceed is not true, then 
+		// Determing if the question can be opened;
+		let proceed = canOpenQuestion(key);
 		if(!proceed){ return; }
 
 		// Set the current question key to the key of the opened question
 		CURRENT_QUESTION_KEY = key;
-
-		// TO DO: Turn this back on;
-		// let validHeaders = isHeadersVisible()
-		// if(!validHeaders){ return; }
 
 		Logger.log("Loading Question");
 		Logger.log(cell);
@@ -438,15 +438,19 @@
 		let map = QA_MAP[key];
 
 		// Format the questions and answers
-		let question = formatContent(map["question"]);
-		let answer   = formatContent(map["answer"]);
-		let value    = Number(map["question"]["value"]);
 		let isDailyDouble = map["question"]["dailydouble"];
-		// update question if it is daily double
+
+		let question = formatContent(map["question"]);
 		question = (isDailyDouble) ? (getDailyDoubleContent() + question ) : question;
+
+		let answer   = formatContent(map["answer"]);
+
+		let questionValue    = Number(map["question"]["value"]);
+		questionValue = isNaN(questionValue) ? 0 : questionValue;
+		questionValue = (isDailyDouble) ? (2 * questionValue) : questionValue;
 		
 		// Calculate the value for the points;
-		let questionValue = (isDailyDouble) ? 2 * value : IS_FINAL_JEOPARDY ? getMaxPossibleWager() : isNaN(value) ? "n/a" : value;
+		// let questionValue2 = (isDailyDouble) ? 2 * value : IS_FINAL_JEOPARDY ? getMaxPossibleWager() : isNaN(value) ? "n/a" : value;
 
 		loadQuestionViewSection("question_block", question, mode, true);
 		loadQuestionViewSection("value_header", undefined, mode, false);
@@ -468,6 +472,7 @@
 		document.getElementById("answer_block").classList.add("hidden");
 		document.getElementById("correct_block").classList.add("hidden");
 		document.getElementById("question_view").classList.add("hidden");
+		document.getElementById("assignScoresButton").disabled = true; // set assign score back to disabled;
 		Timer.resetTimer(); // make sure the timer is reset to default.
 	}
 
@@ -493,24 +498,16 @@
 	// Open up the selected question	
 	function onQuestionClick(event)
 	{
-		if(CURRENT_TEAM_IDX != -1)
+		let ele = event.target;
+		let td  = (ele.tagName == "TD") ? ele : ele.querySelectorAll(".category_option")[0];
+		if (td != undefined)
 		{
-			let ele = event.target;
-			let td  = (ele.tagName == "TD") ? ele : ele.querySelectorAll(".category_option")[0];
-			if (td != undefined)
-			{
-				onOpenQuestion(td);
-			} 
-			else
-			{ 
-				alert("ERROR: Couldn't load question. Try again?"); 
-			} 
-		}
+			onOpenQuestion(td);
+		} 
 		else
-		{
-			alert("Please ensure a team is set to current team");
-		}
-		
+		{ 
+			alert("ERROR: Couldn't load question. Try again?"); 
+		} 
 	}
 
 	// Reveal the answer in the question popup; Also reveal player answers
@@ -587,8 +584,6 @@
 		let setting = SETTINGS_MAPPING["Selecting Questions"];
 		let mode = setting.option;
 
-		console.log(mode);
-
 		switch(mode)
 		{
 			case "1":
@@ -597,7 +592,6 @@
 			case "2":
 				let teamDetails = getTeamDetails(LAST_TEAM_CORRECT);
 				let teamName = teamDetails["name"];
-				console.log(teamDetails);
 				setCurrentPlayerByName(teamName);
 				break;
 			default:
@@ -806,9 +800,10 @@
 			dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
 
 			category_name 	= category.getName();
+			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
 
 			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title' data-jpd-category-name=\"${category_name}\"></th></tr>`;
+			category_name_row 		= `<tr><th class='category category_title' data-jpd-category-name=\"${category_name}\">${preFilledCategoryName}</th></tr>`;
 			
 			// Set the questions 
 			category_questions_row	= "";
@@ -1019,7 +1014,6 @@
 		switch(mode)
 		{
 			case "1":
-				console.log("What!?");
 				colGroupSection = `<colgroup>
 										<col style="width:30%"/>
 										<col style="width:40%">
@@ -1267,14 +1261,17 @@
 
 		let teamDetails = getTeamDetails(teamCode);
 
-		// Reveal the wager element
+		// Reveal the wager element and set to zero by default
 		teamDetails["wager_ele"].classList.remove("hidden"); 
+		teamDetails["wager_ele"].innerText = 0;
+		teamDetails["wager_ele2"].innerText = 0;
 
 		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
 
 		// Get the wager value from the wager field; Set in field
 		MyTrello.get_card_custom_fields(teamCode, function(data){
 			response = JSON.parse(data.responseText);
+
 
 			for(var idx = 0; idx < response.length; idx++)
 			{
@@ -1283,18 +1280,15 @@
 				// skip any field that is not the wager field
 				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
 
-				let valueObject = obj["value"];
+				let valueObject = obj["value"] ?? {};
 				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
 				
-				if(value != "")
-				{
-					value = value.trim();
-					let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
-					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
-					teamDetails["wager_ele"].innerText = wagerValue;
-					teamDetails["wager_ele2"].innerText = wagerValue;
-				}
-
+				// Set the wager value
+				value = value.trim();
+				let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
+				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+				teamDetails["wager_ele"].innerText = wagerValue;
+				teamDetails["wager_ele2"].innerText = wagerValue;
 			}
 		});
 	}
@@ -1333,6 +1327,46 @@
 
 
 /********** HELPER FUNCTIONS -- SETTERS, UPDATERS, and RESETERS **************************************/
+
+	// Determine an set the new team score
+	function calculateTeamNewScore(teamCode, questionValue, isCorrect=false)
+	{
+		// Get the team details
+		let teamDetails = getTeamDetails(teamCode);
+
+		// Get wager details
+		let team_score = Number(teamDetails["score"]);
+		let team_wager = Number(teamDetails["wager"]);
+
+		let questionValueNum = Number(questionValue);
+		questionValueNum = isNaN(questionValueNum) ? 0 : questionValueNum;
+
+		// Calculate the points of the question;
+		let points = (IS_FINAL_JEOPARDY) ? team_wager : questionValueNum; 
+
+		// Defaulting new score to the same team score
+		let newScore = team_score; 
+
+		// calculating the new score based on combinations
+		if(IS_FINAL_JEOPARDY && !isCorrect)
+		{
+			newScore -= points;
+		}
+		else if (isCorrect)
+		{
+			newScore += points;
+		}
+
+		// Set the value on the HTML table 
+		teamDetails["score_ele"].innerText = newScore;
+
+		// Update Trello if the score is different;
+		if(team_score != newScore)
+		{
+			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
+		}
+
+	}
 
 	// Reset the answer
 	function resetAnswers()
@@ -1446,42 +1480,6 @@
 		}
 	}
 
-	function calculateTeamNewScore(teamCode, questionValue, isCorrect=false)
-	{
-		// Get team score from page
-		let team_score_value = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'");
-		let team_score = Number(team_score_value.innerText);
-
-		// Get team wager from page
-		let team_wager_value = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
-		let team_wager = Number(team_wager_value.innerText);
-
-		// Calculate the points of the question;
-		let points = (IS_FINAL_JEOPARDY) ? team_wager : Number(questionValue);
-
-		// Defaulting new score to the same team score
-		let newScore = team_score; 
-
-		// calculating the new score based on combinations
-		if(IS_FINAL_JEOPARDY && !isCorrect)
-		{
-			newScore -= points;
-		}
-		else if (isCorrect)
-		{
-			newScore += points;
-		}
-
-		// Set the value on the HTML table 
-		team_score_value.innerText = newScore;
-
-		// Update Trello if the score is different;
-		if(team_score != newScore)
-		{
-			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
-		}
-
-	}
 
 /********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
 
@@ -1510,12 +1508,51 @@
 			}
 		});
 
-		if(totalMissing > 0)
+		if( (totalMissing > 0) && !IS_TEST_RUN )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		return (totalMissing == 0)
+		let headersVisible = (IS_TEST_RUN) ? true : (totalMissing == 0);
+		return headersVisible;
+	}
+
+	// Re-open the same question?
+	function isReopenQuestion(key)
+	{
+		let canOpen = true; 
+
+		if(CURRENT_QUESTION_KEY === key)
+		{
+			canOpen = confirm("This question has already been presented. Re-open?") == 1;
+		}
+
+		return canOpen;
+	}
+
+	function isFirstTeamSet()
+	{
+		let firstTeamSet = (CURRENT_TEAM_IDX != -1)
+		if(!firstTeamSet)
+		{
+			alert("Please ensure a team is set to current team");
+		}
+		return firstTeamSet;
+	}
+
+	// Check if the question can be opened;
+	function canOpenQuestion(key)
+	{
+
+		let canOpen = true;
+
+		let allHeadersVisible = isHeadersVisible();
+		let isSafeToOpen = isReopenQuestion(key);
+		let firstTeamSet = isFirstTeamSet();
+
+		canOpen = allHeadersVisible && isSafeToOpen && firstTeamSet;
+
+		return canOpen; 
 	}
 	
 

@@ -25,7 +25,7 @@ const Rules =
 			"subRules":["If the person who buzzes doesn't get it correct, the next person to buzz in gets to answer",
 						"NOTE: The game doesn't have any buzz-in feature, so you'll have to use your own buzzers"
 						],
-			"suggestion": "Be sure to use the 'LIVE' host view to see the question & answer to determine who got it right"
+			"suggestion": "Be sure to use the 'LIVE' host view to see the answer while asking the question. To know who got it right;"
 		}
 	],
 
@@ -43,7 +43,7 @@ const Rules =
 			"label": "Last Person to Get it Right",
 			"type": "select",
 			"rule":"The first person to buzz-in AND get the question correct gets to pick the next question",
-			"subRules":["The host can choose whatever means to determine who gets to pick first."],
+			"subRules":["If nobody gets the current question correct, the last person to got a question correct continues picking."],
 			"suggestion": ""
 		}
 	],

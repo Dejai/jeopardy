@@ -85,16 +85,6 @@
 				<textarea id="game_edit_sheet_value" class="edit_game_value" placeholder="Paste the Edit Sheet URL Here" style="width:100%;" rows="3"/></textarea>
 			</div>
 			<div class="edit_game_subsection">
-				<h2>Game Media</h2>
-				<p>OPTIONAL: Load any images and audio that you want to use in the game.<br/>
-					The file names used here should match what is entered in your spreadsheet (above)
-				</p>
-				<ul id="game_media"></ul>
-				<form enctype="multipart/form-data" method="post" name="fileinfo2">
-					<input id="game_files" type="file" name="game_files" accept="image/*, audio/*" multiple onchange="add_media()" class="pointer">
-				</form>
-			</div>
-			<div class="edit_game_subsection">
 				<h2>Game Settings</h2>
 				<p>Configure the settings that you want to use for your game.</p>
 				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
@@ -114,6 +104,17 @@
 					<tbody id="settings_table_body"></tbody>
 				</table>
 			</div>
+			<div class="edit_game_subsection">
+				<h2>Game Media</h2>
+				<p>OPTIONAL: Load any images and audio that you want to use in the game.<br/>
+					The file names used here should match what is entered in your spreadsheet (above)
+				</p>
+				<ul id="game_media"></ul>
+				<form enctype="multipart/form-data" method="post" name="fileinfo2">
+					<input id="game_files" type="file" name="game_files" accept="image/*, audio/*" multiple onchange="add_media()" class="pointer">
+				</form>
+			</div>
+			
 		</div>
 	</div>
 	<div class="center_section_50 centered">
