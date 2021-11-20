@@ -136,9 +136,14 @@
 	.timer_buttons {  cursor:pointer; font-size:45px; }
 	#revealAnswerButton { font-size:15px; cursor:pointer; }
 	.answer_link { color:white; font-size:50%; }
-	#correct_block table { width:55%; text-align:center; margin:auto; }
+	
+	#correct_block { width: 55%; margin:auto; }
+	/* Table */
+	#correct_block table { width:100%; text-align:center; }
 	#correct_block table thead th { border-bottom: 2px solid white;}
 	#correct_block table input { font-size:140%; cursor:pointer; }
 	#correct_block table tbody tr { border-bottom:1px solid black; } 
-	#close_question_view { position:fixed; z-index:1000; top:0; left:0; width:10%; padding:1%; text-align:left; cursor:pointer; }
+	#correct_block table > tbody > tr:last-child > td { border-bottom: 2px solid white;}
+	#assign_scores_block { padding:1%; text-align:right; }
 
+	#close_question_view { position:fixed; z-index:1000; top:0; left:0; width:10%; padding:1%; text-align:left; cursor:pointer; }

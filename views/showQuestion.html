@@ -8,7 +8,7 @@
 		</span>
 	</span>
 	<div id="question_block"></div>
-	<h2>Value = <span id="value_block"></span></h2>
+	<h2 id="value_header">Value = <span id="value_block"></span></h2>
 	<p id="reveal_answer_block">
 		<button id="revealAnswerButton" onclick="onRevealAnswer();">Reveal Answer</button>
 	</p>
@@ -36,6 +36,10 @@
 				</colgroup>
 				<tbody id="team_answers_list"></tbody>
 			</table>
+			<div id="assign_scores_block">
+				<button id="assignScoresButton" class="pointer" onclick="onAssignScore()" disabled>Assign Scores</button>
+				<p class="pointer" onclick="onNobodyCorrect()">Nobody got it correct.</p>
+			</div>
 		</div>	
 	</div>		
 </div>

@@ -13,8 +13,10 @@
 		"_daily_double_image":"../assets/img/daily_double.jpeg",
 	};
 
+	// Storing details about the questions and game stage
 	var QA_MAP = {};   //The Question-Answer map;
 	var IS_FINAL_JEOPARDY = false;
+	var CURRENT_QUESTION_KEY = undefined;
 
 	// Storing the current players
 	var TEAMS_ADDED = [];
@@ -25,7 +27,6 @@
 	var PLAYER_MAPPING = {};
 
 	var SETTINGS_MAPPING = {};
-
 
 	var IS_TEST_RUN = false;
 	var IS_DEMO_RUN = false;
@@ -53,7 +54,6 @@
 		// Load the game params to determine what should happen next
 		loadGameParams();
 	});
-
 
 	function loadGameParams()
 	{
@@ -185,7 +185,6 @@
 
 		}
 	}
-
 
 	// Get the attachments on the card (if any)
 	function load_attachments_from_trello()
@@ -377,7 +376,6 @@
 		});
 	}
 
-
 	//Reveal the name of a category that is not visible yet
 	function onCategoryClick(event)
 	{
@@ -403,8 +401,23 @@
 	{
 		Timer.resetTimer();
 
+		// Get the question key from the clicked cell
+		let key = cell.getAttribute("data-jpd-quest-key");
+
+		let proceed = true;
+		if(CURRENT_QUESTION_KEY == key)
+		{
+			proceed = confirm("This question has already been presented. Re-open?") == 1;
+		}
+
+		// If proceed is not true, then 
+		if(!proceed){ return; }
+
+		// Set the current question key to the key of the opened question
+		CURRENT_QUESTION_KEY = key;
+
 		// TO DO: Turn this back on;
-		// let validHeaders = onValidateHeaders()
+		// let validHeaders = isHeadersVisible()
 		// if(!validHeaders){ return; }
 
 		Logger.log("Loading Question");
@@ -420,9 +433,6 @@
 		cell.style.backgroundColor = "gray";
 		cell.style.color = "black";
 		cell.disabled = true;
-		
-		// Get the question key from the clicked cell
-		let key = cell.getAttribute("data-jpd-quest-key");
 
 		// Get the mapped object from the Question/Answer Map
 		let map = QA_MAP[key];
@@ -438,11 +448,12 @@
 		// Calculate the value for the points;
 		let questionValue = (isDailyDouble) ? 2 * value : IS_FINAL_JEOPARDY ? getMaxPossibleWager() : isNaN(value) ? "n/a" : value;
 
-		loadQuestionViewSection("question_block", question, mode);
-		loadQuestionViewSection("value_block", questionValue, mode);
-		loadQuestionViewSection("reveal_answer_block", undefined, mode, "2");
-		loadQuestionViewSection("answer_block", answer, mode, "1,2");
-		loadQuestionViewSection("correct_block", undefined, mode, "1");
+		loadQuestionViewSection("question_block", question, mode, true);
+		loadQuestionViewSection("value_header", undefined, mode, false);
+		loadQuestionViewSection("value_block", questionValue, mode, false);
+		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
+		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
+		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
 
 		// Show the question section
 		document.getElementById("question_view").classList.remove("hidden");
@@ -453,21 +464,11 @@
 	function onCloseQuestion()
 	{
 		window.scrollTo(0,0); // Scroll back to the top of the page;
-		updateScore();
+		// onUpdateScore();
 		document.getElementById("answer_block").classList.add("hidden");
 		document.getElementById("correct_block").classList.add("hidden");
 		document.getElementById("question_view").classList.add("hidden");
 		Timer.resetTimer(); // make sure the timer is reset to default.
-
-		// Only do these actions if it is NOT final jeopardy
-		if(!IS_FINAL_JEOPARDY)
-		{
-			var singleTeamWinner = undefined
-			onUpdateTurn(); // Pick whos turn it is next
-
-			// Reset the answers for each team, so it no longer shows
-			resetAnswers(); // Reset the answers for each team.
-		}
 	}
 
 	// End the game and archive the list
@@ -488,7 +489,6 @@
 			});
 		}
 	}
-
 
 	// Open up the selected question	
 	function onQuestionClick(event)
@@ -519,20 +519,28 @@
 		
 		var answers = document.querySelectorAll(".team_answer");
 
+		// Loop through all possible teams;
+
 		for(var idx = 0; idx < answers.length; idx++)
 		{
 			let obj = answers[idx];
 			let teamCode = obj.getAttribute("data-jpd-team-code");
 
+			// Get team details
+			let teamDetails = getTeamDetails(teamCode);
+
+			// Set the answer given by the person;
 			MyTrello.get_single_card(teamCode, function(data){
 				response = JSON.parse(data.responseText);
 				obj.innerHTML = response["desc"];
 			});
 
+			// Set the 
 			// Attempt to set teamCode
 			if(IS_FINAL_JEOPARDY)
 			{
-				getWagers(teamCode);			
+				let highestScore = getHighestScore();
+				getWagersPerTeam(teamCode, highestScore);		
 			}
 		}
 
@@ -540,7 +548,6 @@
 		mydoc.showContent("#answer_block");
 		mydoc.showContent("#correct_block");
 	}
-
 
 	// Reveal the game board & set initial team
 	function onStartGame(event)
@@ -672,6 +679,20 @@
 		});
 	}
 
+	// Check if assigning scores button should be enabled
+	function onTeamGotItRight()
+	{
+		let button = document.querySelector("#assignScoresButton");
+		var gotItRight = document.querySelectorAll(".who_got_it_right:checked");
+		if(gotItRight.length > 0)
+		{
+			button.disabled = false;
+		}
+		else
+		{
+			button.disabled = true;
+		}
+	}
 
 	// Adds a team Row to the teams table
 	function onAddTeam(teamCode, teamName)
@@ -697,30 +718,72 @@
 		document.getElementById("teams_block").innerHTML += content;
 	}
 
-	// Validate the headers are shown
-	function onValidateHeaders()
+	// Helper if nobody got it right
+	function onNobodyCorrect()
 	{
-		let categories = document.querySelectorAll(".category_title");
-		let totalMissing = 0;
+		onAssignScore(false); // pass in false for update score
+	}
 
-		categories.forEach((obj) => {
-			if( obj.innerText == "" )
-			{
-				totalMissing += 1;
-			}
-		});
-
-		if(totalMissing > 0)
-		{
-			alert("Please show all the headers before beginning")
+	// Assigns the scores and then closes the question
+	function onAssignScore(updateScore=true)
+	{
+		// First update the score
+		if(updateScore){ 
+			onUpdateScore(); 
 		}
 
-		return (totalMissing == 0)
+		// Then, close the question popup
+		onCloseQuestion();
+
+		// Updating turn and resetting answers
+		// Only do these actions if it is NOT final jeopardy
+		if(!IS_FINAL_JEOPARDY)
+		{
+			onUpdateTurn(); // Pick whos turn it is next
+
+			// Reset the answers for each team, so it no longer shows
+			resetAnswers(); // Reset the answers for each team.
+		}
+	}
+
+	// Update the score for all teams that got the question correct
+	function onUpdateScore()
+	{
+		var question_value = document.getElementById("value_block").innerText; // Get the value of the question
+
+		let setting = SETTINGS_MAPPING["Selecting Questions"];
+		let mode = setting.option;
+
+		// Get the team inputs for Who Got It Right?
+		var teamInputs = document.querySelectorAll(".who_got_it_right");
+
+		if(teamInputs != undefined)
+		{
+			Logger.log("ERROR! Could not load the team inputs");
+		}
+
+		// Loop through all options
+		teamInputs.forEach( (obj) => {
+
+			let teamCode = obj.getAttribute("data-jpd-team-code");
+
+			// If version where single person gets it right; 
+			if(mode == "2" && obj.checked)
+			{
+				LAST_TEAM_CORRECT = teamCode; //Set the team that got it correct, since they go again;
+
+			}
+
+			// Calculae/set the score based on teamCode and if object is checked
+			calculateTeamNewScore(teamCode, question_value, obj.checked);
+		});
+		
+		// Update the leader board
+		updateLeader();
 	}
 
 
-
-/************ Create/Update DOM ***************************************/
+/************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
 
 	function create_game_board()
 	{
@@ -842,10 +905,9 @@
 		}
 	}
 
-
 	// Load the content into the question block;
 	//	>> If the [mode] passed in is in the list [hidIfMod] list, then it will be hidden
-	function loadQuestionViewSection(sectionID, content, mode, hideIfMode="")
+	function loadQuestionViewSection(sectionID, content, mode, showInFinalJeopardy, hideIfMode="")
 	{
 		let element = document.getElementById(sectionID);
 		let modesToHideFor = (hideIfMode) ?? "-1";
@@ -866,6 +928,13 @@
 			{
 				element.classList.remove("hidden")
 			}
+
+			// Adjust visibility during final jeopardy
+			if(IS_FINAL_JEOPARDY)
+			{
+				if(showInFinalJeopardy){  element.classList.remove("hidden"); }
+				if(!showInFinalJeopardy){  element.classList.add("hidden"); }
+			}
 		}
 
 	}
@@ -878,7 +947,577 @@
 		whoGotItRight.innerHTML = formattedTeams;
 	}
 
+	// Hide button to set team by name
+	function hideSetTeamButton()
+	{
+		// hide any direct buttons if visible
+		var buttons = document.querySelectorAll(".setTeamDirectly");
+		if(buttons.length > 0)
+		{
+			buttons.forEach(function(button){
+				button.classList.add("hidden");
+			});
+		}
+	}
 
+	// Sort the list of teams to determine the leader
+	function updateLeader()
+	{
+
+		table_body = document.getElementById("teams_block");
+
+		current_teams = Array.from(document.getElementsByClassName("team_row"));
+		sorted_teams = current_teams.sort(function(a,b){
+							a_score = a.getElementsByClassName("team_score")[0].innerText;
+							b_score = b.getElementsByClassName("team_score")[0].innerText;
+							return b_score - a_score;
+						});
+
+		sorted_teams_html = "";
+		table_body.innerHTML = "";
+
+		//  Update the table with the correct order
+		sorted_teams.forEach(function(row){ 
+			table_body.innerHTML += row.outerHTML;
+		});
+
+		updateLeaderColors()
+	}
+	
+
+
+/********** HELPER FUNCTIONS -- GETTERS **************************************/
+
+	// Get the table section for "Who Got It Right?"
+	function getWhotGotItRight_Section()
+	{
+
+		let tableHtml = "";
+
+		let setting = SETTINGS_MAPPING["Answering Questions"];
+		let mode = setting.option;
+		
+		// Load the different sections of who got it right
+		let colGroupSection = getWhoGotItRight_ColGroup(mode);
+		let headSection = getWhoGotItRight_Head(mode);
+		let bodySection = getWhoGotItRight_Body(mode);
+
+		tableHtml = colGroupSection + headSection + bodySection;
+
+		return tableHtml;
+
+	}
+
+	// Get the <colgroup> section for the section = "Who Got It Right?"
+	function getWhoGotItRight_ColGroup(mode)
+	{
+		let colGroupSection = undefined;
+
+		// An override if it is final jeopardy
+		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
+
+		switch(mode)
+		{
+			case "1":
+				console.log("What!?");
+				colGroupSection = `<colgroup>
+										<col style="width:30%"/>
+										<col style="width:40%">
+										<col/>
+									</colgroup>`;
+				break;
+			case "2":
+				colGroupSection = `<colgroup>
+										<col style="width:10%"/>
+									</colgroup>`;
+				break;
+			case "FJ!":
+					colGroupSection = `<colgroup>
+											<col style="width:20%"/>
+											<col style="width:30%">
+											<col style="width:35%">
+											<col/>
+										</colgroup>`;
+					break;
+			default:
+				colGroupSection = "";
+		}
+		return colGroupSection;
+	}
+
+	// Get the <head> section for the section = "Who Got It Right?"
+	function getWhoGotItRight_Head(mode)
+	{
+		let headSection = undefined;
+
+		// An override if it is final jeopardy
+		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
+
+		switch(mode)
+		{
+			case "1":
+				headSection = `<thead>
+									<tr>
+										<th>Team</th>
+										<th>Answer</th>
+										<th>Correct?</th>
+									</tr>
+								</thead>`;
+				break;
+			case "2":
+				headSection = `<thead>
+									<tr>
+										<th>Select Team</th>
+									</tr>
+								</thead>`;
+				break;
+			case "FJ!":
+					headSection = `<thead>
+										<tr>
+											<th>Team</th>
+											<th>Answer</th>
+											<th>Wager</th>
+											<th>Correct?</th>
+										</tr>
+									</thead>`;
+					break;
+			default:
+				headSection = "";
+		}
+		return headSection;
+	}
+
+	// Get the <body> section for the section = "Who Got It Right?"
+	function getWhoGotItRight_Body(mode)
+	{
+		// Get the list of teams;
+		var teams = document.querySelectorAll(".team_name");
+
+		// Building the teams for "Who Got It Right?"
+		var teamListWhoGotItRight = "";
+
+		// An override if it is final jeopardy
+		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
+
+		teams.forEach(function(obj){
+			let teamName = obj.innerHTML;
+			let code = obj.getAttribute("data-jpd-team-code");
+
+			let teamOption = "";
+
+			switch(mode)
+			{
+				case "1":
+					teamOption = getWhotGotItRight_CheckBoxRow(teamName, code);
+					break;
+				case "2":
+					teamOption = getWhotGotItRight_RadioButtonRow(teamName, code);
+					break;
+				case "FJ!":
+						teamOption = getWhotGotItRight_CheckBoxRow(teamName, code, true);
+						break;
+				default:
+					teamOption = "";
+			}
+			teamListWhoGotItRight += teamOption;
+		});
+
+		let bodySection = `<tbody id="team_answers_list">${teamListWhoGotItRight}</tbody>`;
+
+		return bodySection;
+	}
+
+	// Get an individual Row+Checkbox for a team;
+	function getWhotGotItRight_CheckBoxRow(teamName, teamCode, includeWager=false)
+	{
+		label = `<td><label>${teamName}</label><span>&nbsp;</span></td>`;
+		answer = `<td><p class="team_answer" data-jpd-team-code="${teamCode}"></p></td>`;
+		wager = (includeWager) ? `<td><p class="team_wager_question_view" data-jpd-team-code="${teamCode}"></p></td>`: "";
+		input = `<td><input type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}" onchange="onTeamGotItRight()"></td>`;
+		return "<tr>" + label + answer + wager + input + "</tr>";
+	}
+
+	// Get an individual Radio button for a team;
+	function getWhotGotItRight_RadioButtonRow(teamName, teamCode)
+	{
+		radioButtonRow = `<tr><td><p>
+							<input id="radio_${teamCode}" type="radio" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="who_got_it_right" onchange="onTeamGotItRight()"> &nbsp;
+							<label style="cursor:pointer;" for="radio_${teamCode}">${teamName}</label>
+						</p></td></tr>`;
+		return radioButtonRow;
+	}
+
+	// Get the image and audio used for Daily Double
+	function getDailyDoubleContent()
+	{
+		Logger.log("Getting Daily Double Content");
+		let content = "";
+		content += formatImages("_daily_double_image");
+		content += formatAudio("_daily_double_audio", true);
+		content += "<br/>";
+		return content;
+	}
+
+	//Purpose: Generates 4 random characters to create a team code;
+	function getGameCode()
+	{
+		
+		let game_code = "";
+
+		if(IS_DEMO_RUN || IS_TEST_RUN)
+		{
+			game_code = (IS_TEST_RUN) ? "TEST" : "DEMO";
+		}
+		else
+		{
+			let char1 = getRandomCharacter();
+			let char2 = getRandomCharacter();
+			let char3 = getRandomCharacter();
+			let char4 = getRandomCharacter();
+
+			let chars = char1 + char2 + char3 + char4;
+
+			// Make sure the code is not demo;
+			game_code = ( isReservedCode(chars) ) ? getGameCode() : chars;
+		}
+
+		Logger.log("Game Code = " + game_code);
+
+		return game_code
+	}
+	// Get the game media based on a given value
+	function getGameMediaURL(value)
+	{
+		let url = "";
+		if(GAME_MEDIA.hasOwnProperty(value))
+		{
+			url = GAME_MEDIA[value];
+		}
+		return url;
+	}
+
+	// Get details about a team based on the teams table
+	function getTeamDetails(teamCode)
+	{
+		let teamName = document.querySelector("span.team_name[data-jpd-team-code='"+teamCode+"'"); 
+		let teamScore = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'"); 
+		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); 
+		let teamWager2 = document.querySelector("p.team_wager_question_view[data-jpd-team-code='"+teamCode+"'"); 
+
+		let teamDetails = {
+			"name": teamName?.innerText ?? "", 
+			"name_ele": teamName, 
+			"score": teamScore?.innerText ?? "", 
+			"score_ele": teamScore, 
+			"wager": teamWager?.innerText ?? "",
+			"wager_ele": teamWager,
+			"wager_ele2": teamWager2
+		}
+
+		return teamDetails;
+	}
+
+	// Get the highest score
+	function getHighestScore()
+	{
+		let highest = 0;
+
+		let team_score_values = document.querySelectorAll("span.team_score");
+
+		team_score_values.forEach((obj) =>{
+			let val = Number(obj.innerText) ?? 0;
+			val = isNaN(val) ? 0 : val;
+			highest = (val > highest) ? val : highest;
+		});
+		return highest
+
+	}
+	// Get the max possible wager users can bet against
+	function getMaxPossibleWager()
+	{
+		let max = 0;
+
+		let team_score_values = document.querySelectorAll("span.team_score");
+		for(var idx = 0; idx < team_score_values.length; idx++)
+		{
+			let val = Number(team_score_values[idx].innerText);
+			if (!isNaN(val) && val > max)
+			{
+				max = val;
+			}
+		}
+
+		return max;
+	}
+
+	// Purpose: Returns a random character from the alphabet; Used to generate team codes
+	// Get a random character in the alphabet
+	function getRandomCharacter()
+	{
+		characters = "abcdefghijklmnopqrstuvwxyz";
+		randChar = Math.floor(Math.random()*characters.length);
+		return characters[randChar].toUpperCase();
+	}
+
+	// Get the wager for the current team (adjust to max possible - in case someone tries to cheat)
+	function getWagersPerTeam(teamCode, highestScore)
+	{
+		let settings = SETTINGS_MAPPING["Final Jeopardy Wager"];
+		let mode = settings.option; 
+
+		let teamDetails = getTeamDetails(teamCode);
+
+		// Reveal the wager element
+		teamDetails["wager_ele"].classList.remove("hidden"); 
+
+		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
+
+		// Get the wager value from the wager field; Set in field
+		MyTrello.get_card_custom_fields(teamCode, function(data){
+			response = JSON.parse(data.responseText);
+
+			for(var idx = 0; idx < response.length; idx++)
+			{
+				let obj = response[idx];
+
+				// skip any field that is not the wager field
+				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
+
+				let valueObject = obj["value"];
+				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+				
+				if(value != "")
+				{
+					value = value.trim();
+					let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
+					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+					teamDetails["wager_ele"].innerText = wagerValue;
+					teamDetails["wager_ele2"].innerText = wagerValue;
+				}
+
+			}
+		});
+	}
+
+	function getWagers(teamCode, content="0")
+	{
+
+		let max = getMaxPossibleWager();
+		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
+		teamWager.classList.remove("hidden");
+		let wager_value = 0;
+
+		// Get the wager value from the wager field
+		MyTrello.get_card_custom_fields(teamCode, function(data){
+			response = JSON.parse(data.responseText);
+			response.forEach(function(obj){
+
+				let valueObject = obj["value"];
+				let is_wager_field = obj["idCustomField"] == MyTrello.custom_field_wager;
+				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+				
+				if(is_wager_field && value != "")
+				{
+					value = value.trim();
+					Logger.log("User wager: " + value);
+					let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
+					Logger.log("Evaluated wager:" + wagerValue);
+					wagerValue = (wagerValue > max) ? max : wagerValue;
+					Logger.log("Final Wager Value: " + wagerValue);
+					teamWager.innerText = wagerValue;
+				}
+			});
+		});
+	}
+
+
+
+/********** HELPER FUNCTIONS -- SETTERS, UPDATERS, and RESETERS **************************************/
+
+	// Reset the answer
+	function resetAnswers()
+	{
+		Logger.log("Clearing Answers in 5 seconds!");
+		setTimeout(function(){
+			let teams = Array.from(document.querySelectorAll(".team_name"));
+			teams.forEach(function(obj){
+				card_id = obj.getAttribute("data-jpd-team-code");
+				MyTrello.update_card(card_id, "");
+			});
+		}, 5000)
+		
+	}
+
+	// Set the first player
+	function setFirstPlayer()
+	{
+		var setting = SETTINGS_MAPPING["Who Goes First?"];
+		
+		if(setting.option == "1")
+		{
+			setCurrentPlayerRandomly();
+		}
+		else if (setting.option == "2")
+		{
+			alert("Please select a team that goest first");
+		}
+		
+	}
+
+	// Take in a team name and set that team to current player
+	function setCurrentPlayerByName(teamName)
+	{
+		let idx = TEAMS_ADDED.indexOf(teamName);
+		setCurrentPlayer(idx);
+
+		// Hide the buttons to set team directly
+		hideSetTeamButton();
+	
+	}
+
+	// Randomly set the first player
+	function setCurrentPlayerRandomly()
+	{
+		let numTeams  = TEAMS_ADDED.length;
+		if(numTeams > 0)
+		{
+			let idx = Math.floor(Math.random() * numTeams);
+			setCurrentPlayer(idx); // Set that index as the current player
+		}
+
+		// Hide the buttons to set team directly
+		hideSetTeamButton();
+	}
+
+	// Set the current player based on index
+	function setCurrentPlayer(idx=-1)
+	{
+		let numTeams  = TEAMS_ADDED.length;
+
+		let new_index = (idx > numTeams) ? 0 : idx;
+
+		if(new_index != -1)
+		{
+			mydoc.showContent("#current_turn_section");
+			
+			nextTeam = TEAMS_ADDED[new_index];
+			
+			Logger.log(`Setting Next Team = ${nextTeam}`);
+			document.getElementById("current_turn").innerText = nextTeam;
+			
+			// Update the index for use in any other call back to this function
+			CURRENT_TEAM_IDX = new_index;
+		}
+	}
+
+	// Update the colors associated with the leaders
+	function updateLeaderColors()
+	{
+		var team_scores = document.querySelectorAll("span.team_score");
+		var scores = [];
+		for (var i = 0; i < team_scores.length; i++)
+		{
+			let sect = team_scores[i];
+			let score = Number(sect.innerHTML);
+			if (!scores.includes(score))
+			{
+				scores.push(score);
+			}
+		}
+		// Sort the scores
+		scores = scores.sort(function(a,b){return b-a; });
+		let length = scores.length;
+
+		// Set the first, second, and third values; 
+		let first = scores[0];
+		let second = (scores.length > 1) ? scores[1] : -1;
+		let third = (scores.length > 2 ) ? scores[2] : -1;
+
+		for (var i = 0; i < team_scores.length; i++)
+		{
+			let sect = team_scores[i];
+			sect.classList.remove("first_place");
+			sect.classList.remove("second_place");
+			sect.classList.remove("third_place");
+			let val = Number(sect.innerHTML);
+			if (val == first){ sect.classList.add("first_place"); }
+			else if (val == second){ sect.classList.add("second_place"); }
+			else if (val == third){ sect.classList.add("third_place"); }
+		}
+	}
+
+	function calculateTeamNewScore(teamCode, questionValue, isCorrect=false)
+	{
+		// Get team score from page
+		let team_score_value = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'");
+		let team_score = Number(team_score_value.innerText);
+
+		// Get team wager from page
+		let team_wager_value = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
+		let team_wager = Number(team_wager_value.innerText);
+
+		// Calculate the points of the question;
+		let points = (IS_FINAL_JEOPARDY) ? team_wager : Number(questionValue);
+
+		// Defaulting new score to the same team score
+		let newScore = team_score; 
+
+		// calculating the new score based on combinations
+		if(IS_FINAL_JEOPARDY && !isCorrect)
+		{
+			newScore -= points;
+		}
+		else if (isCorrect)
+		{
+			newScore += points;
+		}
+
+		// Set the value on the HTML table 
+		team_score_value.innerText = newScore;
+
+		// Update Trello if the score is different;
+		if(team_score != newScore)
+		{
+			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
+		}
+
+	}
+
+/********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
+
+	// check if a current player has been set
+	function isCurrentPlayerSet()
+	{
+		return (CURRENT_TEAM_IDX > -1);
+	}
+
+	function isReservedCode(code)
+	{
+		let reserved = ["DEMO", "TEST"];
+		return reserved.includes(code.toUpperCase());
+	}
+
+	// Validate the headers are shown
+	function isHeadersVisible()
+	{
+		let categories = document.querySelectorAll(".category_title");
+		let totalMissing = 0;
+
+		categories.forEach((obj) => {
+			if( obj.innerText == "" )
+			{
+				totalMissing += 1;
+			}
+		});
+
+		if(totalMissing > 0)
+		{
+			alert("Please show all the headers before beginning")
+		}
+
+		return (totalMissing == 0)
+	}
+	
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
 
@@ -1021,518 +1660,3 @@
 			document.getElementById("rules_list").innerHTML = rulesListItems;
 		}
 	}
-
-/********** HELPER FUNCTIONS -- GETTERS **************************************/
-
-	// Get the table section for "Who Got It Right?"
-	function getWhotGotItRight_Section()
-	{
-
-		let tableHtml = "";
-
-		let setting = SETTINGS_MAPPING["Answering Questions"];
-		let mode = setting.option;
-		
-		// Load the different sections of who got it right
-		let teams = getWhoGotItRight_Teams(mode);
-		let colGroupSection = getWhoGotItRight_ColGroup(mode);
-		let headSection = getWhoGotItRight_Head(mode);
-		let bodySection = getWhoGotItRight_Body(mode, teams);
-
-		tableHtml = colGroupSection + headSection + bodySection;
-
-		return tableHtml;
-
-	}
-
-	// Get the <colgroup> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_ColGroup(mode)
-	{
-		let colGroupSection = undefined;
-
-		switch(mode)
-		{
-			case "1":
-				colGroupSection = `<colgroup>
-										<col style="width:30%"/>
-										<col style="width:40%">
-										<col/>
-									</colgroup>`;
-				break;
-			case "2":
-				colGroupSection = `<colgroup>
-										<col style="width:10%"/>
-									</colgroup>`;
-				break;
-			default:
-				colGroupSection = "";
-		}
-		return colGroupSection;
-	}
-
-	// Get the <head> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_Head(mode)
-	{
-		let headSection = undefined;
-		switch(mode)
-		{
-			case "1":
-				headSection = `<thead>
-									<tr>
-										<th>Team</th>
-										<th>Answer</th>
-										<th>Correct?</th>
-									</tr>
-								</thead>`;
-				break;
-			case "2":
-				headSection = `<thead>
-									<tr>
-										<th>Select Team</th>
-									</tr>
-								</thead>`;
-				break;
-			default:
-				headSection = "";
-		}
-		return headSection;
-	}
-
-	// Get the <body> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_Body(mode, teamsList)
-	{
-
-		let teamSection = "";
-		switch(mode)
-		{
-			case "1":
-				teamSection =  teamsList;
-				break;
-			case "2":
-				// teamSection = `<tr>
-				// 					<td>
-				// 						<select>${teamsList}</select>
-				// 					</td>
-				// 				</th>`;
-				teamSection = teamsList;
-				break;
-			default:
-				teamSection = "";
-		}
-
-		let bodySection = `<tbody id="team_answers_list">${teamSection}</tbody>`;
-
-		return bodySection;
-	}
-
-	// Get the list of teams to populate the section = "Who Got it Right?"
-	function getWhoGotItRight_Teams(mode)
-	{
-
-		var teams = document.querySelectorAll(".team_name");
-
-		var teamListWhoGotItRight = "";
-
-		teams.forEach(function(obj){
-			let teamName = obj.innerHTML;
-			let code = obj.getAttribute("data-jpd-team-code");
-
-			let teamOption = "";
-
-			switch(mode)
-			{
-				case "1":
-					teamOption = getWhotGotItRight_CheckBoxRow(teamName, code);
-					break;
-				case "2":
-					teamOption = getWhotGotItRight_RadioButtonRow(teamName, code);
-					break;
-				default:
-					teamOption = "";
-			}
-			teamListWhoGotItRight += teamOption;
-		});
-
-		return teamListWhoGotItRight;
-	}
-
-	// Get an individual Row+Checkbox for a team;
-	function getWhotGotItRight_CheckBoxRow(teamName, teamCode)
-	{
-		label = `<td><label>${teamName}</label><span>&nbsp;</span></td>`;
-		answer = `<td><p class="team_answer" data-jpd-team-code="${teamCode}"></p></td>`;
-		input = `<td><input type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}"></td>`;
-		return "<tr>" + label + answer + input + "</tr>";
-	}
-
-	// Get an individual Radio button for a team;
-	function getWhotGotItRight_RadioButtonRow(teamName, teamCode)
-	{
-		radioButtonRow = `<p>
-							<input id="radio_${teamCode}" type="radio" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="who_got_it_right"> &nbsp;
-							<label style="cursor:pointer;" for="radio_${teamCode}">${teamName}</label>
-						</p>`;
-		return radioButtonRow;
-	}
-
-	// Get the image and audio used for Daily Double
-	function getDailyDoubleContent()
-	{
-		Logger.log("Getting Daily Double Content");
-		let content = "";
-		content += formatImages("_daily_double_image");
-		content += formatAudio("_daily_double_audio", true);
-		content += "<br/>";
-		return content;
-	}
-
-	//Purpose: Generates 4 random characters to create a team code;
-	function getGameCode()
-	{
-		
-		let game_code = "";
-
-		if(IS_DEMO_RUN || IS_TEST_RUN)
-		{
-			game_code = (IS_TEST_RUN) ? "TEST" : "DEMO";
-		}
-		else
-		{
-			let char1 = getRandomCharacter();
-			let char2 = getRandomCharacter();
-			let char3 = getRandomCharacter();
-			let char4 = getRandomCharacter();
-
-			let chars = char1 + char2 + char3 + char4;
-
-			// Make sure the code is not demo;
-			game_code = ( isReservedCode(chars) ) ? getGameCode() : chars;
-		}
-
-		Logger.log("Game Code = " + game_code);
-
-		return game_code
-	}
-	// Get the game media based on a given value
-	function getGameMediaURL(value)
-	{
-		let url = "";
-		if(GAME_MEDIA.hasOwnProperty(value))
-		{
-			url = GAME_MEDIA[value];
-		}
-		return url;
-	}
-
-	// Get details about a team based on the teams table
-	function getTeamDetails(teamCode)
-	{
-		let teamName = document.querySelector("span.team_name[data-jpd-team-code='"+teamCode+"'"); 
-		let teamScore = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'"); 
-		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); 
-
-		let teamDetails = {
-			"name": teamName?.innerText ?? "", 
-			"score": teamScore?.innerText ?? "", 
-			"wager": teamWager?.innerText ?? ""
-		}
-
-		return teamDetails;
-	}
-
-	// Get the max possible wager users can bet against
-	function getMaxPossibleWager()
-	{
-		let max = 0;
-
-		let team_score_values = document.querySelectorAll("span.team_score");
-		for(var idx = 0; idx < team_score_values.length; idx++)
-		{
-			let val = Number(team_score_values[idx].innerText);
-			if (!isNaN(val) && val > max)
-			{
-				max = val;
-			}
-		}
-
-		return max;
-	}
-
-	// Purpose: Returns a random character from the alphabet; Used to generate team codes
-	// Get a random character in the alphabet
-	function getRandomCharacter()
-	{
-		characters = "abcdefghijklmnopqrstuvwxyz";
-		randChar = Math.floor(Math.random()*characters.length);
-		return characters[randChar].toUpperCase();
-	}
-
-	function getWagers(teamCode, content="0")
-	{
-
-		let max = getMaxPossibleWager();
-		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
-		teamWager.classList.remove("hidden");
-		let wager_value = 0;
-
-		// Get the wager value from the wager field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			response = JSON.parse(data.responseText);
-			response.forEach(function(obj){
-
-				let valueObject = obj["value"];
-				let is_wager_field = obj["idCustomField"] == MyTrello.custom_field_wager;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if(is_wager_field && value != "")
-				{
-					value = value.trim();
-					Logger.log("User wager: " + value);
-					let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
-					Logger.log("Evaluated wager:" + wagerValue);
-					wagerValue = (wagerValue > max) ? max : wagerValue;
-					Logger.log("Final Wager Value: " + wagerValue);
-					teamWager.innerText = wagerValue;
-				}
-			});
-		});
-	}
-
-
-/********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
-
-	// check if a current player has been set
-	function isCurrentPlayerSet()
-	{
-		return (CURRENT_TEAM_IDX > -1);
-	}
-
-	function isReservedCode(code)
-	{
-		let reserved = ["DEMO", "TEST"];
-		return reserved.includes(code.toUpperCase());
-	}
-
-/********** HELPER FUNCTIONS -- SETTERS, UPDATERS, and RESETERS **************************************/
-
-	// Reset the answer
-	function resetAnswers()
-	{
-		Logger.log("Clearing Answers in 5 seconds!");
-		setTimeout(function(){
-			let teams = Array.from(document.querySelectorAll(".team_name"));
-			teams.forEach(function(obj){
-				card_id = obj.getAttribute("data-jpd-team-code");
-				MyTrello.update_card(card_id, "");
-			});
-		}, 5000)
-		
-	}
-	// Set the first player
-	function setFirstPlayer()
-	{
-		var setting = SETTINGS_MAPPING["Who Goes First?"];
-		
-		if(setting.option == "1")
-		{
-			setCurrentPlayerRandomly();
-		}
-		else if (setting.option == "2")
-		{
-			alert("Please select a team that goest first");
-		}
-		
-	}
-
-	// Take in a team name and set that team to current player
-	function setCurrentPlayerByName(teamName)
-	{
-		let idx = TEAMS_ADDED.indexOf(teamName);
-		setCurrentPlayer(idx);
-
-		// Hide the buttons to set team directly
-		hideSetTeamButton();
-	
-	}
-
-	// Randomly set the first player
-	function setCurrentPlayerRandomly()
-	{
-		let numTeams  = TEAMS_ADDED.length;
-		if(numTeams > 0)
-		{
-			let idx = Math.floor(Math.random() * numTeams);
-			setCurrentPlayer(idx); // Set that index as the current player
-		}
-
-		// Hide the buttons to set team directly
-		hideSetTeamButton();
-	}
-
-	// Hide button to set team by name
-	function hideSetTeamButton()
-	{
-		// hide any direct buttons if visible
-		var buttons = document.querySelectorAll(".setTeamDirectly");
-		if(buttons.length > 0)
-		{
-			buttons.forEach(function(button){
-				button.classList.add("hidden");
-			});
-		}
-	}
-
-	// Set the current player based on index
-	function setCurrentPlayer(idx=-1)
-	{
-		let numTeams  = TEAMS_ADDED.length;
-
-		let new_index = (idx > numTeams) ? 0 : idx;
-
-		if(new_index != -1)
-		{
-			mydoc.showContent("#current_turn_section");
-			
-			nextTeam = TEAMS_ADDED[new_index];
-			
-			Logger.log(`Setting Next Team = ${nextTeam}`);
-			document.getElementById("current_turn").innerText = nextTeam;
-			
-			// Update the index for use in any other call back to this function
-			CURRENT_TEAM_IDX = new_index;
-		}
-	}
-
-	// Sort the list of teams to determine the leader
-	function updateLeader()
-	{
-
-		table_body = document.getElementById("teams_block");
-
-		current_teams = Array.from(document.getElementsByClassName("team_row"));
-		sorted_teams = current_teams.sort(function(a,b){
-							a_score = a.getElementsByClassName("team_score")[0].innerText;
-							b_score = b.getElementsByClassName("team_score")[0].innerText;
-							return b_score - a_score;
-						});
-
-		sorted_teams_html = "";
-		table_body.innerHTML = "";
-
-		//  Update the table with the correct order
-		sorted_teams.forEach(function(row){ 
-			table_body.innerHTML += row.outerHTML;
-		});
-
-		updateLeaderColors()
-	}
-
-	// Update the colors associated with the leaders
-	function updateLeaderColors()
-	{
-		var team_scores = document.querySelectorAll("span.team_score");
-		var scores = [];
-		for (var i = 0; i < team_scores.length; i++)
-		{
-			let sect = team_scores[i];
-			let score = Number(sect.innerHTML);
-			if (!scores.includes(score))
-			{
-				scores.push(score);
-			}
-		}
-		// Sort the scores
-		scores = scores.sort(function(a,b){return b-a; });
-		let length = scores.length;
-
-		// Set the first, second, and third values; 
-		let first = scores[0];
-		let second = (scores.length > 1) ? scores[1] : -1;
-		let third = (scores.length > 2 ) ? scores[2] : -1;
-
-		for (var i = 0; i < team_scores.length; i++)
-		{
-			let sect = team_scores[i];
-			sect.classList.remove("first_place");
-			sect.classList.remove("second_place");
-			sect.classList.remove("third_place");
-			let val = Number(sect.innerHTML);
-			if (val == first){ sect.classList.add("first_place"); }
-			else if (val == second){ sect.classList.add("second_place"); }
-			else if (val == third){ sect.classList.add("third_place"); }
-		}
-	}
-
-	// Update the score for all teams that got the question correct
-	function updateScore()
-	{
-		var question_value = document.getElementById("value_block").innerText; // Get the value of the question
-
-		let setting = SETTINGS_MAPPING["Selecting Questions"];
-		let mode = setting.option;
-
-		// Get the team inputs for Who Got It Right?
-		var teamInputs = document.querySelectorAll(".who_got_it_right");
-
-		if(teamInputs != undefined)
-		{
-			Logger.log("ERROR! Could not load the team inputs");
-		}
-
-		// Loop through all options
-		teamInputs.forEach( (obj) => {
-
-			let teamCode = obj.getAttribute("data-jpd-team-code");
-
-			// If version where single person gets it right; 
-			if(mode == "2" && obj.checked)
-			{
-				LAST_TEAM_CORRECT = teamCode; //Set the team that got it correct, since they go again;
-
-			}
-
-			// Calculae/set the score based on teamCode and if object is checked
-			calculateTeamNewScore(teamCode, question_value, obj.checked);
-		});
-		
-		// Update the leader board
-		updateLeader();
-	}
-
-	function calculateTeamNewScore(teamCode, questionValue, isCorrect)
-	{
-		// Get team score from page
-		let team_score_value = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'");
-		let team_score = Number(team_score_value.innerText);
-
-		// Get team wager from page
-		let team_wager_value = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
-		let team_wager = Number(team_wager_value.innerText);
-
-		// Calculate the points of the question;
-		let points = (IS_FINAL_JEOPARDY) ? team_wager : Number(questionValue);
-
-		// Defaulting new score to the same team score
-		let newScore = team_score; 
-
-		// calculating the new score based on combinations
-		if(IS_FINAL_JEOPARDY && !isCorrect)
-		{
-			newScore -= points;
-		}
-		else if (isCorrect)
-		{
-			newScore += points;
-		}
-
-		// Set the value on the HTML table 
-		team_score_value.innerText = newScore;
-
-		// Update Trello if the score is different;
-		if(team_score != newScore)
-		{
-			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
-		}
-
-	}
-
