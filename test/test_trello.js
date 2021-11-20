@@ -148,16 +148,9 @@ function process_old_data()
 					quest_split = line.split(" ~ ");
 					questions += quest_split[1] + "\n";
 					answers += quest_split[2] + "\n";
-					// arr = [curr_category, quest_split[0], "No", quest_split[1], "", "", "", quest_split[1], "", "", ""]
-					// arr_str = arr.join(",");
-					// output += arr_str + "\n";
 				}
 			}
-			// console.log(questions);
 			console.log(answers);
-
-			// document.getElementById("test_results2").innerText = output; 
-
 		},
 		failure: function(data){ console.log(data); }
 	});
