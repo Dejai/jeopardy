@@ -16,7 +16,8 @@
 	// Storing details about the questions and game stage
 	var QA_MAP = {};   //The Question-Answer map;
 	var IS_FINAL_JEOPARDY = false;
-	var CURRENT_QUESTION_KEY = undefined;
+	// var CURRENT_QUESTION_KEY = undefined;
+	var ASKED_QUESTIONS = [];
 
 	// Storing the current players
 	var TEAMS_ADDED = [];
@@ -408,7 +409,10 @@
 	// Openning a question 
 	function onOpenQuestion(cell)
 	{
+		// Rest timer and button to assign scores;
 		Timer.resetTimer();
+		document.getElementById("assignScoresButton").disabled = true; 
+
 
 		// Get the question key from the clicked cell
 		let key = cell.getAttribute("data-jpd-quest-key");
@@ -418,7 +422,8 @@
 		if(!proceed){ return; }
 
 		// Set the current question key to the key of the opened question
-		CURRENT_QUESTION_KEY = key;
+		// CURRENT_QUESTION_KEY = key;
+		ASKED_QUESTIONS.push(key);
 
 		Logger.log("Loading Question");
 		Logger.log(cell);
@@ -464,15 +469,19 @@
 
 	}
 
-	//Close the current question; Calls to reset timer, update turn, and clear answers
+	//Close the current question; Resets teh timer;
 	function onCloseQuestion()
 	{
-		window.scrollTo(0,0); // Scroll back to the top of the page;
-		document.getElementById("answer_block").classList.add("hidden");
-		document.getElementById("correct_block").classList.add("hidden");
-		document.getElementById("question_view").classList.add("hidden");
-		document.getElementById("assignScoresButton").disabled = true; // set assign score back to disabled;
-		Timer.resetTimer(); // make sure the timer is reset to default.
+		let confirmMsg = "Looks like you have a team selected. Are you sure you want to close this question without assigning points?";
+		let proceedClose = (hasAssignablePoints()) ? confirm(confirmMsg) : 	true;
+		if(proceedClose)
+		{
+			window.scrollTo(0,0); // Scroll back to the top of the page;
+			document.getElementById("answer_block").classList.add("hidden");
+			document.getElementById("correct_block").classList.add("hidden");
+			document.getElementById("question_view").classList.add("hidden");
+			Timer.resetTimer(); // make sure the timer is reset to default.
+		}
 	}
 
 	// End the game and archive the list
@@ -693,15 +702,19 @@
 	// Helper if nobody got it right
 	function onNobodyCorrect()
 	{
-		onAssignScore(false); // pass in false for update score
+		onAssignPoints(false); // pass in false for update score
 	}
 
 	// Assigns the scores and then closes the question
-	function onAssignScore(updateScore=true)
+	function onAssignPoints(updateScore=true)
 	{
 		// First update the score
-		if(updateScore){ 
+		if(updateScore)
+		{ 
 			onUpdateScore(); 
+
+			// set assign score back to disabled;
+			document.getElementById("assignScoresButton").disabled = true; 
 		}
 
 		// Then, close the question popup
@@ -1516,7 +1529,8 @@
 	{
 		let canOpen = true; 
 
-		if(CURRENT_QUESTION_KEY === key)
+		if(ASKED_QUESTIONS.includes(key))
+		// if(CURRENT_QUESTION_KEY === key)
 		{
 			canOpen = confirm("This question has already been presented. Re-open?") == 1;
 		}
@@ -1547,6 +1561,12 @@
 		canOpen = allHeadersVisible && isSafeToOpen && firstTeamSet;
 
 		return canOpen; 
+	}
+
+	function hasAssignablePoints()
+	{
+		let assignScoresButton = document.querySelector("#assignScoresButton");
+		return (assignScoresButton.disabled == false)
 	}
 	
 
