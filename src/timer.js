@@ -125,6 +125,11 @@ const Timer = {
 		this.setTimerSeconds(this.timer_default);
 	},
 
+	getTimerDefault: function()
+	{
+		return this.timer_default;
+	},
+
 	timeUpCallback: function(){
 		console.log("Time is up");
 	},

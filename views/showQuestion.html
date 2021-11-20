@@ -8,19 +8,20 @@
 		</span>
 	</span>
 	<div id="question_block"></div>
-	<h2>Value = <span id="value_block"></span></h2>
-	<button id="revealAnswerButton" onclick="onRevealAnswer();">Reveal Answer</button><br/><br/>
-	<div id="answer_block" class="hidden"></div>
+	<h2 id="value_header">Value = <span id="value_block"></span></h2>
+	<p id="reveal_answer_block">
+		<button id="revealAnswerButton" onclick="onRevealAnswer();">Reveal Answer</button>
+	</p>
+	<div id="answer_block"></div>
 
 	<div id="correct_block" class="hidden">
-		
 		<div>
 			<h2>Who Got It Right?</h2>
 			<p class=" how_to_play_section hidden instruction center_section_50">
 				This section shows the list of teams &amp; their answers. <br/>
 				Select who got it right, and when you close the popup, the points will be applied to their score.
 			</p>
-			<table>
+			<table id="who_got_it_right_table">
 				<thead>
 					<tr>
 						<th>Team</th>
@@ -33,8 +34,12 @@
 					<col style="width:40%">
 					<col/>
 				</colgroup>
-				<tbody id="team_list"></tbody>
+				<tbody id="team_answers_list"></tbody>
 			</table>
+			<div id="assign_scores_block">
+				<button id="assignScoresButton" class="pointer" onclick="onAssignScore()" disabled>Assign Points</button>
+				<p class="pointer" onclick="onNobodyCorrect()">Nobody got it correct.</p>
+			</div>
 		</div>	
 	</div>		
 </div>
