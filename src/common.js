@@ -133,12 +133,12 @@ const mydoc = {
 	},
 
 	addClass: function(selector, className){
-		this._toggleClass(selector, "add", className);
+		mydoc._toggleClass(selector, "add", className);
 	},
 
 	removeClass: function(selector, className){
 		console.log(selector + " " + className);
-		this._toggleClass(selector, "remove", className);
+		mydoc._toggleClass(selector, "remove", className);
 	},
 
 	isValidValue : function(value)

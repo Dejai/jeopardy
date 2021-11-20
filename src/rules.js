@@ -72,20 +72,16 @@ const Rules =
 			"id": 1,
 			"label": "15 Seconds to Answer.",
 			"type": "number",
-			"rule":"You've got 15 seconds to answer the question!",
-			"subRules":["That's how long you get to deliberate for each question.",
-						"Time starts after the question is read"
-						],
+			"rule":"Each play gets15 seconds to answer the question!",
+			"subRules":["Time starts after the question is read"],
 			"suggestion": ""
 		},
 		{
 			"id": 2,
 			"label": "${VALUE} seconds to Answer.",
 			"type": "custom number",
-			"rule":"You've got ${VALUE} seconds to answer the question!",
-			"subRules":["That's how long you get to deliberate for each question.",
-						"Time starts after the question is read"
-						],
+			"rule":"Each play gets ${VALUE} seconds to answer the question!",
+			"subRules":["Time starts after the question is read"],
 			"suggestion": ""
 		},
 
@@ -96,7 +92,7 @@ const Rules =
 			"id": 1,
 			"label": "Classic",
 			"type": "select",
-			"rule": "You can only wager as many points as you have at the beginning of Final Jeopardy!",
+			"rule": "A player can only wager as many points as they have, when the final round begins",
 			"subRules": [],
 			"suggestion" : ""
 		},
@@ -105,9 +101,9 @@ const Rules =
 			"label": "Max Wager is Highest Score",
 			"type": "select",
 			"rule":"For FINAL JEOPARDY, you can wager as much as the HIGHEST OVERALL SCORE!",
-			"subRules":["The max amount that you can wager is based on the highest overall score!",
+			"subRules":["The max amount that a player can wager is based on the highest overall score!",
 						"So, you could come from behind &amp; beat the team in the lead &#128578;",
-						"Or, you could lose it all and end up with negative points. &#128579;"
+						"Or, you could lose it all and possibly end up with negative points. &#128579;"
 						],
 			"suggestion" : ""
 		}

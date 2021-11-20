@@ -10,9 +10,7 @@ var CURR_GAME_PASSWORD = "";
 var CURR_GAME_RULES =  undefined;
 var USE_DEFAULT_RULES = true;
 
-/*********************************************************************************
-	HOST: ON PAGE LOAD
-**********************************************************************************/ 
+/****************  HOST: ON PAGE LOAD ****************************/ 
 	
 	mydoc.ready(function(){
 
@@ -100,9 +98,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 
-/*********************************************************************************
-	HOST: LOAD GAME (to either PLAY or EDIT)
-**********************************************************************************/ 
+/*********** HOST: LOAD GAME (to either PLAY or EDIT) *************************/ 
 
 	// Get the selected game and entered pass phrase
 	function getGameAndPassPhrase()
@@ -158,7 +154,6 @@ var USE_DEFAULT_RULES = true;
 		}
 	}
 
-
 	// Validate the password
 	function validate_password(game_id, password, callback)
 	{
@@ -192,56 +187,264 @@ var USE_DEFAULT_RULES = true;
 		});
 	}
 
-/*********************************************************************************
-	HOST: EDITING EXISTING GAME
-**********************************************************************************/ 
-
-	// Delete the media
-	function delete_media(mediaID)
+	// Load the game settings
+	function loadGameSettings(settingsJSON=undefined)
 	{
-		remove_existing_media_from_page(mediaID);
+		let table_body = document.getElementById("settings_table_body")
 
-		MyTrello.delete_attachment(CURR_GAME_ID, mediaID, function(data){
+		table_body.innerHTML = get_formatted_rules(settingsJSON);
+
+		onShowRuleDetails(); // Ensure values are displayed;
+	}
+
+	// Create the new game;
+	function create_game(game_name, pass_phrase)
+	{
+		MyTrello.create_game_card(MyTrello.admin_list_id, game_name, function(data)
+		{
 			response = JSON.parse(data.responseText);
+			game_id = response["id"];
+
+			// Add the pass to the custom field
+			MyTrello.update_card_custom_field(game_id,MyTrello.custom_field_phrase,pass_phrase)
+
+
+			setTimeout(function(){
+				load_url = "http://" + location.host + location.pathname.replace("create", "edit") + "?gameid=" + game_id;
+				location.replace(load_url);
+			}, 2000);
 		});
 	}
 
-	// Format the game settings for 
-	function formatSetting(settingObj)
+	function add_media()
 	{
-		let name = settingObj["name"];
-		let type = Settings.GetSettingType(name);
-		let builtin = settingObj["builtin"];
-		let options = settingObj["options"];
+		var files = document.getElementById("game_files").files;
 
-		let disabledFlag = (builtin) ? "disabled" : "";
-
-		// The elements
-		let inputElement = "";
-
-		if(type == "select")
+		for(var idx = 0; idx < files.length; idx++)
 		{
-			let optionElements = ""
-			options.forEach(function(value){
-				optionElements += `<option value="${value}">${value}</option>`
-			});	
-			inputElement = `<select id="${name}" ${disabledFlag}>
-								${optionElements}
-							</select>`
-		}
-		else if (type == "number")
-		{
-			inputElement = `<input id="${name}" type="number" name="" ${disabledFlag}>`;
-		}
+			var fileData = new FormData();
 
-		let row = `<tr>
-						<th>${name}</th>
-						<td>${inputElement}</td>
-					</tr>`;
+			fileData.append("key", MyTrello.key);
+			fileData.append("token", MyTrello.token);
+			fileData.append("file", files[idx]);
+			fileData.append("name", files[idx].name);
+			fileData.append("setCover", false);
 
-		return row;
+			MyTrello.create_attachment(CURR_GAME_ID, fileData, function(data){
+
+				response = JSON.parse(data.responseText);
+
+				file_name = response["fileName"];
+				file_url  = response["url"];
+				file_id   = response["id"];
+
+				add_existing_media_to_page(file_id, file_name, file_url);
+			});
+		}		
 	}
 
+/************* HOST: EVENT LISTENERS ************************************/ 
+
+
+	// Listener for when the user changes an option on the settings section
+	function onRuleOptionChange(event)
+	{
+		let sourceEle = event.srcElement;	
+		onToggleRuleOptionDetails(sourceEle);
+	}
+
+	// Toggle visibility of sections related to selected rule option
+	function onToggleRuleOptionDetails(sourceEle)
+	{
+		// Get the selected option of the element
+		let selectedOption = sourceEle.querySelector("option:checked");
+
+		// Get key values from the selected option;
+		let attr_Description = selectedOption.getAttribute("data-jpd-description");
+		let attr_Suggestion = selectedOption.getAttribute("data-jpd-suggestion");
+		let attr_Type = selectedOption.getAttribute("data-jpd-type");
+		let attr_CustomValue = selectedOption.getAttribute("data-jpd-custom-value");
+
+		// Show the rule description
+		let ruleDescParagraph = get_sibling(sourceEle, "rule_description");
+		if(ruleDescParagraph != undefined)
+		{
+			ruleDescParagraph.innerText = attr_Description;
+		}
+
+		// Check if suggestion is included;
+		let suggestionParagraph = get_sibling(sourceEle, "rule_suggestion");
+		let hasSuggestion = attr_Suggestion?.length > 0 ?? false;
+		if(hasSuggestion)
+		{
+			suggestionParagraph.classList.remove("hidden");
+			suggestionParagraph.innerText = "Suggestion: " + attr_Suggestion;
+		}
+		else
+		{
+			suggestionParagraph.classList.add("hidden");
+			suggestionParagraph.innerText = attr_Suggestion;
+		}
+
+		// Next, check if custom value can be input
+		let customInput = get_sibling(sourceEle, "rule_custom");
+		let allowsCustom = attr_Type?.includes("custom") ?? false;
+		if(allowsCustom)
+		{
+			customInput.classList.remove("hidden");
+			customInput.value = attr_CustomValue ?? "";
+		}
+		else
+		{
+			customInput.classList.add("hidden");
+			customInput.value = "";
+		}
+	}
+
+	// Show all the rule details on load
+	function onShowRuleDetails()
+	{
+		let selects = document.querySelectorAll(".ruleOption");
+
+		// Loops through all options and shows details
+		selects.forEach((obj) =>{
+			onToggleRuleOptionDetails(obj);
+		});
+	}
+
+	// Handler for saving the game components
+	function onSaveGame()
+	{
+		// Save the different components
+		onSaveGameComponent("GameName");
+		onSaveGameComponent("PassPhrase");
+		onSaveGameComponent("PublishedSheetURL");
+		onSaveGameComponent("EditSheetURL");
+		onSaveGameComponent("GameSettings");
+	}
+
+	// function New way to save game component
+	function onSaveGameComponent(componentName)
+	{
+		let identifier = undefined;
+		let saved_value = undefined;
+		let updateFunc = undefined;
+		let expectedParams = 2;
+		let parameters = [CURR_GAME_ID];
+
+		let isUpdate = false; // by default, nothing to update;
+		let timeout = 1000; //default timeout of 1 second;
+
+		switch(componentName)
+		{
+			case "GameName":
+				identifier = "game_name_value";
+				saved_value = CURR_GAME_NAME;
+				updateFunc = MyTrello.update_card_name
+				checkValue = checkIfNewValue(identifier, saved_value);
+				isUpdate = checkValue.isNewValue;
+				parameters.push(checkValue.value);
+				CURR_GAME_NAME = checkValue.value;
+				break;
+			case "PassPhrase":
+				identifier = "game_pass_phrase";
+				saved_value = CURR_GAME_PASSWORD;
+				updateFunc = MyTrello.update_card_custom_field;
+				expectedParams = 3;
+				parameters.push(MyTrello.custom_field_phrase);
+				checkValue = checkIfNewValue(identifier, saved_value);
+				isUpdate = checkValue.isNewValue;
+				parameters.push(checkValue.value);
+				CURR_GAME_PASSWORD = checkValue.value;
+				break;
+			case "PublishedSheetURL":
+				identifier = "game_url_value";
+				saved_value = CURR_PUB_SHEET_URL;
+				updateFunc = MyTrello.update_card_custom_field;
+				expectedParams = 3;
+				parameters.push(MyTrello.custom_field_pub_url);
+				checkValue = checkIfNewValue(identifier, saved_value);
+				isUpdate = checkValue.isNewValue;
+				parameters.push(checkValue.value);
+				CURR_PUB_SHEET_URL = checkValue.value;
+				break;
+			case "EditSheetURL":
+				identifier = "game_edit_sheet_value";
+				saved_value = CURR_EDIT_SHEET_URL;
+				updateFunc = MyTrello.update_card_custom_field;
+				expectedParams = 3;
+				parameters.push(MyTrello.custom_field_edit_url);
+				checkValue = checkIfNewValue(identifier, saved_value);
+				isUpdate = checkValue.isNewValue;
+				parameters.push(checkValue.value);
+				CURR_EDIT_SHEET_URL = checkValue.value;
+				break;
+			case "GameSettings":
+				identifier = "settings_identifier";
+				updateFunc = MyTrello.update_card_description
+				isUpdate = true; // Always update settings;
+				savedRules = get_saved_rules();
+				savedRulesJSON = JSON.stringify(savedRules);
+				parameters.push(savedRulesJSON);
+				break;
+			default:
+				console.log("Could not set values");
+		}
+
+		// First, start the load of the toggler 
+		onToggleSaveComponentState(identifier, true);
+
+		// Then check if updates should be made; 
+		if(isUpdate && (parameters.length == expectedParams) )
+		{
+			timeout = 3000; // make the timeout longer; 
+			console.log("Time to make an update");
+			updateFunc(...parameters);
+		}
+
+		// Finally, end the save mode
+		setTimeout(()=>{
+			onToggleSaveComponentState(identifier);
+		}, timeout);
+	}	
+
+	// Toggle the state of each component being saved;
+	function onToggleSaveComponentState(identifier, isSaving=false)
+	{
+
+		// Get the related element and parent;
+		let element = document.querySelector(`#${identifier}`);
+		let parent = element?.parentElement;
+
+		if(parent != undefined)
+		{
+			let saving_gif = parent.querySelector('.component_saving_gif');
+			let save_button = parent.querySelector(".save_component_button");
+
+			if(isSaving)
+			{
+				save_button.innerText = "Saving ...";
+				save_button.disabled = true;
+				save_button.style.backgroundColor = "blue";
+				saving_gif.classList.remove("hidden");
+			}
+			else
+			{
+				save_button.innerText = "Saved!";
+				save_button.style.backgroundColor = "orange";
+				saving_gif.classList.add("hidden");
+
+				// Reset to basics;
+				setTimeout(() => {
+					save_button.disabled = false;
+					save_button.innerText = "Save";
+					save_button.style.backgroundColor = "limegreen";
+				},2000);
+			}
+		}
+	}
+	
+/************* HOST: GETTERS ************************************/ 
 
 	// Loads existing team if card ID was already included or found
 	function get_existing_game(card_id)
@@ -387,7 +590,6 @@ var USE_DEFAULT_RULES = true;
 		});
 	}
 
-	//
 	// Get the rules formatted to display on the page
 	function get_formatted_rules(savedSettings)
 	{
@@ -410,7 +612,6 @@ var USE_DEFAULT_RULES = true;
 					setting = savedSetting
 				}
 			});
-
 			// Loop through all the options
 			options.forEach(function(option){
 
@@ -418,14 +619,20 @@ var USE_DEFAULT_RULES = true;
 				let label = option["label"];
 				let rule = option["rule"];
 				let type = option["type"];
+				let suggestion = option["suggestion"];
+				
 
 				let selectedAttribute = (setting != undefined && (setting["option"] == ruleID) ) ? "selected" : "";
 				let customValue = setting["value"] ?? "";
 
-				optionElements += `<option value="${ruleID}" data-rule="${rule}" data-type="${type}" data-custom-value="${customValue}" ${selectedAttribute}>${label}</option>`
+				optionElements += `<option value="${ruleID}" data-jpd-description="${rule}" data-jpd-type="${type}" data-jpd-custom-value="${customValue}" data-jpd-suggestion="${suggestion}" ${selectedAttribute}>
+										${label}
+									</option>`;
 			});	
 
-			inputElement = `<select id="${ruleInputID}" data-rule-name="${rule}" class="ruleOption" onChange="onRuleOptionChange(event)">
+			// let showSuggestion = (suggestion.length > 0) ? "" : "hidden";
+
+			inputElement = `<select id="${ruleInputID}" data-jpd-rule-name="${rule}" class="ruleOption" onChange="onRuleOptionChange(event)">
 								${optionElements}
 							</select>`
 
@@ -434,219 +641,75 @@ var USE_DEFAULT_RULES = true;
 							<th>${rule}</th>
 							<td>
 								${inputElement}
-								<p class="hidden">
-									<input type="text" placeholder="Enter custom \${VALUE} name="customValue"/>
-								</p>
-							</td>
-							<td>
-								<input type="text" placeholder="Enter custom \${VALUE} name="customValue" class="hidden"/>
+								<div class="rule_details_div">
+									<p class="rule_detail rule_description"></p>
+									<p class="rule_detail rule_suggestion hidden"></p>
+									<input class="rule_custom hidden" type="text" placeholder="Enter custom \${VALUE} name="customValue" />
+								</div>
 							</td>
 						</tr>`;
-
+					// 	<td>
+					// 	<input type="text" placeholder="Enter custom \${VALUE} name="customValue" class="hidden"/>
+					// </td>
 			rulesFormatted += row;
 		});
 
 		return rulesFormatted;
 	}
 
-	// Ensures the custom values are set/visible after loading rules
-	function get_formatted_rules_customValue()
+	// Get a related child section 
+	function get_sibling(sourceEle, siblingClassName)
 	{
-		let selects = document.querySelectorAll(".ruleOption");
+		let parent = sourceEle.parentElement;
+		let sibling = parent.querySelector(`.${siblingClassName}`);
+		return sibling;
+	}
 
-		selects.forEach(function(select){
+	// Get the saved rules as set on the page
+	function get_saved_rules()
+	{
+		// Get all rule elements
+		let ruleOptions = document.querySelectorAll(".ruleOption");
 
-			let selectedOption = get_selected_optionObject(select);
+		// Place to store the saved rules
+		let savedRules = [];
 
-			if(selectedOption.isCustom)
+		ruleOptions.forEach(function(input){
+
+			let ruleName = input.getAttribute("data-jpd-rule-name");
+			let ruleOptionValue = input.value;
+			let selectedOption = input.querySelector("option:checked");
+
+			let ruleObj = {"name": `${ruleName}`, "option": ruleOptionValue};
+
+			let isCustom = selectedOption.getAttribute("data-jpd-type")?.includes("custom") ?? false;
+
+			if(isCustom)
 			{
-				let hiddenInput = get_hidden_input(select);
-				hiddenInput.value = selectedOption.customValue;
-				hiddenInput.classList.remove('hidden');
+				let customInput = get_sibling(input, "rule_custom");
+				ruleObj["value"] = customInput.value;
 			}
+			savedRules.push(ruleObj);
+		});
+
+		return savedRules;
+	}
+
+/************* HOST: SETTERS / DELETERS ************************************/ 
+
+	// Delete the media
+	function delete_media(mediaID)
+	{
+		remove_existing_media_from_page(mediaID);
+
+		MyTrello.delete_attachment(CURR_GAME_ID, mediaID, function(data){
+			response = JSON.parse(data.responseText);
 		});
 	}
 
-	// Get the hidden input reserved for custom values.
-	function get_hidden_input(selectEle)
-	{
-		let sibling = selectEle.nextElementSibling;
-		let parent = selectEle.parentElement; // this would be the <td>
-		let parentSibling = parent.nextElementSibling; // this would be the last <td> (with the hidden input);
-		let hiddenInput = parentSibling.firstElementChild; // the hidden input;
-
-		return hiddenInput;
-	}
-
-	// Get the selected game <option> element; Returns an object with the element and whether it allows for custom
-	function get_selected_optionObject(selectEle)
-	{
-		let selectedOption = selectEle.querySelector("option:checked");
-
-		let type = selectedOption.getAttribute("data-type");
-		let attest = type.includes("custom");
-	
-		let customValue = selectedOption.getAttribute("data-custom-value");
-
-		let optionObject = { 
-								"element": selectedOption, 
-								"isCustom": attest,
-								"customValue": customValue
-							};
-
-		return optionObject;
-	}
-
-	// Load the game settings
-	function loadGameSettings(settingsJSON=undefined)
-	{
-		console.log(settingsJSON);
-
-		let table_body = document.getElementById("settings_table_body")
-
-		table_body.innerHTML = get_formatted_rules(settingsJSON);
-
-		// Ensure custom values are visible as well.
-		get_formatted_rules_customValue()
-	}
-
-	// Listener for when the user changes an option on the settings section
-	function onRuleOptionChange(event)
-	{
-		let sourceEle = event.srcElement;
-		// let sibling = sourceEle.nextElementSibling;
-		// let parent = sourceEle.parentElement; // this would be the <td>
-		// let parentSibling = parent.nextElementSibling; // this would be the last <td> (with the hidden input);
-		let hiddenInput = get_hidden_input(sourceEle);
-		//  parentSibling.firstElementChild; // the hidden input;
-
-		// Check if selected option is custom
-		let isCustom = selectedOptionHasCustomValue(sourceEle);
-
-		if(isCustom)
-		{
-			hiddenInput.classList.remove("hidden");
-		}
-		else
-		{
-			hiddenInput.classList.add("hidden");
-		}
-	}
 
 
-	// Handler for saving the game components
-	function save_game()
-	{
-		// Disable the save button
-		let save_button = document.getElementById("save_game_button");
-		save_button.disabled = true;
-
-		// Show the loading GIF
-		toggle_saving_gif();
-
-		// Save the different components
-		save_game_component("GameName", CURR_GAME_NAME, "game_name_value");
-		save_game_component("PassPhrase", CURR_GAME_PASSWORD, "game_pass_phrase");
-		save_game_component("PublishedSheetURL", CURR_PUB_SHEET_URL, "game_url_value");
-		save_game_component("EditSheetURL", CURR_EDIT_SHEET_URL, "game_edit_sheet_value");
-		save_game_component("GameSettings", "", "settings_identifier");
-
-		setTimeout(function(){
-			save_button.disabled = false;
-			toggle_saving_gif(true);
-		}, 2000);
-	}
-
-	// Save an individual game component, based on passed in values
-	function save_game_component(componentName, currValue, fieldID)
-	{
-
-		let element = document.getElementById(fieldID);
-		let isDiffValue = (element != undefined && element.value != undefined && (currValue != element.value));
-
-		if(isDiffValue)
-		{
-			let new_value = element.value.trim();
-
-			switch(componentName)
-			{
-				case "GameName":
-					MyTrello.update_card_name(CURR_GAME_ID, new_value);
-					CURR_GAME_NAME = new_value;
-					break;
-				case "PassPhrase":
-					MyTrello.update_card_custom_field(CURR_GAME_ID,MyTrello.custom_field_phrase,new_value);
-					CURR_GAME_PASSWORD = new_value;
-					break;
-				case "PublishedSheetURL":
-					MyTrello.update_card_custom_field(CURR_GAME_ID,MyTrello.custom_field_pub_url,new_value);
-					CURR_PUB_SHEET_URL = new_value;
-					break;
-				case "EditSheetURL":
-					MyTrello.update_card_custom_field(CURR_GAME_ID,MyTrello.custom_field_edit_url,new_value);
-					CURR_EDIT_SHEET_URL = new_value;
-					break;
-				case "GameSettings":
-					saveGameSettings();
-					break;
-				default:
-					Logger.log("Saving Game Component: NO COMPONENT FOUND WITH NAME: " + componentName);
-					break;
-			}
-		}
-	}
-
-
-	function saveGameSettings()
-	{
-		try
-		{
-			// Get all rule elements
-			let ruleOptions = document.querySelectorAll(".ruleOption");
-
-			let savedRules = [];
-
-			ruleOptions.forEach(function(input){
-
-				let ruleName = input.getAttribute("data-rule-name");
-				let ruleOptionValue = input.value;
-
-				let ruleObj = {"name": `${ruleName}`, "option": ruleOptionValue};
-
-				let isCustom = selectedOptionHasCustomValue(input);
-
-				if(isCustom)
-				{
-					let hiddenInput = get_hidden_input(input);
-					ruleObj["value"] = hiddenInput.value;
-				}
-				savedRules.push(ruleObj);
-			});
-
-			let savedRulesJSON = JSON.stringify(savedRules);
-			MyTrello.update_card_description(CURR_GAME_ID, savedRulesJSON);
-
-		}
-		catch(error)
-		{
-			console.log(error);
-		}
-	}
-
-	// Takes in a <select> and checks if the current option has a data-type with custom in the wording
-	function selectedOptionHasCustomValue(sourceEle)
-	{
-		let selectedOption = sourceEle.querySelector("option:checked");
-
-		let type = selectedOption.getAttribute("data-type");
-		let attest = type.includes("custom");
-		return attest;
-	}
-
-
-/*********************************************************************************
-	DOCUMENT OBJECT MODEL
-**********************************************************************************/ 
+/************* DOCUMENT OBJECT MODEL ***********************************/ 
 
 	function add_existing_media_to_page(fileID, fileName, fileURL)
 	{
@@ -709,10 +772,7 @@ var USE_DEFAULT_RULES = true;
 		section.innerHTML = value;
 	}
 
-
-/*********************************************************************************
-	HOST: CREATE GAME
-**********************************************************************************/ 
+/******************** ATTEST ***********************************/ 
 
 	// Validate New Game
 	function validate_new_game()
@@ -766,49 +826,18 @@ var USE_DEFAULT_RULES = true;
 		}	
 	}
 
-	// Create the new game;
-	function create_game(game_name, pass_phrase)
+	// Check if something should be saved/updated
+	function checkIfNewValue(elementID, savedValue)
 	{
-		MyTrello.create_game_card(MyTrello.admin_list_id, game_name, function(data)
+		let element = document.getElementById(elementID);
+		let elementValue = element?.value?.trim() ?? savedValue;
+		let isDifference = (elementValue != savedValue);
+
+		if(!isDifference)
 		{
-			response = JSON.parse(data.responseText);
-			game_id = response["id"];
+			console.log(`${elementID} is up to date!`)
+		}
 
-			// Add the pass to the custom field
-			MyTrello.update_card_custom_field(game_id,MyTrello.custom_field_phrase,pass_phrase)
-
-
-			setTimeout(function(){
-				load_url = "http://" + location.host + location.pathname.replace("create", "edit") + "?gameid=" + game_id;
-				location.replace(load_url);
-			}, 2000);
-		});
+		let newValueObj = {"isNewValue":isDifference, "value": elementValue }
+		return newValueObj;
 	}
-
-	function add_media()
-	{
-		var files = document.getElementById("game_files").files;
-
-		for(var idx = 0; idx < files.length; idx++)
-		{
-			var fileData = new FormData();
-
-			fileData.append("key", MyTrello.key);
-			fileData.append("token", MyTrello.token);
-			fileData.append("file", files[idx]);
-			fileData.append("name", files[idx].name);
-			fileData.append("setCover", false);
-
-			MyTrello.create_attachment(CURR_GAME_ID, fileData, function(data){
-
-				response = JSON.parse(data.responseText);
-
-				file_name = response["fileName"];
-				file_url  = response["url"];
-				file_id   = response["id"];
-
-				add_existing_media_to_page(file_id, file_name, file_url);
-			});
-		}		
-	}
-

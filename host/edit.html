@@ -39,45 +39,57 @@
 	</div>
 	<div id="edit_game_section" class="hidden">
 		<div class="center_section_50 centered">
-			<button id="save_game_button" class="button_mash save_button" onclick="save_game()">
-				SAVE
-			</button>
-			<a id="test_game_button" href="" target="_blank">
-				<button class="button_mash test_button">
-					TEST GAME
-				</button>
-			</a>
 			<a id="play_game_button" href="" target="_blank">
 				<button class="button_mash play_button">
 					PLAY GAME
 				</button>
 			</a>
+			<a id="test_game_button" href="" target="_blank">
+				<button class="button_mash test_button">
+					TEST GAME
+				</button>
+			</a>
+			<button id="save_game_button" class="button_mash save_button" onclick="onSaveGame()">
+				SAVE ALL
+			</button>			
 			<br/>
-			<img id="saving_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden" style="width:50px;height:50px;">
+			<img id="saving_gif" class="hidden" src="../assets/img/loading1.gif" style="width:50px;height:50px;">
 			<span id="saving_results_section"></span>
 		</div>
 		<div class="center_section_50">
 			<div class="edit_game_subsection">
-				<h2>Game Name</h2>
+				<h2>Game Name
+					<button class="save_component_button save_button" onclick="onSaveGameComponent('GameName')">Save</button>
+					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
+				</h2>
 				<p>Enter a name for your game. This is displayed at the top when playing the game.</p>
 				<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value">
 			</div>
 			<div class="edit_game_subsection">	
-				<h2>Pass Phrase</h2>
+				<h2>Pass Phrase
+					<button class="save_component_button save_button" onclick="onSaveGameComponent('PassPhrase')">Save</button>
+					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
+				</h2>
 				<p>
 					This pass phrase is used to access the edit page as well as to play/host the game. 
 				</p>
 				<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password">
 			</div>
 			<div class="edit_game_subsection">
-				<h2>Published Sheet URL</h2>
+				<h2>Published Sheet URL
+					<button class="save_component_button save_button" onclick="onSaveGameComponent('PublishedSheetURL')">Save</button>
+					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
+				</h2>
 				<p>
 					Use the instructions in the <a class="hyperlink" target="_blank" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTwUkX8fG2cwDAI4M6AUx4AulguXYVaP277_tjxTS18trOlaBEes2ocR3UGBm_eRsAWShmI4gse7dk1/pubhtml" title="Game Template">Game Template</a> to setup your Game spreadsheet.<br/>Then, paste the published URL here. 
 				</p>
 				<textarea id="game_url_value" class="edit_game_value" placeholder="Paste the Published URL Here" style="width:100%;" rows="4"/></textarea>
 			</div>
 			<div class="edit_game_subsection">
-				<h2>Edit Sheet URL</h2>
+				<h2>Edit Sheet URL
+					<button class="save_component_button save_button" onclick="onSaveGameComponent('EditSheetURL')">Save</button>
+					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
+				</h2>
 				<p>
 					This is the URL to the actual Google Sheet, so you can quickly edit it. 
 					<a id="go_to_edit_sheet" href="" class="hyperlink" target="_blank"></a> 
@@ -85,20 +97,23 @@
 				<textarea id="game_edit_sheet_value" class="edit_game_value" placeholder="Paste the Edit Sheet URL Here" style="width:100%;" rows="3"/></textarea>
 			</div>
 			<div class="edit_game_subsection">
-				<h2>Game Settings</h2>
+				<h2>Game Settings
+					<button class="save_component_button save_button" onclick="onSaveGameComponent('GameSettings')">Save</button>
+					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
+				</h2>
 				<p>Configure the settings that you want to use for your game.</p>
 				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
 				<table id="settings_table" style="width:100%;">
 					<colgroup>
-						<col style="width:25%;"/>
-						<col style="width:25%;"/>
-						<col style="width:30%;"/>
+						<col style="width:25%; text-align:left;"/>
+						<col style="width:75%; text-align:left;"/>
+						<!-- <col style="width:30%;"/> -->
 					</colgroup>
 					<thead>
 						<tr>
 							<th>Rule Name</th>
 							<th>Options</th>
-							<th>Custom Value <br/>(if applicable)</th>
+							<!-- <th>Custom Value <br/>(if applicable)</th> -->
 						</tr>
 					</thead>
 					<tbody id="settings_table_body"></tbody>

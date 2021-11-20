@@ -1391,11 +1391,6 @@
 		{
 			setCurrentPlayerRandomly();
 		}
-		else if (setting.option == "2")
-		{
-			alert("Please select a team that goest first");
-		}
-		
 	}
 
 	// Take in a team name and set that team to current player
@@ -1508,12 +1503,12 @@
 			}
 		});
 
-		if( (totalMissing > 0) && !IS_TEST_RUN )
+		if( totalMissing > 0 )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (IS_TEST_RUN) ? true : (totalMissing == 0);
+		let headersVisible = (totalMissing == 0);
 		return headersVisible;
 	}
 
@@ -1535,7 +1530,7 @@
 		let firstTeamSet = (CURRENT_TEAM_IDX != -1)
 		if(!firstTeamSet)
 		{
-			alert("Please ensure a team is set to current team");
+			alert("Please select a team that will start (see below);");
 		}
 		return firstTeamSet;
 	}

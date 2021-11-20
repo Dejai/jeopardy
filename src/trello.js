@@ -29,7 +29,7 @@ const MyTrello = {
 
 /*** Helper Functions ***/
 	set_current_game_list: function(listID){
-		this.current_game_list_id = listID;
+		MyTrello.current_game_list_id = listID;
 	},
 
 
@@ -38,36 +38,36 @@ const MyTrello = {
 	// Create attachments on a card
 	create_attachment: function(cardID, fileData, successCallback){
 		// let params = `name=${fileName}&mimeType=${fileType}&file=${fileData}`
-		let trello_path = `${this.endpoint}/cards/${cardID}/attachments`;
-		// ?key=${this.key}&token=${this.token}}&${params}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${cardID}/attachments`;
+		// ?key=${MyTrello.key}&token=${MyTrello.token}}&${params}`;
 		myajax.AJAX({ method:"POST", path:trello_path, data:fileData, success:successCallback, failure:Logger.errorHandler});		
 	},
 
 	// Creates a new Trello Card
 	create_card: function(listID, team_name, successCallback){
 		let params = `name=${team_name}&idList=${listID}&pos=top`;
-		let trello_path = `${this.endpoint}/cards/?key=${this.key}&token=${this.token}&${params}`
+		let trello_path = `${MyTrello.endpoint}/cards/?key=${MyTrello.key}&token=${MyTrello.token}&${params}`
 		myajax.AJAX({ method: "POST", path:trello_path, data:"", success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Creates a new Trello Card
 	create_game_card: function(listID, team_name, successCallback){
 		let params = `name=${team_name}&idList=${listID}&pos=top&idLabels=5fdfd98086c6bc9cc56d4db3`;
-		let trello_path = `${this.endpoint}/cards/?key=${this.key}&token=${this.token}&${params}`
+		let trello_path = `${MyTrello.endpoint}/cards/?key=${MyTrello.key}&token=${MyTrello.token}&${params}`
 		myajax.AJAX({ method: "POST", path:trello_path, data:"", success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Add a comment to a card
 	create_card_comment: function(card_id, comment){
 		let param = `text=${comment}`;
-		let trello_path = `${this.endpoint}/cards/${card_id}/actions/comments?key=${this.key}&token=${this.token}&${param}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/actions/comments?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method: "POST", path:trello_path, data:"", failure:Logger.errorHandler});
 	},
 
 	// Create a new list
 	create_list: function(listName,successCallback){
 		let param = `name=${listName}`
-		let trello_path = `${this.endpoint}/boards/${this.board_id}/lists?key=${this.key}&token=${this.token}&${param}`
+		let trello_path = `${MyTrello.endpoint}/boards/${MyTrello.board_id}/lists?key=${MyTrello.key}&token=${MyTrello.token}&${param}`
 		myajax.AJAX({ method: "POST", path:trello_path, data:"", success: successCallback, failure:Logger.errorHandler});
 	},
 
@@ -78,56 +78,56 @@ const MyTrello = {
 	
 	// Get list of boards;
 	get_boards: function(successCallback){
-		let trello_path = `${this.endpoint}/members/me/boards?key=${this.key}&token=${this.token}`
+		let trello_path = `${MyTrello.endpoint}/members/me/boards?key=${MyTrello.key}&token=${MyTrello.token}`
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Get Custom Fields;
 	get_custom_fields: function(successCallback){
-		let trello_path = `${this.endpoint}//boards/${this.board_id}/customFields?key=${this.key}&token=${this.token}`
+		let trello_path = `${MyTrello.endpoint}//boards/${MyTrello.board_id}/customFields?key=${MyTrello.key}&token=${MyTrello.token}`
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Get a list of Trello Cards
 	get_cards: function(listID, successCallback){
-		let trello_path = `${this.endpoint}/lists/${listID}/cards?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/lists/${listID}/cards?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Gets a single trello card's actions
 	get_card_actions: function(card_id, successCallback){
-						let trello_path = `${this.endpoint}/cards/${card_id}/actions/?key=${this.key}&token=${this.token}`;
+						let trello_path = `${MyTrello.endpoint}/cards/${card_id}/actions/?key=${MyTrello.key}&token=${MyTrello.token}`;
 						myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 					},
 
 	// Gets a single trello card's actions
 	get_card_attachments: function(card_id, successCallback){
-		let trello_path = `${this.endpoint}/cards/${card_id}/attachments/?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/attachments/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 
 	get_card_custom_fields: function(card_id, successCallback){
-		let trello_path = `${this.endpoint}/cards/${card_id}/customFieldItems/?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/customFieldItems/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Get Labels
 	get_labels: function(successCallback){
-		let trello_path = `${this.endpoint}/boards/${this.board_id}/labels?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/boards/${MyTrello.board_id}/labels?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path : trello_path, success: successCallback, failure : Logger.errorHandler});
 	},
 
 	// Gets the set of Trello Lists
 	get_lists: function(successCallback){
 		let param="filter=open";
-		let trello_path = `${this.endpoint}/boards/${this.board_id}/lists?key=${this.key}&token=${this.token}&${param}`;
+		let trello_path = `${MyTrello.endpoint}/boards/${MyTrello.board_id}/lists?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
 	// Gets a single trello cards
 	get_single_card: function(card_id, successCallback, failureCallback=undefined){
-		let trello_path = `${this.endpoint}/cards/${card_id}/?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:failureCallback});
 	},
 
@@ -137,20 +137,20 @@ const MyTrello = {
 	// Update a single card
 	update_card: function(card_id, new_desc){
 		let param = `desc=${new_desc}`;
-		let trello_path = `${this.endpoint}/cards/${card_id}/?key=${this.key}&token=${this.token}&${param}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method: "PUT", path:trello_path, failure:Logger.errorHandler});
 	},
 
 	update_card_description: function(card_id, new_desc){
 		let obj = { "desc": new_desc };
 		var encoded = JSON.stringify(obj);
-		let trello_path = `${this.endpoint}/cards/${card_id}/?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "PUT", path:trello_path, data:encoded, contentType:"JSON", failure:Logger.errorHandler});
 	},
 
 	update_card_name: function(card_id, new_name){
 		let param = `name=${new_name}`;
-		let trello_path = `${this.endpoint}/cards/${card_id}/?key=${this.key}&token=${this.token}&${param}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method: "PUT", path:trello_path, failure:Logger.errorHandler});
 	},
 
@@ -159,14 +159,14 @@ const MyTrello = {
 		var obj = { "value":{ "text":new_value } };
 		// var encoded = encodeURIComponent(obj);
 		var encoded = JSON.stringify(obj);
-		let trello_path = `${this.endpoint}/cards/${card_id}/customField/${field_id}/item/?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/customField/${field_id}/item/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "PUT", path:trello_path, data:encoded, contentType:"JSON", failure:Logger.errorHandler});
 	},
 
 	// Update list to be archived
 	update_list_to_archive: function(list_id, new_name, successCallback){
 		let param = `name=${new_name}&closed=true`;
-		let trello_path = `${this.endpoint}/lists/${list_id}/?key=${this.key}&token=${this.token}&${param}`;
+		let trello_path = `${MyTrello.endpoint}/lists/${list_id}/?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method:"PUT", path:trello_path, success:successCallback, failure:Logger.errorHandler});
 	},
 
@@ -174,7 +174,7 @@ const MyTrello = {
 /*** DELETE Calls ***/
 
 	delete_attachment: function(cardID, attachmentID, successCallback){
-		let trello_path = `${this.endpoint}/cards/${cardID}/attachments/${attachmentID}?key=${this.key}&token=${this.token}`;
+		let trello_path = `${MyTrello.endpoint}/cards/${cardID}/attachments/${attachmentID}?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method:"DELETE", path:trello_path, success:successCallback, failure:Logger.errorHandler});		
 	},
 
