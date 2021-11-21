@@ -215,6 +215,8 @@
 
 				response = JSON.parse(data.responseText);
 
+				console.log(response);
+
 				if(response.length > 0) //Process the attachments, then load the spreadsheet;
 				{
 					Logger.log("Loading attachments from card");
@@ -368,7 +370,7 @@
 		// Set the appropriate list based on DEMO, TEST, or real game
 		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
 		{
-			let list_id = (IS_TEST_RUN) ? MyTrello.test_list_id : MyTrello.demo_list_id;
+			let list_id = (IS_DEMO_RUN) ? MyTrello.demo_list_id :  MyTrello.test_list_id ;
 			CURR_LIST_ID = list_id;
 			Logger.log("Current Game List ID: " + list_id);
 		} 
@@ -1406,6 +1408,7 @@
 		setTimeout(function(){
 			let teams = Array.from(document.querySelectorAll(".team_name"));
 			teams.forEach(function(obj){
+
 				card_id = obj.getAttribute("data-jpd-team-code");
 				MyTrello.update_card(card_id, "");
 			});
