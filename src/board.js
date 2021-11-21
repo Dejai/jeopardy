@@ -29,6 +29,8 @@
 
 	var SETTINGS_MAPPING = {};
 
+	var IS_LIVE_HOST_VIEW = false;
+
 	var IS_TEST_RUN = false;
 	var IS_DEMO_RUN = false;
 
@@ -40,6 +42,10 @@
 
 		// Set the game board listeners
 		game_board_listeners();
+
+		// Check if this is the live host view
+		let path = location.pathname;
+		IS_LIVE_HOST_VIEW = path.includes("host.html");
 
 		// Load the additional views
 		load_views();
@@ -54,6 +60,8 @@
 
 		// Load the game params to determine what should happen next
 		loadGameParams();
+
+
 	});
 
 	function loadGameParams()
@@ -105,13 +113,16 @@
 		});
 	}
 
-	function load_views(){
+	function load_views()
+	{
 		$("#menu_section").load("../views/menu.html");
 		$("#rules_section").load("../views/rules.html");
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
-		$("#show_question_section").load("../views/showQuestion.html", function(data){
+
+		let showQuestionView = (IS_LIVE_HOST_VIEW) ? "showQuestionHost": "showQuestion";
+		$("#show_question_section").load(`../views/${showQuestionView}.html`, function(data){
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
 			close_button.addEventListener("click", onCloseQuestion);
@@ -181,7 +192,7 @@
 
 			// Set the default timer
 			let setting = SETTINGS_MAPPING["Time to Answer Questions"];
-			if(setting.hasOwnProperty("customValue"))
+			if(setting.hasOwnProperty("customValue") && setting["customValue"] != "")
 			{
 				let time = Number(setting["customValue"]);
 				time = isNaN(time) ? Timer.getTimerDefault() : time;
@@ -322,8 +333,10 @@
 	// Handles setting up all the pieces for the game;
 	function initialize_game()
 	{
+
 		// Set Game Name
-		document.getElementById("game_name").innerHTML = GAME_NAME;
+		let gameNameLiveHostView = (IS_LIVE_HOST_VIEW) ? " (Host View) " : ""
+		document.getElementById("game_name").innerHTML = GAME_NAME + gameNameLiveHostView;
 
 		// Creates the game table
 		create_game_board();
@@ -343,25 +356,29 @@
 		addListenerQuestionClick();
 
 		// Set the game code
-		// let game_code = getGameCode();
-		let game_code = (IS_TEST_RUN) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
+		let game_code = (IS_TEST_RUN || IS_LIVE_HOST_VIEW) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
 		CURR_GAME_CODE = game_code;
 		document.getElementById("game_code").innerHTML = game_code;
 
+		// Hide the game code section if not being used
+		if(IS_LIVE_HOST_VIEW)
+		{
+			document.getElementById("game_code_header")?.classList.add("hidden")
+		}
+
 		// Set the appropriate list based on DEMO, TEST, or real game
-		if(IS_DEMO_RUN || IS_TEST_RUN)
+		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
 		{
 			let list_id = (IS_TEST_RUN) ? MyTrello.test_list_id : MyTrello.demo_list_id;
-			MyTrello.set_current_game_list(list_id);
+			CURR_LIST_ID = list_id;
 			Logger.log("Current Game List ID: " + list_id);
 		} 
 		else
 		{
 			MyTrello.create_list(game_code,function(data){
 				response = JSON.parse(data.responseText);
-				MyTrello.set_current_game_list(response["id"]);
 				CURR_LIST_ID = response["id"];
-				Logger.log("Current Game List ID: " + MyTrello.current_game_list_id);
+				Logger.log("Current Game List ID: " + CURR_LIST_ID);
 			});
 		}
 	}
@@ -399,6 +416,15 @@
 		}
 	}
 
+	// Show all the categories by default;
+	function onCategoryClickAuto()
+	{
+		categories = document.querySelectorAll(".category_title");
+		categories?.forEach((obj) => {
+			obj.click();
+		});
+	}
+
 	// Prevent the page accidentally closing
 	function onClosePage(event)
 	{
@@ -409,10 +435,8 @@
 	// Openning a question 
 	function onOpenQuestion(cell)
 	{
-		// Rest timer and button to assign scores;
+		// Rest timer and button to assign scores (if not live host view)
 		Timer.resetTimer();
-		document.getElementById("assignScoresButton").disabled = true; 
-
 
 		// Get the question key from the clicked cell
 		let key = cell.getAttribute("data-jpd-quest-key");
@@ -422,7 +446,6 @@
 		if(!proceed){ return; }
 
 		// Set the current question key to the key of the opened question
-		// CURRENT_QUESTION_KEY = key;
 		ASKED_QUESTIONS.push(key);
 
 		Logger.log("Loading Question");
@@ -454,16 +477,24 @@
 		questionValue = isNaN(questionValue) ? 0 : questionValue;
 		questionValue = (isDailyDouble) ? (2 * questionValue) : questionValue;
 		
-		// Calculate the value for the points;
-		// let questionValue2 = (isDailyDouble) ? 2 * value : IS_FINAL_JEOPARDY ? getMaxPossibleWager() : isNaN(value) ? "n/a" : value;
-
+		// Load the different sections
 		loadQuestionViewSection("question_block", question, mode, true);
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
-		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
-		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
 
+		if (IS_LIVE_HOST_VIEW)
+		{
+			// Auto-show the answer block in this view
+			document.getElementById("answer_block")?.classList.remove("hidden");
+		}
+		else  // do these things if NOT live host view
+		{
+			loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
+			loadQuestionViewSection("correct_block", undefined, mode, false, "1");
+			document.getElementById("assignScoresButton").disabled = true; 
+		}
+		
 		// Show the question section
 		document.getElementById("question_view").classList.remove("hidden");
 
@@ -477,9 +508,9 @@
 		if(proceedClose)
 		{
 			window.scrollTo(0,0); // Scroll back to the top of the page;
-			document.getElementById("answer_block").classList.add("hidden");
-			document.getElementById("correct_block").classList.add("hidden");
-			document.getElementById("question_view").classList.add("hidden");
+			document.getElementById("answer_block")?.classList.add("hidden");
+			document.getElementById("correct_block")?.classList.add("hidden");
+			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
 	}
@@ -570,6 +601,16 @@
 		mydoc.showContent("#round_1_row");
 		mydoc.showContent("#finalJeopardyButton");
 
+		// Do these things if LIVE HOST
+		if(IS_LIVE_HOST_VIEW)
+		{
+			mydoc.hideContent("#teams_table");
+			mydoc.hideContent("#teams_sync_section");
+
+			// Auto-show the headers
+			onCategoryClickAuto();
+		}
+
 		// Set a comment indicating the game is being played
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -630,9 +671,12 @@
 	}
 
 	// Sync the teams
-	function onSyncTeams(selectPlayer)
+	function onSyncTeams()
 	{
-		MyTrello.get_cards(MyTrello.current_game_list_id, function(data){
+		// Don't try to sync teams if live host view
+		if(IS_LIVE_HOST_VIEW){ return; }
+
+		MyTrello.get_cards(CURR_LIST_ID, function(data){
 
 			response = JSON.parse(data.responseText);
 			response.forEach(function(obj){
@@ -949,6 +993,9 @@
 	// Loads the list of teams in the "Correct answer" section to pick who got it right
 	function loadTeamNamesInCorrectAnswerBlock()
 	{
+		// Don't try to sync teams if live host view
+		if(IS_LIVE_HOST_VIEW){ return; }
+
 		formattedTeams = getWhotGotItRight_Section();
 		let whoGotItRight = document.getElementById("who_got_it_right_table");
 		whoGotItRight.innerHTML = formattedTeams;
@@ -1164,33 +1211,6 @@
 		return content;
 	}
 
-	//Purpose: Generates 4 random characters to create a team code;
-	function getGameCode()
-	{
-		
-		let game_code = "";
-
-		if(IS_DEMO_RUN || IS_TEST_RUN)
-		{
-			game_code = (IS_TEST_RUN) ? "TEST" : "DEMO";
-		}
-		else
-		{
-			let char1 = getRandomCharacter();
-			let char2 = getRandomCharacter();
-			let char3 = getRandomCharacter();
-			let char4 = getRandomCharacter();
-
-			let chars = char1 + char2 + char3 + char4;
-
-			// Make sure the code is not demo;
-			game_code = ( isReservedCode(chars) ) ? getGameCode() : chars;
-		}
-
-		Logger.log("Game Code = " + game_code);
-
-		return game_code
-	}
 	// Get the game media based on a given value
 	function getGameMediaURL(value)
 	{
@@ -1551,6 +1571,8 @@
 	// Check if the question can be opened;
 	function canOpenQuestion(key)
 	{
+		// Don't try to do any validation if live host view
+		if(IS_LIVE_HOST_VIEW){ return true; }
 
 		let canOpen = true;
 
@@ -1565,6 +1587,9 @@
 
 	function hasAssignablePoints()
 	{
+		// Don't try to do any validation if live host view
+		if(IS_LIVE_HOST_VIEW){ return false; }
+
 		let assignScoresButton = document.querySelector("#assignScoresButton");
 		return (assignScoresButton.disabled == false)
 	}
