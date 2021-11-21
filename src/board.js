@@ -158,7 +158,6 @@
 
 				// Load the game settings & rules
 				let gameSettings = Settings.GetSettings(myajax.GetJSON(response["desc"]));
-				// let gameRules = Settings.GetRules();
 				load_game_rules(gameSettings);
 
 				// Get the published URL from the card custom field

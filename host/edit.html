@@ -39,16 +39,25 @@
 	</div>
 	<div id="edit_game_section" class="hidden">
 		<div class="center_section_50 centered">
-			<a id="play_game_button" href="" target="_blank">
+			<button class="button_mash play_button" onclick="onOpenGameURL('play')">
+				PLAY GAME
+			</button>
+			<button class="button_mash play_button" onclick="onOpenGameURL('host')">
+				VIEW HOST
+			</button>
+			<!-- <a id="play_game_button" href="" target="_blank">
 				<button class="button_mash play_button">
 					PLAY GAME
 				</button>
-			</a>
-			<a id="test_game_button" href="" target="_blank">
+			</a> -->
+			<button class="button_mash test_button" onclick="onOpenGameURL('play',true)">
+				TEST GAME
+			</button>
+			<!-- <a id="test_game_button" href="" target="_blank">
 				<button class="button_mash test_button">
 					TEST GAME
 				</button>
-			</a>
+			</a> -->
 			<button id="save_game_button" class="button_mash save_button" onclick="onSaveGame()">
 				SAVE ALL
 			</button>			

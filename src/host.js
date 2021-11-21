@@ -63,30 +63,46 @@ var USE_DEFAULT_RULES = true;
 			MyTrello.get_cards(MyTrello.admin_list_id, function(data){
 				response = JSON.parse(data.responseText);
 
-				response.sort(function(a,b){
-					aName = a["name"].toLowerCase();
-					bName = b["name"].toLowerCase();
-
-					if(aName < b["name"])
-					{
-						return -1;
-					}
-					if(aName > bName)
-					{
-						return 1;
-					}
-					return 0;
+				let cardMap = {};
+				response.forEach((card) => {
+					cardName = card["name"];
+					cardID = card["id"];
+					cardMap[cardName] = cardID;
 				});
+
+				let cardNames = Object.keys(cardMap);
+
+				cardNames.sort();
+
+				// response.sort(function(a,b){
+				// 	aName = a["name"].toLowerCase();
+				// 	bName = b["name"].toLowerCase();
+
+				// 	if(aName < b["name"])
+				// 	{
+				// 		return -1;
+				// 	}
+				// 	if(aName > bName)
+				// 	{
+				// 		return 1;
+				// 	}
+				// 	return 0;
+				// });
 
 				let options = "";
 
-				let game_id    = undefined;
-				response.forEach(function(card){
-					let card_name = card["name"];
-					let card_id   = card["id"];
+				// let game_id    = undefined;
+				for(var idx = 0; idx < cardNames.length; idx++)
+				{
+					singleCardName = cardNames[idx];
+					singleCardID = cardMap[singleCardName];
+					// card = response[idx];
+					
+					// let card_name = card["name"];
+					// let card_id   = card["id"];
 
-					options += `<option value=${card_id}>${card_name}</option>`;
-				});
+					options += `<option value=${singleCardID}>${singleCardName}</option>`;
+				}
 				
 				games_select_list.innerHTML += options;
 			});
@@ -115,12 +131,8 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Looks up the lists from the board and tries to find the one matching the given game code
-	function loadGame(action, isTestRun=false)
+	function loadGame(action, isTestRun=false, samePageLoad=false)
 	{
-
-		// Determine if this is a test game;
-		let test_param = (isTestRun) ? "&test=1" : "";
-
 		// Start Clear results if any & load GIF
 		set_loading_results("");
 		toggle_loading_gif();
@@ -129,28 +141,33 @@ var USE_DEFAULT_RULES = true;
 		let current_game_id = credentials["game_id"];
 		let given_password = credentials["pass_phrase"];
 
-		if (current_game_id != undefined)
+		// console.log(current_game_id && current_game_id != "");
+		if (current_game_id != undefined && current_game_id != "")
 		{
-			// Set the option for new paths; 
-			let playPath = "/board/?gameid=" + current_game_id + test_param;
-			let editPath = "/host/edit.html?gameid=" + current_game_id;
-
-			// Set up the new based on action path
-			let newPath = (action == "play") ? 
-						location.pathname.replace("/host/load.html", playPath) 
-						: location.pathname.replace("/host/load.html", editPath);
-			// Set the new URL
-			let newURL = "http://" + location.host + newPath;
-
 			CURR_GAME_ID = current_game_id;
 			validate_password(current_game_id, given_password, function(){
-				location.replace(newURL);
+				onOpenGameURL(action, isTestRun, samePageLoad);
 			});
 		}
 		else 
 		{
-			result = "Could not find a game with the given name!";
+			result = "Please select from the list of available games.";
 			set_loading_results(result);
+		}
+	}
+
+	// Open a game
+	function onOpenGameURL(type, isTest=false, samePageLoad=false)
+	{
+		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
+		console.log(newURL);
+		if(samePageLoad)
+		{
+			location.replace(newURL);
+		}
+		else
+		{
+			window.open(newURL, "_blank");
 		}
 	}
 
@@ -179,10 +196,8 @@ var USE_DEFAULT_RULES = true;
 			});
 			if(failure)
 			{
-				// toggle_loading_gif(true);
 				result = "Invalid credentials for this game";
 				set_loading_results(result);
-				// document.getElementById("loading_results_section").innerText = result;
 			}
 		});
 	}
@@ -245,6 +260,20 @@ var USE_DEFAULT_RULES = true;
 
 /************* HOST: EVENT LISTENERS ************************************/ 
 
+	// When the list of games changes
+	function onSelectLoadGame(event)
+	{
+		let sourceEle = event.target;
+		selectedGame = sourceEle.value;
+		
+		// Set the host view link/button
+		document.querySelector("#open_host_view_button").href =  get_game_url(selectedGame, "host");
+
+		playURL = get_game_url(selectedGame, "play");
+		testURL = get_game_url(selectedGame, "play", true);
+		hostURL = get_game_url(selectedGame, "host");
+
+	}
 
 	// Listener for when the user changes an option on the settings section
 	function onRuleOptionChange(event)
@@ -398,7 +427,7 @@ var USE_DEFAULT_RULES = true;
 		if(isUpdate && (parameters.length == expectedParams) )
 		{
 			timeout = 3000; // make the timeout longer; 
-			console.log("Time to make an update");
+			console.log(`Making update for: ${identifier}`);
 			updateFunc(...parameters);
 		}
 
@@ -530,15 +559,8 @@ var USE_DEFAULT_RULES = true;
 			
 				if(is_published_field && value != "")
 				{
-
 					CURR_PUB_SHEET_URL = value;
 					document.getElementById("game_url_value").value = value;
-
-					let path = "/board/?gameid=" + card_id + demoParam;
-					let hrefPlay = "http://" + location.host + location.pathname.replace("/host/edit.html",path);
-					let hrefTest = hrefPlay + "&test=1";
-					document.getElementById("test_game_button").href = hrefTest;
-					document.getElementById("play_game_button").href = hrefPlay;
 				}
 			});
 		});
@@ -588,6 +610,38 @@ var USE_DEFAULT_RULES = true;
 				}
 			});
 		});
+	}
+
+	// Get the full URLs for playing/testing the game
+	function get_game_url(gameID, type="", isTest=false)
+	{
+		let path = "";
+
+		switch(type)
+		{
+			case "edit":
+				path = `/host/edit.html?gameid=${gameID}`;
+				break;
+			case "demo":
+				path = `/board/?gameid=${gameID}&demo=1`;
+				break;
+			case "play":
+				path = `/board/?gameid=${gameID}`;
+				break;
+			case "host":
+				path = `/board/host.html?gameid=${gameID}`;
+				break;
+			default:
+				path = "/";
+		}
+
+		path += (isTest) ? "&test=1" : "";
+
+		let fullURL = location.origin + path;
+		console.log(path);
+		console.log(fullURL);
+		return fullURL
+
 	}
 
 	// Get the rules formatted to display on the page

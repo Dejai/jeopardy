@@ -33,17 +33,19 @@
 			<h2>Enter Pass Phrase:</h2>
 			<input id="given_game_password" type="text" name="game_password" placeholder="Enter game password" class="input_mash"> <br/>
 			<span style="font-style:italic;">If you forget the pass phrase, you can paste the full edit URL instead. <br/> If it matches the one for the game, it will load.</span>
-
 			<br/><br/>
-
-			<button id="edit_game_button" class="button_mash test_button" onclick="loadGame('edit')" >
+			<button id="edit_game_button" class="button_mash test_button" onclick="loadGame('edit', false, true)" >
 				EDIT GAME
 			</button>
-			<button id="play_game_button" class="button_mash play_button" onclick="loadGame('play')">
+			<br/><br/>
+			<button id="play_game_button" class="button_mash play_button" onclick="loadGame('play', false, true)">
 				PLAY GAME
 			</button>
 			<br/><br/>
-
+			<button id="play_game_button" class="button_mash play_button" onclick="loadGame('host')">
+				OPEN HOST VIEW
+			</button>
+			<br/><br/>
 			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden" style="width:100px;height:100px;">
 		</div>
 	</div>
