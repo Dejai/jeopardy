@@ -55,6 +55,7 @@ var USE_DEFAULT_RULES = true;
 		event.returnValue='';
 	}
 
+	// Get the list of games for the load page
 	function loadListOfGames()
 	{
 		try
@@ -70,36 +71,17 @@ var USE_DEFAULT_RULES = true;
 					cardMap[cardName] = cardID;
 				});
 
+				// Get the names and sort;
 				let cardNames = Object.keys(cardMap);
-
 				cardNames.sort();
-
-				// response.sort(function(a,b){
-				// 	aName = a["name"].toLowerCase();
-				// 	bName = b["name"].toLowerCase();
-
-				// 	if(aName < b["name"])
-				// 	{
-				// 		return -1;
-				// 	}
-				// 	if(aName > bName)
-				// 	{
-				// 		return 1;
-				// 	}
-				// 	return 0;
-				// });
 
 				let options = "";
 
-				// let game_id    = undefined;
+				// Loop throught the games
 				for(var idx = 0; idx < cardNames.length; idx++)
 				{
 					singleCardName = cardNames[idx];
 					singleCardID = cardMap[singleCardName];
-					// card = response[idx];
-					
-					// let card_name = card["name"];
-					// let card_id   = card["id"];
 
 					options += `<option value=${singleCardID}>${singleCardName}</option>`;
 				}
@@ -220,12 +202,17 @@ var USE_DEFAULT_RULES = true;
 			response = JSON.parse(data.responseText);
 			game_id = response["id"];
 
+			// Update the description with the default settings
+			let defaultRules = Settings.GetDefaultSettings();
+			MyTrello.update_card_description(game_id, defaultRules);
+
 			// Add the pass to the custom field
 			MyTrello.update_card_custom_field(game_id,MyTrello.custom_field_phrase,pass_phrase)
 
 
 			setTimeout(function(){
-				load_url = "http://" + location.host + location.pathname.replace("create", "edit") + "?gameid=" + game_id;
+				load_url = get_game_url(game_id, "edit");
+				// load_url = "http://" + location.host + location.pathname.replace("create", "edit") + "?gameid=" + game_id;
 				location.replace(load_url);
 			}, 2000);
 		});
@@ -833,8 +820,6 @@ var USE_DEFAULT_RULES = true;
 	{
 		Logger.log("Create Game");
 		set_loading_results("");
-		// document.getElementById("loading_results_section").innerText = "";
-
 		toggle_loading_gif();
 
 		let game_name = document.getElementById("given_game_name").value;
@@ -865,9 +850,6 @@ var USE_DEFAULT_RULES = true;
 				{
 					results = "Cannot Use This Game Name!<br/> Name Already Exists!";
 					set_loading_results(results);
-					// document.getElementById("loading_results_section").innerHTML = results;
-					// toggle_loading_gif(true);
-
 				}
 			});
 		}
@@ -875,8 +857,6 @@ var USE_DEFAULT_RULES = true;
 		{
 			results = "Please enter a game name and a pass phrase!";
 			set_loading_results(results);
-			// document.getElementById("loading_results_section").innerHTML = results;
-			// toggle_loading_gif(true);
 		}	
 	}
 

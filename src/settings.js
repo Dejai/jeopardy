@@ -6,13 +6,6 @@ This object stores the setting and rule configuration for the game
 
 const Settings = {
 
-	// currentSettings : [
-	// 	{ "name": "Answering Questions", "option": 1 },
-	// 	{ "name": "Selecting Questions", "option": 1 },
-	// 	{ "name": "Time to Answer Questions", "option": 2, "value": 20 },
-	// 	{ "name": "Final Jeopardy Wager", "option": 1 }
-	// ],
-
 	currentSettings: [],
 
 	// Gets the settings (w/ rules) for the game
@@ -24,6 +17,22 @@ const Settings = {
 		this.SetRules(); 
 		
 		return this.currentSettings;
+	},
+
+	// Get Default settings
+	GetDefaultSettings: function(){
+		ruleNames = Object.keys(Rules);
+
+		let rulesList = [];
+		
+		ruleNames.forEach((ruleName)=>{
+			ruleObj = {"name": ruleName, "option": "1"}
+			rulesList.push(ruleObj);
+		});
+
+		rulesListJSON = JSON.stringify(rulesList)
+		
+		return rulesListJSON;
 	},
 
 	// Get the individual rule from the Rules object;
@@ -74,3 +83,6 @@ const Settings = {
 		return updatedObject;
 	}
 };
+
+
+Settings.GetDefaultSettings();
