@@ -32,6 +32,16 @@ const MyTrello = {
 		MyTrello.current_game_list_id = listID;
 	},
 
+	GetFullTrelloPath: function(path, params=undefined){
+
+		creds = `?key=${MyTrello.key}&token=${MyTrello.token}`;
+		query = (params != undefined) ? ("&" + params) : "";
+
+		// Build full path;
+		api_path = `${MyTrello.endpoint}` + path + creds + query;
+
+		return api_path;
+	},
 
 /*** CREATE Calls ***/
 
@@ -71,6 +81,24 @@ const MyTrello = {
 		myajax.AJAX({ method: "POST", path:trello_path, data:"", success: successCallback, failure:Logger.errorHandler});
 	},
 
+	// Create a new checklist
+	create_checklist: function(card_id,successCallback=undefined){
+		let params = `name=Media&idCard=${card_id}`;
+		let trello_path = MyTrello.GetFullTrelloPath(`/checklists/`, params);
+		myajax.POST(trello_path, "", successCallback, Logger.errorHandler);
+		// ?key=${MyTrello.key}&token=${MyTrello.token}&${params}`;
+		// let trello_path = `${MyTrello.endpoint}/checklists/?key=${MyTrello.key}&token=${MyTrello.token}&${params}`;
+		// myajax.AJAX({ method: "POST", data:"", path:trello_path, success:successCallback, failure:Logger.errorHandler});
+	},
+
+	// Create an individual checklist item
+	create_checklist_item: function(checklist_id, itemName, successCallback=undefined){
+		let params = `name=${itemName}`;
+		let trello_path = MyTrello.GetFullTrelloPath(`/checklists/${checklist_id}/checkItems`, params);
+		myajax.POST(trello_path, "", successCallback, Logger.errorHandler);
+		// myajax.AJAX({ method: "POST", data:"", path:trello_path, success:successCallback, failure:Logger.errorHandler});
+	},
+
 	
 
 
@@ -96,9 +124,9 @@ const MyTrello = {
 
 	// Gets a single trello card's actions
 	get_card_actions: function(card_id, successCallback){
-						let trello_path = `${MyTrello.endpoint}/cards/${card_id}/actions/?key=${MyTrello.key}&token=${MyTrello.token}`;
-						myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
-					},
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/actions/?key=${MyTrello.key}&token=${MyTrello.token}`;
+		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
+	},
 
 	// Gets a single trello card's actions
 	get_card_attachments: function(card_id, successCallback){
@@ -106,7 +134,13 @@ const MyTrello = {
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
 	},
 
+	// Get the checklist items from a card's checklist
+	get_card_checklist_items: function(checklist_id, successCallback){
+		let trello_path= MyTrello.GetFullTrelloPath(`/checklists/${checklist_id}/checkItems`);
+		myajax.GET(trello_path, successCallback, Logger.errorHandler);
+	},
 
+	// Get the custom fields on a card
 	get_card_custom_fields: function(card_id, successCallback){
 		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/customFieldItems/?key=${MyTrello.key}&token=${MyTrello.token}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorHandler});
@@ -168,6 +202,21 @@ const MyTrello = {
 		let param = `name=${new_name}&closed=true`;
 		let trello_path = `${MyTrello.endpoint}/lists/${list_id}/?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method:"PUT", path:trello_path, success:successCallback, failure:Logger.errorHandler});
+	},
+
+	// Updat the state of a checklist item;
+	update_checklist_item_state: function(card_id, checklist_item_id, isComplete, successCallback){
+		state = (isComplete) ? "complete" : "incomplete"
+		let params = `state=${state}`;
+		let trello_path= MyTrello.GetFullTrelloPath(`/cards/${card_id}/checkItem/${checklist_item_id}`, params);
+		myajax.PUT(trello_path, "", successCallback, Logger.errorHandler);
+	},
+
+	// Updat the value of a checklist item;
+	update_checklist_item_value: function(card_id, checklist_item_id, newName, successCallback){
+		let params = `name=${newName}`;
+		let trello_path= MyTrello.GetFullTrelloPath(`/cards/${card_id}/checkItem/${checklist_item_id}`, params);
+		myajax.PUT(trello_path, "", successCallback, Logger.errorHandler);
 	},
 
 

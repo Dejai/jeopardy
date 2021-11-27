@@ -132,6 +132,60 @@ const mydoc = {
 		this._toggleClass(selector, "add", "hidden");
 	},
 
+	// Set a cookie; Expiration provided in minutes;
+	setCookie: function(cookieName, cookieValue, expirationMins=undefined, cookiePath=undefined){
+
+		expires = "";
+		if(expirationMins != undefined)
+		{
+			expirationDate = new Date();
+			expirationDate.setTime(expirationDate.getTime() + (expirationMins*60000)); // 60,000 milliseconds seconds a minute;
+			utcDate = expirationDate.toUTCString();
+			expires = `expires=${utcDate};`
+		}
+
+		// Setup path;
+		path = "path=";
+		path += (cookiePath != undefined) ? `${cookiePath};` : "/;";
+
+		// Set full cookie 
+		fullCookie = `${cookieName}=${cookieValue}; ${expires} ${path}`;
+
+		document.cookie = fullCookie;
+	},
+
+	// Get a cookie by name
+	getCookie: function(cookieName){
+
+		// Set default return value
+		returnValue = "";
+
+		// Get all the cookies; Split up into list
+		let decodedCookies = decodeURIComponent(document.cookie);
+		let cookieList = decodedCookies.split(";");
+
+		// Loop through cookies
+		for(let idx = 0; idx < cookieList.length; idx++)
+		{
+			cookie = cookieList[idx];
+			cookiePair = cookie.split("=");
+
+			cName = (cookiePair[0] ?? "").trim();
+			cValue = (cookiePair[1] ?? "").trim();
+
+			if (cName != cookieName) continue; 
+
+			// Set the return value to the value of the cookie;
+			returnValue = cValue; 
+		}
+
+		return returnValue;
+	},
+
+	deleteCookie: function(name){
+
+	},
+
 	addClass: function(selector, className){
 		mydoc._toggleClass(selector, "add", className);
 	},
@@ -173,6 +227,19 @@ const mydoc = {
 
 	get_query_map: function(){
 		let query_string = location.search;
+		let query = query_string.replace("?", "")
+		var query_map = {}
+		var combos = query.split("&");
+		combos.forEach(function(obj)
+		{
+			let splits = obj.split("=");
+			query_map[splits[0]] = splits[1];
+		});
+		return query_map;
+	},
+
+	get_query_map_from_url: function(urlObject){
+		let query_string = urlObject.search;
 		let query = query_string.replace("?", "")
 		var query_map = {}
 		var combos = query.split("&");
@@ -340,6 +407,50 @@ const myajax = {
 		{
 			xhttp.send();
 		}
+	}, 
+
+	GET: function(url, successCallback=undefined, failureCallback=undefined){
+
+		let requestObject = {
+			method: "GET",
+			path : url,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
+		
+	},
+
+	POST: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
+		
+		console.log("USING NEW POST APPROACH");
+		let requestObject = {
+			method: "POST",
+			path : url,
+			data: dataObj,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
+	},
+
+	PUT: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
+		
+		console.log("USING NEW PUT APPROACH");
+		let requestObject = {
+			method: "PUT",
+			path : url,
+			data: dataObj,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
 	}
 }
 

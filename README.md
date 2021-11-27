@@ -14,8 +14,10 @@ You can run this site locally using the following steps:
 * Open commandline terminal 
 * Navigate to folder containing this code
 * Run one of the following commands: 
-	* **Using Python:** `python -m SimpleHTTPServer`
+	* **Using Python:** `python -m SimpleHTTPServer 7000`
+	 OR
+	* **Using Python:** `python2 -m http.server 7000`
 	 OR
 	* **Using Docker:** `docker-compose up -d --build`
-* Open site in browser at `localhost:4000` 
+* Open site in browser at `localhost:5000` 
 	* Note: You can change the port in the *docker-compose.yml* file.

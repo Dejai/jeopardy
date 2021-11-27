@@ -6,14 +6,15 @@ var CURR_GAME_NAME = "";
 var CURR_EDIT_SHEET_URL = "";
 var CURR_PUB_SHEET_URL = "";
 var CURR_GAME_PASSWORD = "";
+var CURR_MEDIA_CHECKLIST_ID = "";
 
 var CURR_GAME_RULES =  undefined;
 var USE_DEFAULT_RULES = true;
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
-	mydoc.ready(function(){
-
+	mydoc.ready(function()
+	{
 		// Check for existing player if on player screen
 		let path = location.pathname;
 
@@ -25,6 +26,11 @@ var USE_DEFAULT_RULES = true;
 			{
 				let game_id = query_map["gameid"];
 				get_existing_game(game_id);
+
+				// Load the cloudflare cookies;
+				// MyCloudflare.loadCookies();
+				// console.log(MyCloudflare.getUploadURL());
+
 			} 
 			else 
 			{
@@ -112,6 +118,40 @@ var USE_DEFAULT_RULES = true;
 		return obj;
 	}
 
+	// // Load the details for editing the game details:
+	function loadEditGamePage(response)
+	{
+		console.log("Loading Edit Game Page");
+
+		// Set the current game ID; Also show it in read-only field
+		CURR_GAME_ID = response["id"];
+		document.getElementById("read_only_game_id").innerText = CURR_GAME_ID;
+
+		// Set the Media Checklist ID
+		CURR_MEDIA_CHECKLIST_ID = response["idChecklists"][0] ?? "";
+
+		// Set the current game name;
+		CURR_GAME_NAME = response["name"];
+		document.getElementById("game_name_value").value = CURR_GAME_NAME;
+
+		// Set the current game rules
+		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
+		loadGameSettings(CURR_GAME_RULES);
+
+		// Determine if this should be a DEMO link
+		let demoParam = (CURR_GAME_NAME.toUpperCase() == "DEMO") ? "&demo=1" : "";
+
+		// Get password, and then callback to show game page
+		get_existing_password(CURR_GAME_ID);
+		get_existing_media(CURR_MEDIA_CHECKLIST_ID);
+		get_existing_edit_sheet_url(CURR_GAME_ID);
+		get_existing_published_sheet_url(CURR_GAME_ID, demoParam);
+
+		// Adjust visibility of sections
+		mydoc.hideContent("#enter_game_name_section");
+		mydoc.showContent("#edit_game_section");
+	}
+
 	// Looks up the lists from the board and tries to find the one matching the given game code
 	function loadGame(action, isTestRun=false, samePageLoad=false)
 	{
@@ -128,28 +168,13 @@ var USE_DEFAULT_RULES = true;
 		{
 			CURR_GAME_ID = current_game_id;
 			validate_password(current_game_id, given_password, function(){
-				onOpenGameURL(action, isTestRun, samePageLoad);
+				onNavigateToGameURL(action, isTestRun, samePageLoad);
 			});
 		}
 		else 
 		{
 			result = "Please select from the list of available games.";
 			set_loading_results(result);
-		}
-	}
-
-	// Open a game
-	function onOpenGameURL(type, isTest=false, samePageLoad=false)
-	{
-		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
-		console.log(newURL);
-		if(samePageLoad)
-		{
-			location.replace(newURL);
-		}
-		else
-		{
-			window.open(newURL, "_blank");
 		}
 	}
 
@@ -197,10 +222,14 @@ var USE_DEFAULT_RULES = true;
 	// Create the new game;
 	function create_game(game_name, pass_phrase)
 	{
+		console.log("Creating the game!");
 		MyTrello.create_game_card(MyTrello.admin_list_id, game_name, function(data)
 		{
 			response = JSON.parse(data.responseText);
 			game_id = response["id"];
+
+			// Get the URL to use once created;
+			load_url = get_game_url(game_id, "edit");
 
 			// Update the description with the default settings
 			let defaultRules = Settings.GetDefaultSettings();
@@ -209,43 +238,36 @@ var USE_DEFAULT_RULES = true;
 			// Add the pass to the custom field
 			MyTrello.update_card_custom_field(game_id,MyTrello.custom_field_phrase,pass_phrase)
 
+			// Also add a new checklist
+			MyTrello.create_checklist(game_id, (data) =>{
+				console.log("CREATED CHECKLIST");
 
-			setTimeout(function(){
-				load_url = get_game_url(game_id, "edit");
-				// load_url = "http://" + location.host + location.pathname.replace("create", "edit") + "?gameid=" + game_id;
-				location.replace(load_url);
-			}, 2000);
+				// Navigate to new page once created
+				setTimeout(function(){
+					location.replace(load_url);
+				}, 2000);
+			});
+
+			
 		});
 	}
 
-	function add_media()
-	{
-		var files = document.getElementById("game_files").files;
-
-		for(var idx = 0; idx < files.length; idx++)
-		{
-			var fileData = new FormData();
-
-			fileData.append("key", MyTrello.key);
-			fileData.append("token", MyTrello.token);
-			fileData.append("file", files[idx]);
-			fileData.append("name", files[idx].name);
-			fileData.append("setCover", false);
-
-			MyTrello.create_attachment(CURR_GAME_ID, fileData, function(data){
-
-				response = JSON.parse(data.responseText);
-
-				file_name = response["fileName"];
-				file_url  = response["url"];
-				file_id   = response["id"];
-
-				add_existing_media_to_page(file_id, file_name, file_url);
-			});
-		}		
-	}
-
 /************* HOST: EVENT LISTENERS ************************************/ 
+
+	// Open a game URL
+	function onNavigateToGameURL(type, isTest=false, samePageLoad=false)
+	{
+		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
+		console.log(newURL);
+		if(samePageLoad)
+		{
+			location.replace(newURL);
+		}
+		else
+		{
+			window.open(newURL, "_blank");
+		}
+	}
 
 	// When the list of games changes
 	function onSelectLoadGame(event)
@@ -459,6 +481,107 @@ var USE_DEFAULT_RULES = true;
 			}
 		}
 	}
+
+	// Delete the media
+	function onDeleteMedia(mediaID)
+	{
+		remove_existing_media_from_page(mediaID);
+
+		// Set a card's checklist item to "complete" (i.e. deleted)
+		MyTrello.update_checklist_item_state(CURR_GAME_ID, mediaID, true);
+	}
+
+	// Syncing the game media for this game
+	function onSyncGameMedia()
+	{
+		if(CURR_MEDIA_CHECKLIST_ID != "")
+		{
+
+			// First, get the list of media already in Trello
+			MyTrello.get_card_checklist_items(CURR_MEDIA_CHECKLIST_ID, (data) =>{
+
+				response = JSON.parse(data.responseText);
+
+				// Set the existing media as a list of objects
+				existing_media = {};
+				response.forEach(function(obj) {
+					state = obj["state"];
+					file_id = obj["id"]
+					checklist_details = obj["name"]?.split(" ~ ") ?? ["", ""];
+					file_name = checklist_details[0];
+					file_url = checklist_details[1];
+
+					existing_media[file_name] = {
+						"id": file_id,
+						"state": state,
+						"url": file_url
+					}
+				});
+
+				console.log(existing_media);
+
+				// Next, get the data from the Spreadsheet  get the Spreadsheet values;
+				MyGoogleDrive.getSpreadsheetData(MyGoogleDrive.uploadedMediaURL, (data) =>{
+					
+					console.log(data);
+					spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
+					console.log(spreadSheetData);
+					rows =  spreadSheetData["rows"];
+
+					// Filter the rows to only the ones for this game;
+					rows = MyGoogleDrive.filterRowsByColumnValue(rows,"Game ID", CURR_GAME_ID);
+
+					// Loop through rows to check if media is to be synced
+					for(let idx=0; idx < rows.length; idx++)
+					{
+						row = rows[idx]; // get single row
+
+						// Process the current file to check if it should be updated or created
+						file_name = row["File Name"];
+						file_url = MyGoogleDrive.formatURL(row["Type of File"], row["Upload File"]);
+						checklist_entry = file_name + " ~ " + file_url;
+
+						// Check if file already exists (based on name);
+						existing_file = existing_media[file_name] ?? undefined;
+
+						if(existing_file == undefined)
+						{
+							console.log("Need to add media value");
+							console.log(checklist_entry);
+							add_game_media(checklist_entry);
+						}
+						else
+						{
+							different_url = (file_url != existing_file["url"]);
+
+							if(different_url)
+							{
+								console.log("Updating existing File media!");
+								update_game_media(existing_file["id"], checklist_entry);
+
+								// If item was previously "deleted", set it back to "incomplete" 
+								if( (existing_file["state"] == "complete") )
+								{
+									console.log("Also need to reset state");
+									MyTrello.update_checklist_item_state(CURR_GAME_ID, existing_file["id"], false);
+								}
+							}
+							else
+							{
+								console.log("File up-to-date");
+							}
+						}
+					}
+
+					// Finally load the values on the page
+					setTimeout( ()=>{
+						get_existing_media(CURR_MEDIA_CHECKLIST_ID);
+					}, 2000)
+				});
+
+			});
+		}
+	}
 	
 /************* HOST: GETTERS ************************************/ 
 
@@ -467,35 +590,12 @@ var USE_DEFAULT_RULES = true;
 	{
 		try
 		{
-			MyTrello.get_single_card(card_id, function(data){
+			MyTrello.get_single_card(card_id,(data) => {
 
 				response = JSON.parse(data.responseText);
+				loadEditGamePage(response);
 				
-				// Set the current game ID
-				CURR_GAME_ID = response["id"];
-
-				// Set the current game name;
-				CURR_GAME_NAME = response["name"];
-				document.getElementById("game_name_value").value = CURR_GAME_NAME;
-
-				// Set the current game rules
-				CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
-				loadGameSettings(CURR_GAME_RULES);
-
-				// Determine if this should be a DEMO link
-				let demoParam = (CURR_GAME_NAME.toUpperCase() == "DEMO") ? "&demo=1" : "";
-
-				// Get password, and then callback to show game page
-				get_existing_password(CURR_GAME_ID);
-				get_existing_media(CURR_GAME_ID);
-				get_existing_edit_sheet_url(CURR_GAME_ID);
-				get_existing_published_sheet_url(CURR_GAME_ID, demoParam);
-
-				// Adjust visibility of sections
-				mydoc.hideContent("#enter_game_name_section");
-				mydoc.showContent("#edit_game_section");
-				
-			}, function(data){
+			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
 				set_loading_results(result);
 			});
@@ -506,34 +606,58 @@ var USE_DEFAULT_RULES = true;
 		}		
 	}
 
-	function get_existing_media(card_id)
+	// Get the card's checklsit item based on checklist id
+	function get_existing_media(checklist_id)
 	{
-		MyTrello.get_card_attachments(card_id, function(data){
-			response = JSON.parse(data.responseText);
 
-			response.sort(function(a,b){
-				if(a["fileName"] < b["fileName"])
-				{
-					return -1;
-				}
-				if(a["fileName"] > b["fileName"])
-				{
-					return 1;
-				}
+		if(checklist_id != "")
+		{
+			MyTrello.get_card_checklist_items(checklist_id, (data) => {
+				
+				response = JSON.parse(data.responseText);
 
-				return 0;
+				// Sort the items by name
+				response.sort(function(a,b){
+					if(a["name"] < b["name"])
+					{
+						return -1;
+					}
+					if(a["name"] > b["name"])
+					{
+						return 1;
+					}
+					return 0;
+				});
+
+				console.log(response);
+
+				mediaContent = "";
+
+				response.forEach(function(obj){
+
+					state = obj["state"];
+
+					// Only process items NOT checked off;
+					if(state == "incomplete")
+					{
+						file_id   = obj["id"];
+						checklist_details = obj["name"]?.split(" ~ ") ?? ["", ""];
+						file_name = checklist_details[0];
+						file_url = checklist_details[1];
+
+						mediaContent += get_formatted_media_list_item(file_id, file_name, file_url);
+					}
+					
+				});
+
+				// Populate the media on the page.
+				add_existing_media_to_page(mediaContent);
 			});
-
-			response.forEach(function(obj){
-				file_name = obj["fileName"];
-				file_url  = obj["url"];
-				file_id   = obj["id"];
-
-				add_existing_media_to_page(file_id, file_name, file_url);
-			});
-		});
+		}
+		
 	}
 
+	// Get the published sheet URL stored in the game
 	function get_existing_published_sheet_url(card_id, demoParam="")
 	{
 		MyTrello.get_card_custom_fields(card_id, function(data){
@@ -698,6 +822,15 @@ var USE_DEFAULT_RULES = true;
 		return rulesFormatted;
 	}
 
+	// Get the formatted list of media 
+	function get_formatted_media_list_item(fileID, fileName, fileURL)
+	{
+		link = `<a href='${fileURL}' target="_blank">${fileName}</a>`;
+		del  = `<i onclick="onDeleteMedia('${fileID}')" class="delete_media fa fa-trash"></i>`;
+		row = `<li id="${fileID}">${link} &nbsp; ${del}</li>`;
+		return row; 
+	}
+
 	// Get a related child section 
 	function get_sibling(sourceEle, siblingClassName)
 	{
@@ -738,28 +871,30 @@ var USE_DEFAULT_RULES = true;
 
 /************* HOST: SETTERS / DELETERS ************************************/ 
 
-	// Delete the media
-	function delete_media(mediaID)
+	// Adding media for the game as a checklist item
+	function add_game_media(mediaName)
 	{
-		remove_existing_media_from_page(mediaID);
-
-		MyTrello.delete_attachment(CURR_GAME_ID, mediaID, function(data){
-			response = JSON.parse(data.responseText);
-		});
+		// Leverage Trello call to create a checklist item;
+		MyTrello.create_checklist_item(CURR_MEDIA_CHECKLIST_ID, mediaName);		
 	}
 
+	// Update the value for a game checklist item
+	function update_game_media(mediaID, newValue)
+	{
+		MyTrello.update_checklist_item_value(CURR_GAME_ID, mediaID, newValue);
+
+	}
 
 
 /************* DOCUMENT OBJECT MODEL ***********************************/ 
 
-	function add_existing_media_to_page(fileID, fileName, fileURL)
+	function add_existing_media_to_page(content)
 	{
 		let game_media_list = document.getElementById("game_media");
-
-		link = `<a href='${fileURL}' target="_blank">${fileName}</a>`;
-		del  = `<i onclick="delete_media('${fileID}')" class="delete_media fa fa-trash"></i>`;
-		row = `<li id="${fileID}">${link} &nbsp; ${del}</li>`;
-		game_media_list.innerHTML += row;
+		if(game_media_list != undefined)
+		{
+			game_media_list.innerHTML = content;
+		}
 	}
 
 	function remove_existing_media_from_page(fileID)

@@ -17,47 +17,21 @@
 		<a id="home_button" href="../host/">
       		<button class="fa fa-caret-square-o-left">&nbsp;Back</button>
       	</a>
-		<hr/>
-	</div>
-	<div id="enter_game_name_section" class="hidden">
 		<div class="center_section_50 centered">
-			<h2>Game Name:</h2>
-			<input id="given_game_name" type="text" name="game_name" placeholder="Enter game name" class="input_mash">
-			<select id="list_of_games" name="game_name2" class="input_mash">
-				<option value="">Select a game ...</option>
-			</select>
-			<br/><br/>
-
-			<h2>Game Password:</h2>
-			<input id="given_game_password" type="text" name="game_password" placeholder="Enter game password" class="input_mash">
-			<br/><br/>
-			<button onclick="attempt_game_load()" class="button_mash">Edit Game</button>
-			
-			<br/><br/>
-			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden" style="width:100px;height:100px;">
+			<button class="button_mash play_button" onclick="onNavigateToGameURL('play')">
+				PLAY GAME
+			</button>
+			<button class="button_mash play_button" onclick="onNavigateToGameURL('host')">
+				VIEW HOST
+			</button>
+			<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
+				TEST GAME
+			</button>
 		</div>
+		<hr/>
 	</div>
 	<div id="edit_game_section" class="hidden">
 		<div class="center_section_50 centered">
-			<button class="button_mash play_button" onclick="onOpenGameURL('play')">
-				PLAY GAME
-			</button>
-			<button class="button_mash play_button" onclick="onOpenGameURL('host')">
-				VIEW HOST
-			</button>
-			<!-- <a id="play_game_button" href="" target="_blank">
-				<button class="button_mash play_button">
-					PLAY GAME
-				</button>
-			</a> -->
-			<button class="button_mash test_button" onclick="onOpenGameURL('play',true)">
-				TEST GAME
-			</button>
-			<!-- <a id="test_game_button" href="" target="_blank">
-				<button class="button_mash test_button">
-					TEST GAME
-				</button>
-			</a> -->
 			<button id="save_game_button" class="button_mash save_button" onclick="onSaveGame()">
 				SAVE ALL
 			</button>			
@@ -129,14 +103,40 @@
 				</table>
 			</div>
 			<div class="edit_game_subsection">
-				<h2>Game Media</h2>
-				<p>OPTIONAL: Load any images and audio that you want to use in the game.<br/>
-					The file names used here should match what is entered in your spreadsheet (above)
+				<h2>
+					Game Media
+					<span style="font-size:smaller">(OPTIONAL)</span>
+				</h2>
+				<p>If you want to include images/audio as a part of your game, use the <strong>Google Form</strong> link below.
+					The file name you enter via this upload must match a file name entered in your game spreadsheet (above)
+					When it asks for a <strong>Game ID</strong>, use the value below. 
 				</p>
+				<table id="game_media_details_table">
+					<colgroup>
+						<col style="width:25%;">
+						<col/>
+					</colgroup>
+					<tbody>
+						<tr>
+							<th>Upload Form:</th>
+							<td>
+								<a class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
+									Upload Game Media
+								</a>
+							</td>
+						</tr>
+						<tr>
+							<th>Game ID:</th>
+							<td>
+								<span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span>
+							</td>
+						</tr>
+					</tbody>
+					
+				</table>
+				<br>
+				<button class="pointer" onclick="onSyncGameMedia()">Sync Game Media</button>
 				<ul id="game_media"></ul>
-				<form enctype="multipart/form-data" method="post" name="fileinfo2">
-					<input id="game_files" type="file" name="game_files" accept="image/*, audio/*" multiple onchange="add_media()" class="pointer">
-				</form>
 			</div>
 			
 		</div>
@@ -153,6 +153,9 @@
 	<script src="../src/settings.js"></script>
 	<!-- My Trello code -->
 	<script src="../src/trello.js"></script>
+	<!-- My Cloudflare code -->
+	<script src="../src/googledrive.js"></script>
+	<script src="../src/cloudflare.js"></script>
 	<!-- My Source JS -->
 	<script src="../src/host.js"></script>
 </html>
