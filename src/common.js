@@ -36,8 +36,8 @@ const Logger = {
 	},
 
 	errorHandler: function(err){
-					console.log("ERROR");
-					console.log(err);
+					console.error("ERROR");
+					console.error(err);
 				}
 }
 
@@ -191,7 +191,7 @@ const mydoc = {
 	},
 
 	removeClass: function(selector, className){
-		console.log(selector + " " + className);
+		Logger.log(selector + " " + className);
 		mydoc._toggleClass(selector, "remove", className);
 	},
 
@@ -362,8 +362,8 @@ const myajax = {
 		let method 	= object["method"];
 		let path 	= object["path"];
 
-		let success = this.isValidFunction(object, "success") ? object["success"] : function(request){console.log(request);};
-		let failure = this.isValidFunction(object, "failure") ? object["failure"] : function(request){console.log(request);};
+		let success = this.isValidFunction(object, "success") ? object["success"] : function(request){Logger.log(request);};
+		let failure = this.isValidFunction(object, "failure") ? object["failure"] : function(request){Logger.log(request);};
 
 		// Setting up the request object
 		var xhttp = new XMLHttpRequest();
@@ -425,7 +425,6 @@ const myajax = {
 
 	POST: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
 		
-		console.log("USING NEW POST APPROACH");
 		let requestObject = {
 			method: "POST",
 			path : url,
@@ -440,7 +439,6 @@ const myajax = {
 
 	PUT: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
 		
-		console.log("USING NEW PUT APPROACH");
 		let requestObject = {
 			method: "PUT",
 			path : url,
@@ -472,7 +470,6 @@ const Speaker = {
 					Speaker.selectedVoice = current_voice;
 				}
 			  	Speaker.voicesMap[current_voice.name] = voices[i];
-			  	// console.log(current_voice);
 			}
 		}
 	},
@@ -493,7 +490,6 @@ const Speaker = {
 	},
 
 	setSelectedVoice: function(name){
-		console.log(Speaker.voicesMap);
 		
 		let voice = Speaker.voicesMap[name];
 		if(voice != undefined)
@@ -522,8 +518,9 @@ const Speaker = {
 			stillSpeaking = setInterval(function(){
 				if(!synth.speaking)
 				{
-					console.log("Done Speaking");
+					Logger.log("Done Speaking");
 					clearInterval(stillSpeaking);
+					
 					//  Do the sub description 
 					setTimeout(function(){
 						msg.text = subtext;

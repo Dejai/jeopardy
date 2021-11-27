@@ -15,7 +15,6 @@ const MyGoogleDrive = {
     // Get the data from a given spreadsheet
     getSpreadsheetData: function(urlPath, successCallback, failureCallback=undefined){
         
-
         // Make the call to get the data and then format it
         myajax.AJAX(
             {
@@ -28,7 +27,6 @@ const MyGoogleDrive = {
                 },
                 failure : function(request){
                     Logger.log("Something went wrong when trying to get data from Google!");
-                    // preprocess_game_sheet(request);
                 }
             }
         );
@@ -92,7 +90,7 @@ const MyGoogleDrive = {
                 formattedURL = `http://docs.google.com/uc?export=download&id=${file_id}`
                 break;
             default:
-                console.log("No valid format for type = " + type);
+                Logger.log("No valid format for type = " + type);
         }
 
         return formattedURL;

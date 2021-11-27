@@ -26,11 +26,6 @@ var USE_DEFAULT_RULES = true;
 			{
 				let game_id = query_map["gameid"];
 				get_existing_game(game_id);
-
-				// Load the cloudflare cookies;
-				// MyCloudflare.loadCookies();
-				// console.log(MyCloudflare.getUploadURL());
-
 			} 
 			else 
 			{
@@ -121,8 +116,6 @@ var USE_DEFAULT_RULES = true;
 	// // Load the details for editing the game details:
 	function loadEditGamePage(response)
 	{
-		console.log("Loading Edit Game Page");
-
 		// Set the current game ID; Also show it in read-only field
 		CURR_GAME_ID = response["id"];
 		document.getElementById("read_only_game_id").innerText = CURR_GAME_ID;
@@ -163,7 +156,6 @@ var USE_DEFAULT_RULES = true;
 		let current_game_id = credentials["game_id"];
 		let given_password = credentials["pass_phrase"];
 
-		// console.log(current_game_id && current_game_id != "");
 		if (current_game_id != undefined && current_game_id != "")
 		{
 			CURR_GAME_ID = current_game_id;
@@ -222,7 +214,6 @@ var USE_DEFAULT_RULES = true;
 	// Create the new game;
 	function create_game(game_name, pass_phrase)
 	{
-		console.log("Creating the game!");
 		MyTrello.create_game_card(MyTrello.admin_list_id, game_name, function(data)
 		{
 			response = JSON.parse(data.responseText);
@@ -240,7 +231,6 @@ var USE_DEFAULT_RULES = true;
 
 			// Also add a new checklist
 			MyTrello.create_checklist(game_id, (data) =>{
-				console.log("CREATED CHECKLIST");
 
 				// Navigate to new page once created
 				setTimeout(function(){
@@ -258,7 +248,6 @@ var USE_DEFAULT_RULES = true;
 	function onNavigateToGameURL(type, isTest=false, samePageLoad=false)
 	{
 		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
-		console.log(newURL);
 		if(samePageLoad)
 		{
 			location.replace(newURL);
@@ -426,7 +415,7 @@ var USE_DEFAULT_RULES = true;
 				parameters.push(savedRulesJSON);
 				break;
 			default:
-				console.log("Could not set values");
+				Logger.log("Could not set values");
 		}
 
 		// First, start the load of the toggler 
@@ -436,7 +425,6 @@ var USE_DEFAULT_RULES = true;
 		if(isUpdate && (parameters.length == expectedParams) )
 		{
 			timeout = 3000; // make the timeout longer; 
-			console.log(`Making update for: ${identifier}`);
 			updateFunc(...parameters);
 		}
 
@@ -518,14 +506,10 @@ var USE_DEFAULT_RULES = true;
 					}
 				});
 
-				console.log(existing_media);
-
 				// Next, get the data from the Spreadsheet  get the Spreadsheet values;
 				MyGoogleDrive.getSpreadsheetData(MyGoogleDrive.uploadedMediaURL, (data) =>{
 					
-					console.log(data);
 					spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
-					console.log(spreadSheetData);
 					rows =  spreadSheetData["rows"];
 
 					// Filter the rows to only the ones for this game;
@@ -544,31 +528,29 @@ var USE_DEFAULT_RULES = true;
 						// Check if file already exists (based on name);
 						existing_file = existing_media[file_name] ?? undefined;
 
+						// If entry not there, create it
 						if(existing_file == undefined)
 						{
-							console.log("Need to add media value");
-							console.log(checklist_entry);
 							add_game_media(checklist_entry);
 						}
 						else
 						{
 							different_url = (file_url != existing_file["url"]);
 
+							// If different URL, update entry
 							if(different_url)
 							{
-								console.log("Updating existing File media!");
 								update_game_media(existing_file["id"], checklist_entry);
 
 								// If item was previously "deleted", set it back to "incomplete" 
 								if( (existing_file["state"] == "complete") )
 								{
-									console.log("Also need to reset state");
 									MyTrello.update_checklist_item_state(CURR_GAME_ID, existing_file["id"], false);
 								}
 							}
 							else
 							{
-								console.log("File up-to-date");
+								Logger.log("File up-to-date");
 							}
 						}
 					}
@@ -628,8 +610,6 @@ var USE_DEFAULT_RULES = true;
 					}
 					return 0;
 				});
-
-				console.log(response);
 
 				mediaContent = "";
 
@@ -749,8 +729,6 @@ var USE_DEFAULT_RULES = true;
 		path += (isTest) ? "&test=1" : "";
 
 		let fullURL = location.origin + path;
-		console.log(path);
-		console.log(fullURL);
 		return fullURL
 
 	}
@@ -1004,7 +982,7 @@ var USE_DEFAULT_RULES = true;
 
 		if(!isDifference)
 		{
-			console.log(`${elementID} is up to date!`)
+			Logger.log(`${elementID} is up to date!`)
 		}
 
 		let newValueObj = {"isNewValue":isDifference, "value": elementValue }

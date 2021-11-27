@@ -215,8 +215,6 @@
 
 				response = JSON.parse(data.responseText);
 
-				console.log(response);
-
 				if(response.length > 0) //Process the attachments, then load the spreadsheet;
 				{
 					Logger.log("Loading attachments from card");
