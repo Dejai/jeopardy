@@ -6,97 +6,12 @@
 **********************************************************************************************************/
 
 // customObject = Pass in a custom object with variables/values that you would want to use with the data returned from the ajax call 
-
-/*
-	This object is used to make local server AJAX calls easier; 
-*/
-
 // EXTENSION METHODS 
 	// if (typeof Array.prototype.contains !== "function"){ Array.prototype.contains = function(value){ return this.includes(value); } }
 	// if (typeof Object.prototype.contains !== "function"){ Object.prototype.contains = function(value) { return this[value] != undefined; } }
 
 
-const Logger = { 
-
-	logged_data: [],
-
-	log: function(content, printLog=false){ 
-		this.logged_data.push(content);
-		if(printLog){ this.print_logged_data(content)}
-	},
-
-	show_log: function(){
-		logged_data.forEach(function(obj){
-			console.log(obj);
-		});
-	},
-
-	print_logged_data: function(content){
-		console.log(content);
-	},
-
-	errorHandler: function(err){
-					console.error("ERROR");
-					console.error(err);
-				}
-}
-
-const Helper = {
-	_getRandomCharacter: function(){
-		characters = "abcdefghijklmnopqrstuvwxyz";
-		randChar = Math.floor(Math.random()*characters.length);
-		return characters[randChar].toUpperCase();
-	},
-
-	_isReservedCode: function(code){
-		var reserved = ["DEMO", "TEST"];
-		return reserved.includes(code.toUpperCase());
-	},
-
-	getCode: function(numChars=4){
-		let chars = "";
-
-		for(var idx = 0; idx < numChars; idx++)
-		{
-			chars += Helper._getRandomCharacter();
-		}
-
-		var code = ( Helper._isReservedCode(chars) ) ? Helper.getCode() : chars;
-		return code;
-	},
-
-	getDate: function(){
-		let dd = new Date();
-		let year = dd.getFullYear().toString();
-		let monthIdx = dd.getMonth()+1;
-		let month = (monthIdx<9) ? "0"+monthIdx : monthIdx;
-		let dayIdx = dd.getDate();
-		let day = (dayIdx < 9 ) ? "0"+dayIdx : dayIdx;
-		var myDateObj = { "year":year, "month":month, "day":day };
-		return myDateObj;
-	},
-
-	getDateFormatted: function(format=undefined){
-		let date = Helper.getDate();
-		let year = date["year"];
-		let month = date["month"];
-		let day = date["day"];
-
-		let dateFormatted = `${year}-${month}-${day}`;
-		switch(format)
-		{
-			case "yyyy/mm/dd":
-				dateFormatted = `${year}/${month}/${day}`;
-				break;
-			default:
-				dateFormatted = `${year}-${month}-${day}`;
-				break;
-		}
-		return dateFormatted
-	}
-}
-
-
+// Used for general DOM things
 const mydoc = {
 
 	ready: function(callback){
@@ -194,6 +109,11 @@ const mydoc = {
 		Logger.log(selector + " " + className);
 		mydoc._toggleClass(selector, "remove", className);
 	},
+	
+	// A public warapper for the helper function within
+	toggleClass: function(selector, action, className){
+		mydoc._toggleClass(selector, action, className);
+	},
 
 	isValidValue : function(value)
 	{
@@ -276,6 +196,7 @@ const mydoc = {
 	}
 };
 
+// Used for general AJAX things
 const myajax = { 
 	
 	GetContentType: function(type){
@@ -452,6 +373,133 @@ const myajax = {
 	}
 }
 
+// Used for logging
+const Logger = { 
+
+	logged_data: [],
+
+	log: function(content, printLog=false){ 
+		Logger.logged_data.push(content);
+		if(printLog){ this.print_logged_data(content)}
+	},
+
+	show_log: function(){
+		Logger.logged_data.forEach(function(obj){
+			console.log(obj);
+		});
+	},
+
+	print_logged_data: function(content){
+		console.log(content);
+	},
+
+	errorMessage: function(err){
+					console.error("ERROR");
+					console.error(err);
+				},
+
+		
+	
+}
+
+const MyNotification = {
+
+	// Toggles the given classname on an existing object; If "forceAdd" - it will be no matter what
+	toggle: function(identifier, className, force=undefined){
+
+		let ele = document.querySelector(identifier) ?? undefined
+		if(ele == undefined) return; 
+
+		hasClass = ele.classList.contains(className);
+		forceAction = '"'
+		if(force != undefined)
+		{
+			forceAction = (force) ? "add" : "remove";
+		}
+		action = (forceAction != "") ? forceAction : hasClass ? "remove" : "add";
+
+		mydoc.toggleClass(identifier, action, className);
+	},
+
+	// Adds content to an HTML block; Can include a custom class to add to the HTML block
+	notify: function(identifier, content, className=undefined){
+
+		ele = document.querySelector(identifier) ?? undefined;
+		if(ele == undefined) return; 
+
+		// Set the content
+		ele.innerHTML = content;
+
+		// If Class name included, ensure it is set;
+		if(className != undefined)
+		{
+			mydoc.toggleClass(identifier, "add", className);
+		}
+	},
+
+	// Remove content from an HTML block
+	clear: function(identifier, className=undefined){
+		MyNotification.notify(identifier, "", className);
+	}
+}
+
+// Misc. helper things
+const Helper = {
+	_getRandomCharacter: function(){
+		characters = "abcdefghijklmnopqrstuvwxyz";
+		randChar = Math.floor(Math.random()*characters.length);
+		return characters[randChar].toUpperCase();
+	},
+
+	_isReservedCode: function(code){
+		var reserved = ["DEMO", "TEST"];
+		return reserved.includes(code.toUpperCase());
+	},
+
+	getCode: function(numChars=4){
+		let chars = "";
+
+		for(var idx = 0; idx < numChars; idx++)
+		{
+			chars += Helper._getRandomCharacter();
+		}
+
+		var code = ( Helper._isReservedCode(chars) ) ? Helper.getCode() : chars;
+		return code;
+	},
+
+	getDate: function(){
+		let dd = new Date();
+		let year = dd.getFullYear().toString();
+		let monthIdx = dd.getMonth()+1;
+		let month = (monthIdx<9) ? "0"+monthIdx : monthIdx;
+		let dayIdx = dd.getDate();
+		let day = (dayIdx < 9 ) ? "0"+dayIdx : dayIdx;
+		var myDateObj = { "year":year, "month":month, "day":day };
+		return myDateObj;
+	},
+
+	getDateFormatted: function(format=undefined){
+		let date = Helper.getDate();
+		let year = date["year"];
+		let month = date["month"];
+		let day = date["day"];
+
+		let dateFormatted = `${year}-${month}-${day}`;
+		switch(format)
+		{
+			case "yyyy/mm/dd":
+				dateFormatted = `${year}/${month}/${day}`;
+				break;
+			default:
+				dateFormatted = `${year}-${month}-${day}`;
+				break;
+		}
+		return dateFormatted
+	}
+}
+
+// If voice things are needed
 const Speaker = {
 
 	voicesMap: {"One":"Two"},
