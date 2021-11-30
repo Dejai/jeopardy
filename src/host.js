@@ -485,6 +485,12 @@ var USE_DEFAULT_RULES = true;
 		if(CURR_MEDIA_CHECKLIST_ID != "")
 		{
 
+			loading_html = `
+				<span>Syncing</span>
+				<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
+				`;
+			MyNotification.notify("#syncNotifier", loading_html, "notify_orange");
+
 			// First, get the list of media already in Trello
 			MyTrello.get_card_checklist_items(CURR_MEDIA_CHECKLIST_ID, (data) =>{
 
@@ -555,6 +561,10 @@ var USE_DEFAULT_RULES = true;
 						}
 					}
 
+
+					MyNotification.clear("#syncNotifier", "notify_orange");
+					MyNotification.notify("#syncNotifier", "Synced", "notify_limegreen");
+					
 					// Finally load the values on the page
 					setTimeout( ()=>{
 						get_existing_media(CURR_MEDIA_CHECKLIST_ID);
@@ -591,6 +601,8 @@ var USE_DEFAULT_RULES = true;
 	// Get the card's checklsit item based on checklist id
 	function get_existing_media(checklist_id)
 	{
+
+		MyNotification.clear("#syncNotifier", "notify_limegreen");
 
 		if(checklist_id != "")
 		{

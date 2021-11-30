@@ -439,7 +439,11 @@ const MyNotification = {
 
 	// Remove content from an HTML block
 	clear: function(identifier, className=undefined){
-		MyNotification.notify(identifier, "", className);
+		MyNotification.notify(identifier, "");
+		if(className)
+		{
+			mydoc.toggleClass(identifier, "remove", className);
+		}
 	}
 }
 

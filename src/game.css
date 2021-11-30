@@ -27,6 +27,9 @@
 	.jeopardy_image{ max-width:95%; }
 	#homemade_jeopardy_title { text-decoration:underline; }
 
+	.notify_limegreen { color:limegreen !important; }
+	.notify_orange { color:orange !important; }
+
 
 /* HOME PAGE */
 	#main_section { width:80%; margin:auto; text-align:center; font-size:120%; }
