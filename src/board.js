@@ -450,30 +450,6 @@
 		
 	}
 
-	// Loading spinning gif
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Set loading results
-	function set_loading_results(value)
-	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.innerText = value;
-	}
-
 	// Show the Toggle Button for How To
 	function showHowToPlayButton()
 	{
