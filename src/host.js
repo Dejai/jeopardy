@@ -528,8 +528,11 @@ var USE_DEFAULT_RULES = true;
 
 						// Process the current file to check if it should be updated or created
 						file_name = row["File Name"];
-						file_url = MyGoogleDrive.formatURL(row["Type of File"], row["Upload File"]);
-						checklist_entry = file_name + " ~ " + file_url;
+						// file_url = MyGoogleDrive.formatURL(row["Type of File"], row["Upload File"]);
+						file_type = row["Type of File"]
+						file_url = row["Upload File"]
+
+						checklist_entry = file_name + " ~ " + file_type + " ~ " + file_url;
 
 						// Check if file already exists (based on name);
 						existing_file = existing_media[file_name] ?? undefined;
@@ -635,7 +638,9 @@ var USE_DEFAULT_RULES = true;
 						file_id   = obj["id"];
 						checklist_details = obj["name"]?.split(" ~ ") ?? ["", ""];
 						file_name = checklist_details[0];
-						file_url = checklist_details[1];
+						file_type = checklist_details[1];
+						// file_url = MyGoogleDrive.formatURL(file_type,checklist_details[2]);
+						file_url = checklist_details[2];
 
 						mediaContent += get_formatted_media_list_item(file_id, file_name, file_url);
 					}

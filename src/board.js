@@ -244,9 +244,11 @@
 
 						checklist_details = media["name"]?.split(" ~ ") ?? ["", ""];
 						file_name = checklist_details[0];
-						file_url = checklist_details[1];
+						file_type = checklist_details[1];
+						file_url = checklist_details[2]
+						media_url = MyGoogleDrive.formatURL(file_type, file_url) ;
 
-						GAME_MEDIA[file_name] = file_url;
+						GAME_MEDIA[`${file_name}`] = media_url;
 					});
 				}
 			});
