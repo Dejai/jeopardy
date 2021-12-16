@@ -6,7 +6,7 @@ services:
         container_name: jeopardy_app
         working_dir: /usr/local/apache2/htdocs/
         ports:
-            - 5000:80
+            - 7000:80
         volumes:
             - type: bind
               source: ./

@@ -131,7 +131,7 @@ const Timer = {
 	},
 
 	timeUpCallback: function(){
-		console.log("Time is up");
+		Logger.log("Time is up");
 	},
 
 	setTimeUpCallback: function(callback){

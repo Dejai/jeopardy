@@ -4,6 +4,8 @@
 	var JeopardyGame = undefined;
 	var CURR_GAME_ID = undefined;
 	var CURR_LIST_ID = undefined;
+	var CURR_MEDIA_CHECKLIST_ID = undefined;
+
 	var CURR_GAME_CODE = "";
 	var GAME_NAME  = "Home-made Jeopardy";
 	var HOW_TO_IS_HIDDEN = true;
@@ -29,53 +31,559 @@
 
 	var SETTINGS_MAPPING = {};
 
+	var IS_LIVE_HOST_VIEW = false;
+
 	var IS_TEST_RUN = false;
 	var IS_DEMO_RUN = false;
 
 /************************ GETTING STARTED ************************/
 
 	mydoc.ready(function(){
+
+		// Load the game params to determine what should happen next
+		validParams = loadGameParams();
+
 		// Make sure the page doesn't close once the game starts
 		window.addEventListener("beforeunload", onClosePage);
 
 		// Set the game board listeners
-		game_board_listeners();
+		onKeyboardKeyup();
+
+		// Check if this is the live host view
+		let path = location.pathname;
+		IS_LIVE_HOST_VIEW = path.includes("host.html");
 
 		// Load the additional views
-		load_views();
+		loadGameViews();
 
-		// Set timer callback
-		if(Timer)
-		{
-			Timer.setTimeUpCallback(function(){
-				document.getElementById("time_up_sound").play();
-			});
-		}
-
-		// Load the game params to determine what should happen next
-		loadGameParams();
+		// Load the Trello card
+		loadGameCardFromTrello();
 	});
 
+	// Loads the parameters from the Game URL; returns if valid or not
 	function loadGameParams()
 	{
 		let query_map = mydoc.get_query_map();
-		if(query_map != undefined)
-		{
-			IS_DEMO_RUN = (query_map.hasOwnProperty("demo") && query_map["demo"]==1) ? true : false;
-			IS_TEST_RUN = (query_map.hasOwnProperty("test") && query_map["test"]==1) ? true : false;
-			CURR_GAME_ID = (query_map.hasOwnProperty("gameid")) ? query_map["gameid"] : undefined;
 
-			if(IS_TEST_RUN){ mydoc.addTestBanner(); }
-			
-			load_game_from_trello();
-		}
-		else
-		{
-			set_loading_results("Cannot load game. Incorrect parameters provided.");
+		IS_DEMO_RUN = (query_map["demo"] ?? 0) == 1;
+		IS_TEST_RUN = (query_map["test"] ?? 0) == 1;
+		CURR_GAME_ID = query_map["gameid"] ?? undefined;
+		
+		if(IS_TEST_RUN){ 
+			mydoc.addTestBanner(); 
 		}
 	}
 
-	function game_board_listeners()
+	// Load the individual Views used for the game
+	function loadGameViews()
+	{
+		$("#menu_section").load("../views/menu.html");
+		$("#rules_section").load("../views/rules.html");
+		$("#game_board_section").load("../views/board.html");
+		$("#teams_section").load("../views/teams.html");
+		$("#timer_section").load("../views/timer.html");
+
+		let showQuestionView = (IS_LIVE_HOST_VIEW) ? "showQuestionHost": "showQuestion";
+		$("#show_question_section").load(`../views/${showQuestionView}.html`, function(data){
+			// Set listeners for closing question
+			var close_button = document.getElementById("close_question_view");
+			close_button.addEventListener("click", onCloseQuestion);
+		});
+	}
+
+	// Get the Game card from Trello
+	function loadGameCardFromTrello()
+	{
+		// Clear notification and start loading			
+		MyNotification.clear("#loading_results_section");
+		MyNotification.toggle("#loading_gif", "hidden", false);
+
+		// A common error message in case anything goes wrong;
+		err_msg = "Sorry. There was an issue trying to load the game.<br/>";
+
+		try
+		{
+			// Throw error if game ID is not set;
+			if(CURR_GAME_ID == undefined){ throw "Game ID is not valid! Cannot load game."; }
+
+			MyTrello.get_single_card(CURR_GAME_ID, (data) => {
+
+				response = JSON.parse(data.responseText);
+
+				GAME_NAME = response["name"]
+				CURR_MEDIA_CHECKLIST_ID = response["idChecklists"][0] ?? "";
+
+				//Load the Attachments on the Game (if any);
+				loadGameMedia();
+
+				// Load the game settings
+				loadSettingsMapping(response["desc"]);
+
+				// Determine if the How To button should display
+				showHowToPlayButton();
+
+				// Get the published URL from the card custom field
+				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
+					
+					custom_fields = JSON.parse(data2.responseText);
+
+					// Loop through custom fields;
+					for (var idx = 0; idx < custom_fields.length; idx++)
+					{
+						field = custom_fields[idx];
+						field_id = field["idCustomField"] ?? "";
+						if(field_id != MyTrello.custom_field_pub_url) continue;
+
+						// Get the custom value;
+						custom_value = field?.value?.text ?? "";
+						if(custom_value != "")
+						{
+							MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
+								spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
+								initializeGame(spreadSheetData);
+							});
+						}
+					}
+				});
+			}, 
+			(data) => {
+				err_msg += data.responseText;
+				gameNotification(err_msg, true);
+			});
+		}
+		catch(error)
+		{
+			err_msg += error;
+			gameNotification(err_msg, true);
+		}
+	}
+
+	// Load the settings from Trello card
+	function loadSettingsMapping(jsonString)
+	{
+		try
+		{
+			jsonObj = myajax.GetJSON(jsonString);
+			settings = Settings.GetSettings(jsonObj) ?? [];
+
+			settings.forEach( (setting) => {
+				ruleObj = setting["rule"];
+				ruleName = setting["name"];
+				optionID = setting["option"];
+				customValue = setting["value"] ?? "";
+
+				// Create the Setting mapping:
+				SETTINGS_MAPPING[ruleName] = {"option": optionID, "customValue": customValue, "rule": ruleObj };
+			});
+		}
+		catch(error)
+		{
+			err_msg = "Sorry, something went wrong trying to open rules!\n\n"+error;
+			gameNotification(err_msg, true);
+		}
+	}
+
+	// Parse and load the game rules
+	function loadGameRules()
+	{
+		try
+		{
+			rulesListItems = "";
+
+			Object.keys(SETTINGS_MAPPING).forEach( (key) => {
+
+				setting = SETTINGS_MAPPING[key];
+
+				ruleObj = setting["rule"];
+				rule = ruleObj["rule"];
+				subRules = ruleObj["subRules"];
+
+				ruleElement = `<strong class='rule'>${rule}</strong>`
+				subRulesElements = "";
+					
+				subRules.forEach(function(sub){
+					subRulesElements += `<li class='subrule'>${sub}</li>`
+				});
+				// Create the overall rule item; Append to the list
+				rulesListItems += `<li class='rule_item'>${ruleElement}<ul>${subRulesElements}</ul></li>`;
+			});
+
+			// Set the rules
+			document.getElementById("rules_list").innerHTML = rulesListItems;
+
+			// // Set the default timer
+			// time_setting = SETTINGS_MAPPING["Time to Answer Questions"];
+			// if(time_setting.hasOwnProperty("customValue") && time_setting["customValue"] != "")
+			// {
+			// 	let time = Number(time_setting["customValue"]);
+			// 	time = isNaN(time) ? Timer.getTimerDefault() : time;
+			// 	Timer.setTimerDefault(time);
+			// }
+
+		}
+		catch(error)
+		{
+			err_msg = "Sorry, something went wrong trying to open rules!\n\n"+error
+			gameNotification(err_msg, true);
+		}
+	}
+	
+	// Get the attachments on the card (if any)
+	function loadGameMedia()
+	{
+		try
+		{
+			MyTrello.get_card_checklist_items(CURR_MEDIA_CHECKLIST_ID, (data) => {
+
+				response = JSON.parse(data.responseText);
+
+				// Only continue if there are actually checklist_items
+				if (response.length > 0)
+				{
+					response.forEach( (media) => {
+
+						checklist_details = media["name"]?.split(" ~ ") ?? ["", ""];
+						file_name = checklist_details[0];
+						file_type = checklist_details[1];
+						file_url = checklist_details[2]
+						media_url = MyGoogleDrive.formatURL(file_type, file_url) ;
+
+						GAME_MEDIA[`${file_name}`] = media_url;
+					});
+				}
+			});
+		}
+		catch(error)
+		{
+			err_msg = "Sorry, something went wrong trying to get game media!\n\n"+error;
+			gameNotification(err_msg, true);
+		}
+	}
+
+	// Initialize New Game
+	function initializeGame(spreadsheetData)
+	{
+
+		isValid = isValidSpreadsheet(spreadSheetData);
+		if(!isValid){ return; }  // If not valid, return without doing anything else;
+
+		// Load the game rules if valid sheet
+		loadGameRules();
+
+		// Set timer details for default;
+		setTimerDetails();
+
+		// Setup the Jeopardy Game object
+		createJeopardyObject(givenRows);
+
+		// Create/show the board
+		createGameBoard();
+
+		// Toggle visibility of sections
+		showGameSections();
+		addGameName();
+		addGameCode();
+
+		// Add listeners
+		addListenerCategoryClick();
+		addListenerQuestionClick();
+
+		// Handle the LIST ID
+		setListID();
+	}
+
+	// Used to create a Jeopardy game object;
+	function createJeopardyObject(rows)
+	{
+
+		Logger.log("Creating Jeopardy Objects");
+		JeopardyGame = new Jeopardy();
+
+		rows.forEach( (row) => {
+
+			// General content
+			category_name = row["Category Name"];
+			value = row["Score Value"];
+			daily_double = row["Daily Double?"];
+			// question content
+			question_text = row["Question (Text)"];
+			question_audio = row["Question (Audio)"];
+			question_image = row["Question (Image)"];
+			question_url = row["Question (URL)"];
+			// Answer content
+			answer_text = row["Answer (Text)"];
+			answer_audio = row["Answer (Audio)"];
+			answer_image = row["Answer (Image)"];
+			answer_url = row["Answer (URL)"];
+
+			// Setup the new question
+			new_question = new Question(question_text, question_audio, question_image, question_url,
+				answer_text, answer_audio, answer_image, answer_url, value, daily_double);
+
+			// If category does not exist yet, add it;
+			if(!JeopardyGame.categoryExists(category_name))
+			{
+				JeopardyGame.addCategory( new Category(category_name) );
+			}
+
+			JeopardyGame.getCategory(category_name).addQuestion(new_question);
+		});
+	}
+
+/************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
+
+	// Create the Game Board TABLE
+	function createGameBoard()
+	{
+		Logger.log("Creating the Game Board.");
+
+		// Two "boards" - regular round and final jeopardy
+		var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
+		var final_board = "<tr id=\"final_jeopardy_row\" class=\"hidden\">";
+
+		// Get categories;
+		let categories = JeopardyGame.getCategories();
+		let categoriesLength = categories.length-1;
+
+		categories.forEach(function(category){
+
+			isFinalJeopardy = category.isFinalJeopardy();
+
+			// Properties for the table rows
+			colspan 		= (isFinalJeopardy) ? 3 : 1;
+			dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
+
+			category_name 	= category.getName();
+			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
+
+			// Set the header for the category
+			category_name_row 		= `<tr><th class='category category_title' data-jpd-category-name=\"${category_name}\">${preFilledCategoryName}</th></tr>`;
+			
+			// Set the questions 
+			category_questions_row	= "";
+			questions = category.getQuestions();
+			questions.forEach(function(question){
+				
+
+				quest = question.getQuestion();
+				ans   = question.getAnswer();
+				key = (isFinalJeopardy) ? category_name : (category_name + " - " + quest["value"]);
+
+				QA_MAP[key] = {
+					"question": quest,
+					"answer"  : ans
+				}
+				
+				category_questions_row += `<tr><td class='category category_option' data-jpd-quest-key=\"${key}\">${quest["value"]}</tr></td>`;
+			});
+			
+			// The column
+			let column = `<td colspan=\"colspan\" style='width:${dynamic_width}%;'><table class='category_column'>${category_name_row} ${category_questions_row}</table></td>`;
+
+			if(isFinalJeopardy)
+			{
+				final_board += column;
+			}
+			else
+			{
+				// Add column for category to Game Board
+				main_board += column;
+			}
+				
+			// }
+		});
+
+		// Close both rows;
+		main_board += "</tr>";
+		final_board += "</tr>";
+		
+		let game_board = main_board + final_board;
+
+		document.getElementById("game_board_body").innerHTML = game_board;
+	}
+
+	// Add game name to the board
+	function addGameName()
+	{
+		// Set Game Name on the board
+		let gameNameLiveHostView = (IS_LIVE_HOST_VIEW) ? " (Host View) " : ""
+		document.getElementById("game_name").innerHTML = GAME_NAME + gameNameLiveHostView;
+	}
+
+	// Show the appropriate game section
+	function showGameSections()
+	{
+		// Hide Content
+		mydoc.hideContent("#load_game_section");
+		mydoc.hideContent("#homemade_jeopardy_title");
+
+		// Show Content
+		mydoc.showContent("#game_section");
+	}
+
+	// Add the game code to the page
+	function addGameCode()
+	{
+		// Set the game code
+		let game_code = (IS_TEST_RUN || IS_LIVE_HOST_VIEW) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
+		CURR_GAME_CODE = game_code;
+		document.getElementById("game_code").innerHTML = game_code;
+
+		// Hide the game code section if not being used
+		if(IS_LIVE_HOST_VIEW)
+		{
+			document.getElementById("game_code_header")?.classList.add("hidden")
+		}
+	}
+
+	// Manage the notifications on the page
+	function gameNotification(content, isErrorMsg=false, isLoaderHidden=true)
+	{
+		// First, the loading gif;
+		MyNotification.toggle("#loading_gif", "hidden", isLoaderHidden);
+		// The content
+		MyNotification.notify("#loading_results_section", content);
+		
+		if(isErrorMsg)
+		{
+			// Log in the error message log
+			Logger.errorMessage(content);
+		}
+		
+	}
+
+	// Show the Toggle Button for How To
+	function showHowToPlayButton()
+	{
+		// Show the option for the help text if it is a demo game;
+		if(IS_DEMO_RUN)
+		{ 
+			mydoc.showContent("#toggleHelpTextButton");
+			toggleHowToSections();
+		}
+	}
+
+	// Showing the How To help text
+	function toggleHowToSections()
+	{
+		if(HOW_TO_IS_HIDDEN)
+		{
+			mydoc.showContent(".how_to_play_section");
+			HOW_TO_IS_HIDDEN = false;
+		}
+		else
+		{
+			mydoc.hideContent(".how_to_play_section");
+			HOW_TO_IS_HIDDEN = true;
+		}
+	}
+
+	// Load the content into the question block;
+	//	>> If the [mode] passed in is in the list [hidIfMod] list, then it will be hidden
+	function loadQuestionViewSection(sectionID, content, mode, showInFinalJeopardy, hideIfMode="")
+	{
+		let element = document.getElementById(sectionID);
+		let modesToHideFor = (hideIfMode) ?? "-1";
+		if(element != undefined)
+		{
+			// Only set the content if it is defined;
+			if(content != undefined)
+			{
+				element.innerHTML = content;
+			}
+
+			// Hide for any mode passed in
+			if(modesToHideFor.includes(mode))
+			{
+				element.classList.add("hidden");
+			}
+			else
+			{
+				element.classList.remove("hidden")
+			}
+
+			// Adjust visibility during final jeopardy
+			if(IS_FINAL_JEOPARDY)
+			{
+				if(showInFinalJeopardy){  element.classList.remove("hidden"); }
+				if(!showInFinalJeopardy){  element.classList.add("hidden"); }
+			}
+		}
+
+	}
+
+	// Loads the list of teams in the "Correct answer" section to pick who got it right
+	function loadTeamNamesInCorrectAnswerBlock()
+	{
+		// Don't try to sync teams if live host view
+		if(IS_LIVE_HOST_VIEW){ return; }
+
+		formattedTeams = getWhotGotItRight_Section();
+		let whoGotItRight = document.getElementById("who_got_it_right_table");
+		whoGotItRight.innerHTML = formattedTeams;
+	}
+
+	// Hide button to set team by name
+	function hideSetTeamButton()
+	{
+		// hide any direct buttons if visible
+		var buttons = document.querySelectorAll(".setTeamDirectly");
+		if(buttons.length > 0)
+		{
+			buttons.forEach(function(button){
+				button.classList.add("hidden");
+			});
+		}
+	}
+
+	// Sort the list of teams to determine the leader
+	function updateLeader()
+	{
+
+		table_body = document.getElementById("teams_block");
+
+		current_teams = Array.from(document.getElementsByClassName("team_row"));
+		sorted_teams = current_teams.sort(function(a,b){
+							a_score = a.getElementsByClassName("team_score")[0].innerText;
+							b_score = b.getElementsByClassName("team_score")[0].innerText;
+							return b_score - a_score;
+						});
+
+		sorted_teams_html = "";
+		table_body.innerHTML = "";
+
+		//  Update the table with the correct order
+		sorted_teams.forEach(function(row){ 
+			table_body.innerHTML += row.outerHTML;
+		});
+
+		updateLeaderColors()
+	}
+
+
+
+/******************* EVENT LISTENERS ************************/
+
+	// Adds the listeners to the category columns once loaded
+	function addListenerCategoryClick()
+	{
+		var categories = document.querySelectorAll(".category_title");
+		categories.forEach(function(cell){
+			cell.addEventListener("click", onCategoryClick);
+		});
+	}
+
+	// Add listeners to the game cells;
+	function addListenerQuestionClick()
+	{
+		var cells = document.querySelectorAll(".category_option");
+		cells.forEach(function(cell){
+			cell.addEventListener("click", onQuestionClick);
+		});
+	}
+
+	// Listener for keyboard event = keyup
+	function onKeyboardKeyup()
 	{
 		document.addEventListener("keyup", function(event)
 		{
@@ -105,287 +613,6 @@
 		});
 	}
 
-	function load_views(){
-		$("#menu_section").load("../views/menu.html");
-		$("#rules_section").load("../views/rules.html");
-		$("#game_board_section").load("../views/board.html");
-		$("#teams_section").load("../views/teams.html");
-		$("#timer_section").load("../views/timer.html");
-		$("#show_question_section").load("../views/showQuestion.html", function(data){
-			// Set listeners for closing question
-			var close_button = document.getElementById("close_question_view");
-			close_button.addEventListener("click", onCloseQuestion);
-		});
-	}
-
-	// Get the cards
-	function load_game_from_trello()
-	{
-		// Clear loading results
-		set_loading_results("");
-
-		// Show the loading section
-		toggle_loading_gif();
-
-		try
-		{
-			// Throw error if game ID is not set;
-			if(CURR_GAME_ID == undefined){ throw "Game ID is not valid! Cannot load game."; }
-
-			MyTrello.get_single_card(CURR_GAME_ID, function(data){
-
-				response = JSON.parse(data.responseText);
-
-				GAME_NAME = response["name"];
-				let gameURL = response["desc"].trim();
-
-				//Load the Attachments on the Game (if any);
-				load_attachments_from_trello();
-
-				// Determine if the How To button should display
-				showHowToPlayButton();
-
-				// Load the game settings & rules
-				let gameSettings = Settings.GetSettings(myajax.GetJSON(response["desc"]));
-				// let gameRules = Settings.GetRules();
-				load_game_rules(gameSettings);
-
-				// Get the published URL from the card custom field
-				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2){
-					response2 = JSON.parse(data2.responseText);
-					response2.forEach(function(obj){
-						let valueObject = obj["value"];
-						let is_pub_url_field = obj["idCustomField"] == MyTrello.custom_field_pub_url;
-						let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-						
-						if(is_pub_url_field && value != "")
-						{
-							load_game_from_google(value);
-						}
-					});
-				});
-			});
-		}
-		catch(error)
-		{
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
-	}
-
-	// Parse and load the game rules
-	function load_game_rules(rules=undefined)
-	{
-		try
-		{
-			formatRules(rules);
-
-			// Set the default timer
-			let setting = SETTINGS_MAPPING["Time to Answer Questions"];
-			if(setting.hasOwnProperty("customValue"))
-			{
-				let time = Number(setting["customValue"]);
-				time = isNaN(time) ? Timer.getTimerDefault() : time;
-				Timer.setTimerDefault(time);
-			}
-
-		}
-		catch(error)
-		{
-			Logger.log(error);
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
-	}
-
-	// Get the attachments on the card (if any)
-	function load_attachments_from_trello()
-	{
-		try
-		{
-			MyTrello.get_card_attachments(CURR_GAME_ID, function(data){
-
-				response = JSON.parse(data.responseText);
-
-				if(response.length > 0) //Process the attachments, then load the spreadsheet;
-				{
-					Logger.log("Loading attachments from card");
-					response.forEach(function(obj){
-						name = obj["fileName"];
-						path = obj["url"];
-						GAME_MEDIA[name] = path;
-					});
-				}
-			});
-		}
-		catch(error)
-		{
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
-	}
-
-	// Get the list of games from the spreadsheet
-	function load_game_from_google(urlPath)
-	{
-		let response = "";
-		try
-		{
-			myajax.AJAX(
-				{
-				method: "GET",
-				path : urlPath,
-				cacheControl: "no-cache",
-				success: function(request){
-					Logger.log("Got the Game Data from Google!");
-					preprocess_game_sheet(request);
-				},
-				failure : function(request){
-					Logger.log("Something went wrong when trying to get data from Google!");
-					preprocess_game_sheet(request);
-				}
-				}
-			);
-		}
-		catch(error)
-		{
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
-	}
-
-	// Validate if the game sheet matches the expected format
-	function preprocess_game_sheet(data)
-	{
-		let rows = data.responseText.split("\n");
-		let cols = rows[0].split("\t");
-		if(rows.length == 32 && cols.length == 11)
-		{
-			// Remove the header row
-			rows.shift();
-
-			// Create the game;
-			processed = create_jeopardy_game(rows);
-
-			// If processed returns a valid 
-			if(processed) { initialize_game() }
-		}
-		else
-		{
-			toggle_loading_gif(true);
-			set_loading_results("ERROR: Your sheet is not valid. Please refer to the instructions/template (on the Edit page) for a valid sheet configuration.\n\n");
-		}
-	}
-
-	// Creates the Jeopardy game objects
-	function create_jeopardy_game(data)
-	{
-
-		Logger.log("Creating Jeopardy Objects");
-		JeopardyGame = new Jeopardy();
-
-		data.forEach(function(row){
-
-			let content = row.split("\t");
-			
-			let category 		= content[0];
-
-			let value 			= content[1];
-			let daily_double	= content[2];
-
-			let question_text 	= content[3];
-			let question_audio 	= content[4];
-			let question_image 	= content[5];
-			let question_url 	= content[6];
-			let answer_text 	= content[7];
-			let answer_audio 	= content[8];
-			let answer_image 	= content[9];
-			let answer_url 		= content[10];
-
-			// Setup the new question
-			let new_question = new Question(question_text, question_audio, question_image, question_url,
-											answer_text, answer_audio, answer_image, answer_url,
-											value, daily_double);
-
-			if(JeopardyGame.categoryExists(category))
-			{
-				let theCategory = JeopardyGame.getCategory(category);
-				theCategory.addQuestion(new_question);
-			}
-			else
-			{
-				let newCategory = new Category(category);
-				newCategory.addQuestion(new_question);
-				JeopardyGame.addCategory(newCategory);
-			}
-		});
-
-		return (JeopardyGame != undefined);
-	}
-
-	// Handles setting up all the pieces for the game;
-	function initialize_game()
-	{
-		// Set Game Name
-		document.getElementById("game_name").innerHTML = GAME_NAME;
-
-		// Creates the game table
-		create_game_board();
-
-		// Show loading gif
-		toggle_loading_gif();
-
-		// Hide Content
-		mydoc.hideContent("#load_game_section");
-		mydoc.hideContent("#homemade_jeopardy_title");
-
-		// Show Content
-		mydoc.showContent("#game_section");
-
-		// Add listeners
-		addListenerCategoryClick();
-		addListenerQuestionClick();
-
-		// Set the game code
-		// let game_code = getGameCode();
-		let game_code = (IS_TEST_RUN) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
-		CURR_GAME_CODE = game_code;
-		document.getElementById("game_code").innerHTML = game_code;
-
-		// Set the appropriate list based on DEMO, TEST, or real game
-		if(IS_DEMO_RUN || IS_TEST_RUN)
-		{
-			let list_id = (IS_TEST_RUN) ? MyTrello.test_list_id : MyTrello.demo_list_id;
-			MyTrello.set_current_game_list(list_id);
-			Logger.log("Current Game List ID: " + list_id);
-		} 
-		else
-		{
-			MyTrello.create_list(game_code,function(data){
-				response = JSON.parse(data.responseText);
-				MyTrello.set_current_game_list(response["id"]);
-				CURR_LIST_ID = response["id"];
-				Logger.log("Current Game List ID: " + MyTrello.current_game_list_id);
-			});
-		}
-	}
-
-/******************* EVENT LISTENERS ************************/
-
-	// Adds the listeners to the category columns once loaded
-	function addListenerCategoryClick()
-	{
-		var categories = document.querySelectorAll(".category_title");
-		categories.forEach(function(cell){
-			cell.addEventListener("click", onCategoryClick);
-		});
-	}
-
-	// Add listeners to the game cells;
-	function addListenerQuestionClick()
-	{
-		var cells = document.querySelectorAll(".category_option");
-		cells.forEach(function(cell){
-			cell.addEventListener("click", onQuestionClick);
-		});
-	}
-
 	//Reveal the name of a category that is not visible yet
 	function onCategoryClick(event)
 	{
@@ -399,6 +626,15 @@
 		}
 	}
 
+	// Show all the categories by default;
+	function onCategoryClickAuto()
+	{
+		categories = document.querySelectorAll(".category_title");
+		categories?.forEach((obj) => {
+			obj.click();
+		});
+	}
+
 	// Prevent the page accidentally closing
 	function onClosePage(event)
 	{
@@ -409,10 +645,8 @@
 	// Openning a question 
 	function onOpenQuestion(cell)
 	{
-		// Rest timer and button to assign scores;
+		// Rest timer and button to assign scores (if not live host view)
 		Timer.resetTimer();
-		document.getElementById("assignScoresButton").disabled = true; 
-
 
 		// Get the question key from the clicked cell
 		let key = cell.getAttribute("data-jpd-quest-key");
@@ -422,7 +656,6 @@
 		if(!proceed){ return; }
 
 		// Set the current question key to the key of the opened question
-		// CURRENT_QUESTION_KEY = key;
 		ASKED_QUESTIONS.push(key);
 
 		Logger.log("Loading Question");
@@ -454,16 +687,24 @@
 		questionValue = isNaN(questionValue) ? 0 : questionValue;
 		questionValue = (isDailyDouble) ? (2 * questionValue) : questionValue;
 		
-		// Calculate the value for the points;
-		// let questionValue2 = (isDailyDouble) ? 2 * value : IS_FINAL_JEOPARDY ? getMaxPossibleWager() : isNaN(value) ? "n/a" : value;
-
+		// Load the different sections
 		loadQuestionViewSection("question_block", question, mode, true);
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
-		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
-		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
 
+		if (IS_LIVE_HOST_VIEW)
+		{
+			// Auto-show the answer block in this view
+			document.getElementById("answer_block")?.classList.remove("hidden");
+		}
+		else  // do these things if NOT live host view
+		{
+			loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
+			loadQuestionViewSection("correct_block", undefined, mode, false, "1");
+			document.getElementById("assignScoresButton").disabled = true; 
+		}
+		
 		// Show the question section
 		document.getElementById("question_view").classList.remove("hidden");
 
@@ -477,9 +718,9 @@
 		if(proceedClose)
 		{
 			window.scrollTo(0,0); // Scroll back to the top of the page;
-			document.getElementById("answer_block").classList.add("hidden");
-			document.getElementById("correct_block").classList.add("hidden");
-			document.getElementById("question_view").classList.add("hidden");
+			document.getElementById("answer_block")?.classList.add("hidden");
+			document.getElementById("correct_block")?.classList.add("hidden");
+			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
 	}
@@ -570,6 +811,16 @@
 		mydoc.showContent("#round_1_row");
 		mydoc.showContent("#finalJeopardyButton");
 
+		// Do these things if LIVE HOST
+		if(IS_LIVE_HOST_VIEW)
+		{
+			mydoc.hideContent("#teams_table");
+			mydoc.hideContent("#teams_sync_section");
+
+			// Auto-show the headers
+			onCategoryClickAuto();
+		}
+
 		// Set a comment indicating the game is being played
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -630,9 +881,12 @@
 	}
 
 	// Sync the teams
-	function onSyncTeams(selectPlayer)
+	function onSyncTeams()
 	{
-		MyTrello.get_cards(MyTrello.current_game_list_id, function(data){
+		// Don't try to sync teams if live host view
+		if(IS_LIVE_HOST_VIEW){ return; }
+
+		MyTrello.get_cards(CURR_LIST_ID, function(data){
 
 			response = JSON.parse(data.responseText);
 			response.forEach(function(obj){
@@ -789,208 +1043,6 @@
 	}
 
 
-/************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
-
-	function create_game_board()
-	{
-		Logger.log("Creating the Game Board.");
-
-		// Two "boards" - regular round and final jeopardy
-		var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
-		var final_board = "<tr id=\"final_jeopardy_row\" class=\"hidden\">";
-
-		// Get categories;
-		let categories = JeopardyGame.getCategories();
-		let categoriesLength = categories.length-1;
-
-		categories.forEach(function(category){
-
-			isFinalJeopardy = category.isFinalJeopardy();
-
-			// Properties for the table rows
-			colspan 		= (isFinalJeopardy) ? 3 : 1;
-			dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
-
-			category_name 	= category.getName();
-			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
-
-			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title' data-jpd-category-name=\"${category_name}\">${preFilledCategoryName}</th></tr>`;
-			
-			// Set the questions 
-			category_questions_row	= "";
-			questions = category.getQuestions();
-			questions.forEach(function(question){
-				
-
-				quest = question.getQuestion();
-				ans   = question.getAnswer();
-				key = (isFinalJeopardy) ? category_name : (category_name + " - " + quest["value"]);
-
-				QA_MAP[key] = {
-					"question": quest,
-					"answer"  : ans
-				}
-				
-				category_questions_row += `<tr><td class='category category_option' data-jpd-quest-key=\"${key}\">${quest["value"]}</tr></td>`;
-			});
-			
-			// The column
-			let column = `<td colspan=\"colspan\" style='width:${dynamic_width}%;'><table class='category_column'>${category_name_row} ${category_questions_row}</table></td>`;
-
-			if(isFinalJeopardy)
-			{
-				final_board += column;
-			}
-			else
-			{
-				// Add column for category to Game Board
-				main_board += column;
-			}
-				
-			// }
-		});
-
-		// Close both rows;
-		main_board += "</tr>";
-		final_board += "</tr>";
-
-		// game_board += "</tr><tr id=\"final_jeopardy_row\" class=\"hidden\">";
-
-		let game_board = main_board + final_board;
-
-		document.getElementById("game_board_body").innerHTML = game_board;
-	}
-
-	// Loading spinning gif
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Set loading results
-	function set_loading_results(value)
-	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.innerText = value;
-	}
-
-	// Show the Toggle Button for How To
-	function showHowToPlayButton()
-	{
-		// Show the option for the help text if it is a demo game;
-		if(IS_DEMO_RUN)
-		{ 
-			mydoc.showContent("#toggleHelpTextButton");
-			toggleHowToSections();
-		}
-	}
-
-	// Showing the How To help text
-	function toggleHowToSections()
-	{
-		if(HOW_TO_IS_HIDDEN)
-		{
-			mydoc.showContent(".how_to_play_section");
-			HOW_TO_IS_HIDDEN = false;
-		}
-		else
-		{
-			mydoc.hideContent(".how_to_play_section");
-			HOW_TO_IS_HIDDEN = true;
-		}
-	}
-
-	// Load the content into the question block;
-	//	>> If the [mode] passed in is in the list [hidIfMod] list, then it will be hidden
-	function loadQuestionViewSection(sectionID, content, mode, showInFinalJeopardy, hideIfMode="")
-	{
-		let element = document.getElementById(sectionID);
-		let modesToHideFor = (hideIfMode) ?? "-1";
-		if(element != undefined)
-		{
-			// Only set the content if it is defined;
-			if(content != undefined)
-			{
-				element.innerHTML = content;
-			}
-
-			// Hide for any mode passed in
-			if(modesToHideFor.includes(mode))
-			{
-				element.classList.add("hidden");
-			}
-			else
-			{
-				element.classList.remove("hidden")
-			}
-
-			// Adjust visibility during final jeopardy
-			if(IS_FINAL_JEOPARDY)
-			{
-				if(showInFinalJeopardy){  element.classList.remove("hidden"); }
-				if(!showInFinalJeopardy){  element.classList.add("hidden"); }
-			}
-		}
-
-	}
-
-	// Loads the list of teams in the "Correct answer" section to pick who got it right
-	function loadTeamNamesInCorrectAnswerBlock()
-	{
-		formattedTeams = getWhotGotItRight_Section();
-		let whoGotItRight = document.getElementById("who_got_it_right_table");
-		whoGotItRight.innerHTML = formattedTeams;
-	}
-
-	// Hide button to set team by name
-	function hideSetTeamButton()
-	{
-		// hide any direct buttons if visible
-		var buttons = document.querySelectorAll(".setTeamDirectly");
-		if(buttons.length > 0)
-		{
-			buttons.forEach(function(button){
-				button.classList.add("hidden");
-			});
-		}
-	}
-
-	// Sort the list of teams to determine the leader
-	function updateLeader()
-	{
-
-		table_body = document.getElementById("teams_block");
-
-		current_teams = Array.from(document.getElementsByClassName("team_row"));
-		sorted_teams = current_teams.sort(function(a,b){
-							a_score = a.getElementsByClassName("team_score")[0].innerText;
-							b_score = b.getElementsByClassName("team_score")[0].innerText;
-							return b_score - a_score;
-						});
-
-		sorted_teams_html = "";
-		table_body.innerHTML = "";
-
-		//  Update the table with the correct order
-		sorted_teams.forEach(function(row){ 
-			table_body.innerHTML += row.outerHTML;
-		});
-
-		updateLeaderColors()
-	}
-	
 
 
 /********** HELPER FUNCTIONS -- GETTERS **************************************/
@@ -1164,33 +1216,6 @@
 		return content;
 	}
 
-	//Purpose: Generates 4 random characters to create a team code;
-	function getGameCode()
-	{
-		
-		let game_code = "";
-
-		if(IS_DEMO_RUN || IS_TEST_RUN)
-		{
-			game_code = (IS_TEST_RUN) ? "TEST" : "DEMO";
-		}
-		else
-		{
-			let char1 = getRandomCharacter();
-			let char2 = getRandomCharacter();
-			let char3 = getRandomCharacter();
-			let char4 = getRandomCharacter();
-
-			let chars = char1 + char2 + char3 + char4;
-
-			// Make sure the code is not demo;
-			game_code = ( isReservedCode(chars) ) ? getGameCode() : chars;
-		}
-
-		Logger.log("Game Code = " + game_code);
-
-		return game_code
-	}
 	// Get the game media based on a given value
 	function getGameMediaURL(value)
 	{
@@ -1387,6 +1412,7 @@
 		setTimeout(function(){
 			let teams = Array.from(document.querySelectorAll(".team_name"));
 			teams.forEach(function(obj){
+
 				card_id = obj.getAttribute("data-jpd-team-code");
 				MyTrello.update_card(card_id, "");
 			});
@@ -1487,9 +1513,89 @@
 		}
 	}
 
+	// Set the current LIST ID to use for the game
+	function setListID()
+	{
+		// Set the appropriate list based on DEMO, TEST, or real game
+		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
+		{
+			let list_id = (IS_DEMO_RUN) ? MyTrello.demo_list_id :  MyTrello.test_list_id ;
+			CURR_LIST_ID = list_id;
+			Logger.log("Current Game List ID: " + list_id);
+		} 
+		else
+		{
+			MyTrello.create_list(game_code,function(data){
+				response = JSON.parse(data.responseText);
+				CURR_LIST_ID = response["id"];
+				Logger.log("Current Game List ID: " + CURR_LIST_ID);
+			});
+		}
+	}
+
+	// Set Timer values
+	function setTimerDetails()
+	{
+		// Set timer callback
+		if(Timer)
+		{
+			Timer.setTimeUpCallback(function(){
+				document.getElementById("time_up_sound").play();
+			});
+
+			// Set the default timer
+			time_setting = SETTINGS_MAPPING["Time to Answer Questions"];
+			if(time_setting.hasOwnProperty("customValue") && time_setting["customValue"] != "")
+			{
+				let time = Number(time_setting["customValue"]);
+				time = isNaN(time) ? Timer.getTimerDefault() : time;
+				Timer.setTimerDefault(time);
+			}
+		}
+
+		
+	}
+
 
 /********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
 
+	// Validate the spreadsheet data
+	function isValidSpreadsheet(spreadsheetData)
+	{
+		isValid = true; 
+
+		// First, determine if the data is as expected
+		expectedHeaders = [
+				"Category Name",
+				"Score Value",
+				"Daily Double?",
+				"Question (Text)",
+				"Question (Audio)",
+				"Question (Image)",
+				"Question (URL)",
+				"Answer (Text)",
+				"Answer (Audio)",
+				"Answer (Image)",
+				"Answer (URL)"
+			];
+
+		givenHeaders = spreadsheetData["headers"] ?? [];
+		givenRows = spreadSheetData["rows"];
+
+		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
+		isExpecedRowCount = (spreadsheetData["rows"]?.length ?? 0) == 31;
+
+		isValid = (isExpectedHeaders && isExpecedRowCount)
+
+		if(!isValid)
+		{
+			err_msg = "ERROR: Your spreadhsheet is not valid. Please refer to the instructions/template (on the Edit page) for a valid sheet configuration.\n\n";
+			gameNotification(err_msg, true);
+		}
+
+		return isValid;
+	}
+	
 	// check if a current player has been set
 	function isCurrentPlayerSet()
 	{
@@ -1551,6 +1657,8 @@
 	// Check if the question can be opened;
 	function canOpenQuestion(key)
 	{
+		// Don't try to do any validation if live host view
+		if(IS_LIVE_HOST_VIEW){ return true; }
 
 		let canOpen = true;
 
@@ -1565,9 +1673,15 @@
 
 	function hasAssignablePoints()
 	{
+		// Don't try to do any validation if live host view
+		if(IS_LIVE_HOST_VIEW){ return false; }
+
 		let assignScoresButton = document.querySelector("#assignScoresButton");
 		return (assignScoresButton.disabled == false)
 	}
+
+	
+	
 	
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
@@ -1670,44 +1784,4 @@
 			formatted = `<a class='answer_link' href=\"${value}\" target='_blank'>${value}</a>`;
 		}
 		return formatted;
-	}
-
-	function formatRules(settingsJSON)
-	{
-
-		if(settingsJSON != undefined && settingsJSON.length > 0)
-		{
-			rulesListItems = "";
-
-			settingsJSON.forEach(function(setting){
-
-				// let name = setting["label"];
-				let ruleObj = setting["rule"];
-
-				let ruleName = setting["name"];
-				let optionID = setting["option"];
-				let customValue = setting["value"] ?? "";
-
-				// Create the Setting mapping:
-				SETTINGS_MAPPING[ruleName] = {"option": optionID, "customValue": customValue };
-
-				let rule = ruleObj["rule"];
-				let subRules = ruleObj["subRules"];
-
-				
-
-				ruleElement = `<strong class='rule'>${rule}</strong>`
-				subRulesElements = "";
-				
-				subRules.forEach(function(sub){
-					subRulesElements += `<li class='subrule'>${sub}</li>`
-				});
-
-				// Create the overall rule item; Append to the list
-				rulesListItems += `<li class='rule_item'>${ruleElement}<ul>${subRulesElements}</ul></li>`
-			});
-
-			// Set the rules
-			document.getElementById("rules_list").innerHTML = rulesListItems;
-		}
 	}

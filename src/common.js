@@ -6,97 +6,12 @@
 **********************************************************************************************************/
 
 // customObject = Pass in a custom object with variables/values that you would want to use with the data returned from the ajax call 
-
-/*
-	This object is used to make local server AJAX calls easier; 
-*/
-
 // EXTENSION METHODS 
 	// if (typeof Array.prototype.contains !== "function"){ Array.prototype.contains = function(value){ return this.includes(value); } }
 	// if (typeof Object.prototype.contains !== "function"){ Object.prototype.contains = function(value) { return this[value] != undefined; } }
 
 
-const Logger = { 
-
-	logged_data: [],
-
-	log: function(content, printLog=false){ 
-		this.logged_data.push(content);
-		if(printLog){ this.print_logged_data(content)}
-	},
-
-	show_log: function(){
-		logged_data.forEach(function(obj){
-			console.log(obj);
-		});
-	},
-
-	print_logged_data: function(content){
-		console.log(content);
-	},
-
-	errorHandler: function(err){
-					console.log("ERROR");
-					console.log(err);
-				}
-}
-
-const Helper = {
-	_getRandomCharacter: function(){
-		characters = "abcdefghijklmnopqrstuvwxyz";
-		randChar = Math.floor(Math.random()*characters.length);
-		return characters[randChar].toUpperCase();
-	},
-
-	_isReservedCode: function(code){
-		var reserved = ["DEMO", "TEST"];
-		return reserved.includes(code.toUpperCase());
-	},
-
-	getCode: function(numChars=4){
-		let chars = "";
-
-		for(var idx = 0; idx < numChars; idx++)
-		{
-			chars += Helper._getRandomCharacter();
-		}
-
-		var code = ( Helper._isReservedCode(chars) ) ? Helper.getCode() : chars;
-		return code;
-	},
-
-	getDate: function(){
-		let dd = new Date();
-		let year = dd.getFullYear().toString();
-		let monthIdx = dd.getMonth()+1;
-		let month = (monthIdx<9) ? "0"+monthIdx : monthIdx;
-		let dayIdx = dd.getDate();
-		let day = (dayIdx < 9 ) ? "0"+dayIdx : dayIdx;
-		var myDateObj = { "year":year, "month":month, "day":day };
-		return myDateObj;
-	},
-
-	getDateFormatted: function(format=undefined){
-		let date = Helper.getDate();
-		let year = date["year"];
-		let month = date["month"];
-		let day = date["day"];
-
-		let dateFormatted = `${year}-${month}-${day}`;
-		switch(format)
-		{
-			case "yyyy/mm/dd":
-				dateFormatted = `${year}/${month}/${day}`;
-				break;
-			default:
-				dateFormatted = `${year}-${month}-${day}`;
-				break;
-		}
-		return dateFormatted
-	}
-}
-
-
+// Used for general DOM things
 const mydoc = {
 
 	ready: function(callback){
@@ -132,13 +47,72 @@ const mydoc = {
 		this._toggleClass(selector, "add", "hidden");
 	},
 
+	// Set a cookie; Expiration provided in minutes;
+	setCookie: function(cookieName, cookieValue, expirationMins=undefined, cookiePath=undefined){
+
+		expires = "";
+		if(expirationMins != undefined)
+		{
+			expirationDate = new Date();
+			expirationDate.setTime(expirationDate.getTime() + (expirationMins*60000)); // 60,000 milliseconds seconds a minute;
+			utcDate = expirationDate.toUTCString();
+			expires = `expires=${utcDate};`
+		}
+
+		// Setup path;
+		path = "path=";
+		path += (cookiePath != undefined) ? `${cookiePath};` : "/;";
+
+		// Set full cookie 
+		fullCookie = `${cookieName}=${cookieValue}; ${expires} ${path}`;
+
+		document.cookie = fullCookie;
+	},
+
+	// Get a cookie by name
+	getCookie: function(cookieName){
+
+		// Set default return value
+		returnValue = "";
+
+		// Get all the cookies; Split up into list
+		let decodedCookies = decodeURIComponent(document.cookie);
+		let cookieList = decodedCookies.split(";");
+
+		// Loop through cookies
+		for(let idx = 0; idx < cookieList.length; idx++)
+		{
+			cookie = cookieList[idx];
+			cookiePair = cookie.split("=");
+
+			cName = (cookiePair[0] ?? "").trim();
+			cValue = (cookiePair[1] ?? "").trim();
+
+			if (cName != cookieName) continue; 
+
+			// Set the return value to the value of the cookie;
+			returnValue = cValue; 
+		}
+
+		return returnValue;
+	},
+
+	deleteCookie: function(name){
+
+	},
+
 	addClass: function(selector, className){
 		mydoc._toggleClass(selector, "add", className);
 	},
 
 	removeClass: function(selector, className){
-		console.log(selector + " " + className);
+		Logger.log(selector + " " + className);
 		mydoc._toggleClass(selector, "remove", className);
+	},
+	
+	// A public warapper for the helper function within
+	toggleClass: function(selector, action, className){
+		mydoc._toggleClass(selector, action, className);
 	},
 
 	isValidValue : function(value)
@@ -183,6 +157,19 @@ const mydoc = {
 		});
 		return query_map;
 	},
+
+	get_query_map_from_url: function(urlObject){
+		let query_string = urlObject.search;
+		let query = query_string.replace("?", "")
+		var query_map = {}
+		var combos = query.split("&");
+		combos.forEach(function(obj)
+		{
+			let splits = obj.split("=");
+			query_map[splits[0]] = splits[1];
+		});
+		return query_map;
+	},
 	
 	_toggleClass: function(selector, action, className){
 		try
@@ -209,6 +196,7 @@ const mydoc = {
 	}
 };
 
+// Used for general AJAX things
 const myajax = { 
 	
 	GetContentType: function(type){
@@ -295,8 +283,8 @@ const myajax = {
 		let method 	= object["method"];
 		let path 	= object["path"];
 
-		let success = this.isValidFunction(object, "success") ? object["success"] : function(request){console.log(request);};
-		let failure = this.isValidFunction(object, "failure") ? object["failure"] : function(request){console.log(request);};
+		let success = this.isValidFunction(object, "success") ? object["success"] : function(request){Logger.log(request);};
+		let failure = this.isValidFunction(object, "failure") ? object["failure"] : function(request){Logger.log(request);};
 
 		// Setting up the request object
 		var xhttp = new XMLHttpRequest();
@@ -340,9 +328,182 @@ const myajax = {
 		{
 			xhttp.send();
 		}
+	}, 
+
+	GET: function(url, successCallback=undefined, failureCallback=undefined){
+
+		let requestObject = {
+			method: "GET",
+			path : url,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
+		
+	},
+
+	POST: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
+		
+		let requestObject = {
+			method: "POST",
+			path : url,
+			data: dataObj,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
+	},
+
+	PUT: function(url, dataObj, successCallback=undefined, failureCallback=undefined){
+		
+		let requestObject = {
+			method: "PUT",
+			path : url,
+			data: dataObj,
+			success: successCallback,
+			failure : failureCallback
+		};
+
+		// Submit the ajax request;
+		myajax.AJAX(requestObject);
 	}
 }
 
+// Used for logging
+const Logger = { 
+
+	logged_data: [],
+
+	log: function(content, printLog=false){ 
+		Logger.logged_data.push(content);
+		if(printLog){ this.print_logged_data(content)}
+	},
+
+	show_log: function(){
+		Logger.logged_data.forEach(function(obj){
+			console.log(obj);
+		});
+	},
+
+	print_logged_data: function(content){
+		console.log(content);
+	},
+
+	errorMessage: function(err){
+					console.error("ERROR");
+					console.error(err);
+				},
+
+		
+	
+}
+
+const MyNotification = {
+
+	// Toggles the given classname on an existing object; If "forceAdd" - it will be no matter what
+	toggle: function(identifier, className, force=undefined){
+
+		let ele = document.querySelector(identifier) ?? undefined
+		if(ele == undefined) return; 
+
+		hasClass = ele.classList.contains(className);
+		forceAction = '"'
+		if(force != undefined)
+		{
+			forceAction = (force) ? "add" : "remove";
+		}
+		action = (forceAction != "") ? forceAction : hasClass ? "remove" : "add";
+
+		mydoc.toggleClass(identifier, action, className);
+	},
+
+	// Adds content to an HTML block; Can include a custom class to add to the HTML block
+	notify: function(identifier, content, className=undefined){
+
+		ele = document.querySelector(identifier) ?? undefined;
+		if(ele == undefined) return; 
+
+		// Set the content
+		ele.innerHTML = content;
+
+		// If Class name included, ensure it is set;
+		if(className != undefined)
+		{
+			mydoc.toggleClass(identifier, "add", className);
+		}
+	},
+
+	// Remove content from an HTML block
+	clear: function(identifier, className=undefined){
+		MyNotification.notify(identifier, "");
+		if(className)
+		{
+			mydoc.toggleClass(identifier, "remove", className);
+		}
+	}
+}
+
+// Misc. helper things
+const Helper = {
+	_getRandomCharacter: function(){
+		characters = "abcdefghijklmnopqrstuvwxyz";
+		randChar = Math.floor(Math.random()*characters.length);
+		return characters[randChar].toUpperCase();
+	},
+
+	_isReservedCode: function(code){
+		var reserved = ["DEMO", "TEST"];
+		return reserved.includes(code.toUpperCase());
+	},
+
+	getCode: function(numChars=4){
+		let chars = "";
+
+		for(var idx = 0; idx < numChars; idx++)
+		{
+			chars += Helper._getRandomCharacter();
+		}
+
+		var code = ( Helper._isReservedCode(chars) ) ? Helper.getCode() : chars;
+		return code;
+	},
+
+	getDate: function(){
+		let dd = new Date();
+		let year = dd.getFullYear().toString();
+		let monthIdx = dd.getMonth()+1;
+		let month = (monthIdx<9) ? "0"+monthIdx : monthIdx;
+		let dayIdx = dd.getDate();
+		let day = (dayIdx < 9 ) ? "0"+dayIdx : dayIdx;
+		var myDateObj = { "year":year, "month":month, "day":day };
+		return myDateObj;
+	},
+
+	getDateFormatted: function(format=undefined){
+		let date = Helper.getDate();
+		let year = date["year"];
+		let month = date["month"];
+		let day = date["day"];
+
+		let dateFormatted = `${year}-${month}-${day}`;
+		switch(format)
+		{
+			case "yyyy/mm/dd":
+				dateFormatted = `${year}/${month}/${day}`;
+				break;
+			default:
+				dateFormatted = `${year}-${month}-${day}`;
+				break;
+		}
+		return dateFormatted
+	}
+}
+
+// If voice things are needed
 const Speaker = {
 
 	voicesMap: {"One":"Two"},
@@ -361,7 +522,6 @@ const Speaker = {
 					Speaker.selectedVoice = current_voice;
 				}
 			  	Speaker.voicesMap[current_voice.name] = voices[i];
-			  	// console.log(current_voice);
 			}
 		}
 	},
@@ -382,7 +542,6 @@ const Speaker = {
 	},
 
 	setSelectedVoice: function(name){
-		console.log(Speaker.voicesMap);
 		
 		let voice = Speaker.voicesMap[name];
 		if(voice != undefined)
@@ -411,8 +570,9 @@ const Speaker = {
 			stillSpeaking = setInterval(function(){
 				if(!synth.speaking)
 				{
-					console.log("Done Speaking");
+					Logger.log("Done Speaking");
 					clearInterval(stillSpeaking);
+					
 					//  Do the sub description 
 					setTimeout(function(){
 						msg.text = subtext;

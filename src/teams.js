@@ -157,7 +157,7 @@
 				});
 			}
 
-		}, Logger.errorHandler);
+		}, Logger.errorMessage);
 	}
 
 	function loadTeamUrl(teamID)
@@ -260,7 +260,7 @@
 					}
 				});
 			});
-		}, Logger.errorHandler);
+		}, Logger.errorMessage);
 
 		setTimeout(() =>{
 			setLatestScores();

@@ -95,10 +95,8 @@ function print_data(data){
 
 	document.getElementById("test_results").innerHTML = "";
 
-	// console.log(typeof(response));
 	let isArray = Array.isArray(response);
 	let isObject = (typeof(response) == "object")
-	// console.log(isArray);
 	if (isArray)
 	{
 		response.forEach(function(obj){
