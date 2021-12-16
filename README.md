@@ -23,4 +23,4 @@ You can run this site locally using the following steps:
 	* **Using Docker:** `docker-compose up -d --build`
 
 * Open site in browser at `localhost:<port>`
-	* Replace "<port>" with whatever port number you put in the command (or in the docker file)
+	* Replace "`<port>`" with whatever port number you put in the command (or in the docker file)
