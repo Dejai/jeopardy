@@ -146,23 +146,30 @@
  
 /* QUESTION VIEW */
 	#question_view { z-index:100; width:100%; position:fixed; bottom:0; top:0; background-color:#060CE9; color:#F5F5F5; text-align:center; overflow-y: scroll; }
-	#question_block { font-size:45px; width:55%; padding:3%; margin:auto; border:1px solid #F5F5F5; margin-bottom:1%; }
-	#answer_block { font-size:44px; width:35%; padding:2%; margin:auto; border:1px solid #F5F5F5; }
+	/* #question_block { font-size:45px; width:55%; padding:10%; margin:auto; border-bottom:1px solid #F5F5F5; margin-bottom:1%; } */
+	/* #answer_block { font-size:45px; width:55%; padding:10%; margin:auto; border-top:1px solid #F5F5F5; } */
+	.quest_answ_block { margin:auto; transition: all 1s ease-out; margin-bottom:2%; border-bottom:4px solid #F5F5F5; }
+	.quest_answ_block.visibleBlock { font-size:45px; width:75%; padding-top:5%; padding-bottom:5%;   }
+	.quest_answ_block.hiddenBlock { font-size:0px; width:0px; padding:0%; border:none; }
 	#time_view { width:45%; text-align:center; margin:auto; }
 	#time_view table {width: 100%;}
 	#timer_second { margin-right:2%; }
-	.timer_value { font-size:65px; }
+	.timer_value { font-size:45px; }
 	.timer_buttons {  cursor:pointer; font-size:45px; }
+	#value_header { position:fixed; top:7px; right:7px; font-size:22px; width:20%; font-weight:bolder;}
 	#revealAnswerButton { font-size:15px; cursor:pointer; }
 	.answer_link { color:white; font-size:50%; }
 	
-	#correct_block { width: 55%; margin:auto; }
+	#correct_block { padding-top:1%; width: 55%; margin:auto; }
 	/* Table */
-	#correct_block table { width:100%; text-align:center; }
-	#correct_block table thead th { border-bottom: 2px solid white;}
+	#correct_block table { width:100%; text-align:center; border-collapse: collapse; }
+	#correct_block table thead th { border-bottom: 5px double navy;}
 	#correct_block table input { font-size:140%; cursor:pointer; }
-	#correct_block table tbody tr { border-bottom:1px solid black; } 
-	#correct_block table > tbody > tr:last-child > td { border-bottom: 2px solid white;}
+	/* #correct_block table tbody tr { border-bottom:1px solid black; }  */
+	#correct_block table > tbody > tr:last-child > td { border-bottom: 5px double navy;}
 	#assign_scores_block { padding:1%; text-align:right; }
 
 	#close_question_view { position:fixed; z-index:1000; top:0; left:0; width:10%; padding:1%; text-align:left; cursor:pointer; }
+
+	#who_got_it_right_table tbody tr:hover { background-color:navy; cursor:pointer; }
+	#who_got_it_right_table tbody tr label { cursor:pointer; }

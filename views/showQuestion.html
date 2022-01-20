@@ -7,16 +7,16 @@
 			Click this to close the question popup, or use the ESC key on your keyboard.
 		</span>
 	</span>
-	<div id="question_block"></div>
-	<h2 id="value_header">Value = <span id="value_block"></span></h2>
+	<div id="question_block" class="quest_answ_block visibleBlock"></div>
+	<span id="value_header">Value: <span id="value_block"></span></span>
 	<p id="reveal_answer_block">
 		<button id="revealAnswerButton" onclick="onRevealAnswer();">Reveal Answer</button>
 	</p>
-	<div id="answer_block"></div>
+	<div id="answer_block" class="quest_answ_block hiddenBlock"></div>
 
 	<div id="correct_block" class="hidden">
 		<div>
-			<h2>Who Got It Right?</h2>
+			<h3>Who got it right?</h3>
 			<p class=" how_to_play_section hidden instruction center_section_50">
 				This section shows the list of teams &amp; their answers. <br/>
 				Select who got it right, and when you close the popup, the points will be applied to their score.

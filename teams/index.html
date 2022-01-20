@@ -44,15 +44,15 @@
 
 		<div id="enter_answers_section" class="hidden">
 			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
-			<h4>				
+			<h4 style="border-top:3px solid white;border-bottom:3px solid white; padding:1%">				
 				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
 				<br/>
 				Your Score: <span id="team_score" class="highlight_team_value">0</span>
 				<br/><br/>
 				<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;text-decoration:none;font-size:smaller">
 					&nbsp; Refresh Scores
-				</span>
-				<br/><span style="font-size:60%">(automatic refresh every 60 seconds)</span>
+				</span>&nbsp;<span id="refresh_info_icon" onclick="onRefreshInfoClick()" style="color:red; font-size:smaller;" title="Automatically refreshes every 60 seconds." class="fa fa-question-circle pointer" style="font-size:60%"></span>
+				<span id="refresh_info_message" style="font-size:smaller;" class="hidden"><br/>Automatically refreshes every 60 seconds.</span>
 			</h4>
 
 			<input id="team_card_id" type="text" name="team_card_id" value="" hidden>
@@ -64,11 +64,11 @@
 			</button>
 			<div id="submitted_answer_section" class="hidden">
 				<h4>
-					<span class="submitted_answer">Submitted Answer:</span><br/>
+					<span class="submitted_answer">Last Submitted Answer:</span><br/>
 					<span id="submitted_answer_value" >answer</span>
 				</h4>
 				<h4 id="submitted_wager_section" class="hidden">
-					<span class="submitted_answer">Submitted Wager:</span><br/>
+					<span class="submitted_answer">Last Submitted Wager:</span><br/>
 					<span id="submitted_wager_value" ></span>
 				</h4>
 			</div>

@@ -718,8 +718,19 @@
 		if(proceedClose)
 		{
 			window.scrollTo(0,0); // Scroll back to the top of the page;
-			document.getElementById("answer_block")?.classList.add("hidden");
-			document.getElementById("correct_block")?.classList.add("hidden");
+
+			mydoc.hideContent("#answer_block");
+			mydoc.hideContent("#correct_block");
+			mydoc.showContent("#revealAnswerButton")
+
+			mydoc.addClass("#question_block", "visibleBlock");
+			mydoc.removeClass("#question_block", "hiddenBlock");
+
+			mydoc.addClass("#answer_block", "hiddenBlock");
+			mydoc.removeClass("#answer_block", "visibleBlock");
+
+			// document.getElementById("answer_block")?.classList.add("hidden");
+			// document.getElementById("correct_block")?.classList.add("hidden");
 			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
@@ -793,6 +804,14 @@
 		// Show the sections
 		mydoc.showContent("#answer_block");
 		mydoc.showContent("#correct_block");
+		mydoc.hideContent("#revealAnswerButton")
+		mydoc.hideContent("#question_block audio")
+
+		mydoc.removeClass("#question_block", "visibleBlock");
+		mydoc.addClass("#question_block", "hiddenBlock");
+
+		mydoc.removeClass("#answer_block", "hiddenBlock");
+		mydoc.addClass("#answer_block", "visibleBlock");
 	}
 
 	// Reveal the game board & set initial team
@@ -951,6 +970,12 @@
 		`;
 
 		document.getElementById("teams_block").innerHTML += content;
+
+		// If game was already under way, hide the set team button
+		if(CURRENT_TEAM_IDX > 0)
+		{
+			hideSetTeamButton()
+		}
 	}
 
 	// Helper if nobody got it right
@@ -1188,10 +1213,10 @@
 	// Get an individual Row+Checkbox for a team;
 	function getWhotGotItRight_CheckBoxRow(teamName, teamCode, includeWager=false)
 	{
-		label = `<td><label>${teamName}</label><span>&nbsp;</span></td>`;
-		answer = `<td><p class="team_answer" data-jpd-team-code="${teamCode}"></p></td>`;
-		wager = (includeWager) ? `<td><p class="team_wager_question_view" data-jpd-team-code="${teamCode}"></p></td>`: "";
-		input = `<td><input type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}" onchange="onTeamGotItRight()"></td>`;
+		label = `<td><label for="checkboxrow_${teamCode}">${teamName}</label><span>&nbsp;</span></td>`;
+		answer = `<td><label for="checkboxrow_${teamCode}" class="team_answer" data-jpd-team-code="${teamCode}"></label></td>`;
+		wager = (includeWager) ? `<td><label for="checkboxrow_${teamCode}" class="team_wager_question_view" data-jpd-team-code="${teamCode}"></label></td>`: "";
+		input = `<td><input id="checkboxrow_${teamCode}" type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}" onchange="onTeamGotItRight()"></td>`;
 		return "<tr>" + label + answer + wager + input + "</tr>";
 	}
 
@@ -1582,8 +1607,13 @@
 		givenHeaders = spreadsheetData["headers"] ?? [];
 		givenRows = spreadSheetData["rows"];
 
+
+		console.log(expectedHeaders)
+		console.log(givenHeaders)
+		console.log(spreadsheetData["rows"])
+
 		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
-		isExpecedRowCount = (spreadsheetData["rows"]?.length ?? 0) == 31;
+		isExpecedRowCount = (spreadsheetData["rows"]?.length ?? 0) >= 30;
 
 		isValid = (isExpectedHeaders && isExpecedRowCount)
 
@@ -1621,12 +1651,12 @@
 			}
 		});
 
-		if( totalMissing > 0 )
+		if( totalMissing > 0 && !IS_TEST_RUN )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (totalMissing == 0);
+		let headersVisible = (totalMissing == 0 || IS_TEST_RUN);
 		return headersVisible;
 	}
 

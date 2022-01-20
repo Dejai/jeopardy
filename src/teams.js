@@ -171,14 +171,15 @@
 	{
 		let card_id = document.getElementById("team_card_id").value;
 		let answer = document.getElementById("answer").value;
-			document.getElementById("answer").value = "";
 		let wager = document.getElementById("wager").value;
-			document.getElementById("wager").value = "";
-
 
 		MyTrello.update_card(card_id, answer);	
+
+		// Clear answers
 		document.getElementById("submitted_answer_section").classList.remove("hidden");
 		document.getElementById("submitted_answer_value").innerText = answer;
+		document.getElementById("answer").value = "";
+		document.getElementById("wager").value = "";
 
 		// Attempt to submit wager as well
 		if(wager != "" && Number.isInteger(Number(wager)))
@@ -208,6 +209,17 @@
 		event.returnValue='';
 	}
 
+
+	// Show details about refresh
+	function onRefreshInfoClick()
+	{
+		mydoc.showContent("#refresh_info_message")
+		setTimeout(()=>{
+			mydoc.hideContent("#refresh_info_message");
+		}, 2000)
+	}
+
+	refresh_info_icon
 
 /*************** POLLING FOR SCORES *******************************************/ 
 
@@ -274,8 +286,8 @@
 		let your_score = TEAM_SCORES[TEAM_ID];
 		let high_score = Math.max(...Object.values(TEAM_SCORES));
 
-		your_score = IsNaN(your_score) ? 0 : your_score;
-		high_score = IsNaN(high_score) ? 0 : high_score;
+		your_score = isNaN(your_score) ? 0 : your_score;
+		high_score = isNaN(high_score) ? 0 : high_score;
 
 		// Set the scores;
 		document.getElementById("team_score").innerText = your_score;

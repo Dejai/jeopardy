@@ -92,7 +92,7 @@ const Rules =
 			"id": 1,
 			"label": "Classic",
 			"type": "select",
-			"rule": "A player can only wager as many points as they have, when the final round begins",
+			"rule": "For FINAL JEOPARDY, a player can only wager as many points as they have.",
 			"subRules": [],
 			"suggestion" : ""
 		},
