@@ -149,7 +149,7 @@
 	/* #question_block { font-size:45px; width:55%; padding:10%; margin:auto; border-bottom:1px solid #F5F5F5; margin-bottom:1%; } */
 	/* #answer_block { font-size:45px; width:55%; padding:10%; margin:auto; border-top:1px solid #F5F5F5; } */
 	.quest_answ_block { margin:auto; transition: all 1s ease-out; margin-bottom:2%; border-bottom:4px solid #F5F5F5; }
-	.quest_answ_block.visibleBlock { font-size:45px; width:75%; padding-top:5%; padding-bottom:5%;   }
+	.quest_answ_block.visibleBlock { font-size:45px; width:75%; padding-top:7%; padding-bottom:7%;   }
 	.quest_answ_block.hiddenBlock { font-size:0px; width:0px; padding:0%; border:none; }
 	#time_view { width:45%; text-align:center; margin:auto; }
 	#time_view table {width: 100%;}
@@ -173,3 +173,26 @@
 
 	#who_got_it_right_table tbody tr:hover { background-color:navy; cursor:pointer; }
 	#who_got_it_right_table tbody tr label { cursor:pointer; }
+
+/* Tooltips for How to Play */
+
+	.howtoplay_tooltip { position: relative }
+
+	.howtoplay_tooltip .tooltiptext { position: absolute; z-index: 1; padding:1%; font-size:20px; border-color:red; background-color:red; color:white; padding:5px 0; border-radius:6px; text-align:center; transition: opacity 2s; }
+
+	/* Visibility of the tooltiptext*/
+	/* .tooltiptext.tooltipvisible { visibility:visible; opacity:1 } */
+	.tooltiptext.tooltiphidden { visibility:hidden; opacity:0 }
+
+	/* The tooltip carrot */
+	.howtoplay_tooltip .tooltiptext::after { content: ""; position: absolute; border-width:10px; border-style: solid; }
+
+	/* Position the tooltip text and carrot */
+	.tooltiptext.tooltipabove {  width:400px; bottom: 105%; left: -25%; margin-left: -60px; }
+	.tooltiptext.tooltipabove::after { top:100%; left:50%; margin-left:-5px; border-color: red transparent transparent transparent; }
+
+	.tooltiptext.tooltipright { width:400px; margin-left:20px; }
+	.tooltiptext.tooltipright::after { right:100%; top: 20%; margin-left:5px; border-color: transparent red transparent transparent; }
+
+	.tooltiptext.tooltipleft { width:400px; margin-right:20px; }
+	.tooltiptext.tooltipleft::after { top: 20%; right:-5%; margin-left:5px; border-color: transparent transparent transparent red; }

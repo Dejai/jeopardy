@@ -1,12 +1,6 @@
 <div>
 	
-	<span id="close_question_view" onclick="onCloseQuestion()">
-		CLOSE
-		<br/>
-		<span class="how_to_play_section hidden">
-			Click this to close the question popup, or use the ESC key on your keyboard.
-		</span>
-	</span>
+	<span id="close_question_view" onclick="onCloseQuestion()">CLOSE</span>
 	<div id="question_block" class="quest_answ_block visibleBlock"></div>
 	<span id="value_header">Value: <span id="value_block"></span></span>
 	<p id="reveal_answer_block">
@@ -16,11 +10,15 @@
 
 	<div id="correct_block" class="hidden">
 		<div>
-			<h3>Who got it right?</h3>
-			<p class=" how_to_play_section hidden instruction center_section_50">
-				This section shows the list of teams &amp; their answers. <br/>
-				Select who got it right, and when you close the popup, the points will be applied to their score.
-			</p>
+			
+			<h3>
+				<span class="howtoplay_tooltip"> 
+					Who got it right?
+					<span class='tooltiptext tooltiphidden tooltipright'>
+						Select who got the answer right.
+					</span>
+				</span>
+			</h3>
 			<table id="who_got_it_right_table">
 				<thead>
 					<tr>
@@ -37,8 +35,18 @@
 				<tbody id="team_answers_list"></tbody>
 			</table>
 			<div id="assign_scores_block">
-				<button id="assignScoresButton" class="pointer" onclick="onAssignPoints()" disabled>Assign Points</button>
-				<p class="pointer" onclick="onNobodyCorrect()">Nobody got it correct.</p>
+					<p style="width:15%;float:left;">
+						<span  class="howtoplay_tooltip"> 
+							<span class='tooltiptext tooltiphidden tooltipleft'>
+								Assign points to teams (or not).
+							</span>
+						</span>
+					</p>
+					<button id="assignScoresButton" class="pointer" onclick="onAssignPoints()" disabled>Assign Points</button>
+					<br/>
+					<button id="nobodyGotItRightButton" class="pointer" onclick="onNobodyCorrect()">Nobody got it correct.</button>
+					<button id="finalJeopardyAssign" class="hidden pointer" onclick="onAssignPoints()">Assign Final Scores!</button>
+					<br style="clear:both;"/>
 			</div>
 		</div>	
 	</div>		

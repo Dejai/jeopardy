@@ -14,13 +14,14 @@
 			</td>
 			<td>
 				<h1 id="game_name">DEMO</h1>
+				<p id="toggleHelpText" class="hidden" style="cursor:pointer;color:red;" onclick="toggleHowToSections()">
+					HOW TO USE THIS PAGE
+					<span class="fa fa-question-circle pointer"></span>
+				</p>
 			</td>
 			<td style="text-align:right;padding-right:5%;">
 				<h4>
-					<button id="toggleHelpTextButton" style="background-color:red; color:white;" class="hidden button_mash" onclick="toggleHowToSections()">
-						Toggle Help Text
-					</button>
-					<button id="finalJeopardyButton" class="hidden button_mash" onclick="onShowFinalJeopardy()">
+					<button id="finalJeopardyButton" class="hidden button_mash" onclick="onFinalJeopardy()">
 						Final Jeopardy
 					</button>
 					<button id="endGameButton" class="hidden button_mash" onclick="onEndGame()">

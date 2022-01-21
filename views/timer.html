@@ -1,9 +1,9 @@
 <div id="time_view">
 	
-	<p class="how_to_play_section hidden">
+	<!-- <p class="how_to_play_section hidden">
 		This is the timer for answering the question.<br/>
 		You can also start it using the CONTROL key on your keyboard.
-	</p>
+	</p> -->
 	<div id="time_view_regular">
 		<span id="timer_minute" class="timer_value">00:</span>
 		<span id="timer_second" class="timer_value" contenteditable="true">20</span>
@@ -11,6 +11,14 @@
 		<span onclick="Timer.startTimer()" id="timer_start" class="timer_buttons fa fa-play" style="font-size:35px;"></span>
 		<span onclick="Timer.stopTimer()" id="timer_stop" class="timer_buttons fa fa-pause" style="display:none; font-size:35px;"></span>
 		<span onclick="Timer.resetTimer()" id="timer_reset" class="timer_buttons fa fa-refresh" style="display:none; font-size:35px;"></span>
+		<span class="howtoplay_tooltip">
+			<span style="width:300px; font-size:16px; margin-top:10px;" class="tooltiptext tooltiphidden tooltipright">
+				The timer for answering the question. <br/>
+				You can also use CTRL key to start it.
+			</span>
+		</span>
+		
+
 	</div>
 	<audio id="time_up_sound">
 			<source src="../assets/audio/time_up.mp3" type="audio/mpeg">

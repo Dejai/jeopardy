@@ -119,9 +119,6 @@
 				// Load the game settings
 				loadSettingsMapping(response["desc"]);
 
-				// Determine if the How To button should display
-				showHowToPlayButton();
-
 				// Get the published URL from the card custom field
 				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
 					
@@ -344,8 +341,11 @@
 		// Get categories;
 		let categories = JeopardyGame.getCategories();
 		let categoriesLength = categories.length-1;
+		let categoryCount = 0;
 
 		categories.forEach(function(category){
+
+			categoryCount++;
 
 			isFinalJeopardy = category.isFinalJeopardy();
 
@@ -356,8 +356,12 @@
 			category_name 	= category.getName();
 			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
 
+			// Values for the "how to play" tooltip
+			let howToPlayClass = categoryCount == 3 ? "howtoplay_tooltip" : "";
+			let howToPlaySpan = categoryCount == 3 ? "<span class='tooltiptext tooltiphidden tooltipvisible tooltipabove'>Click to reveal the category names.</span>" : "";
+
 			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title' data-jpd-category-name=\"${category_name}\">${preFilledCategoryName}</th></tr>`;
+			category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name=\"${category_name}\">${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
 			
 			// Set the questions 
 			category_questions_row	= "";
@@ -456,26 +460,39 @@
 	function showHowToPlayButton()
 	{
 		// Show the option for the help text if it is a demo game;
-		if(IS_DEMO_RUN)
+		if(IS_DEMO_RUN || IS_TEST_RUN)
 		{ 
-			mydoc.showContent("#toggleHelpTextButton");
-			toggleHowToSections();
+			mydoc.showContent("#toggleHelpText");
 		}
 	}
 
 	// Showing the How To help text
 	function toggleHowToSections()
 	{
-		if(HOW_TO_IS_HIDDEN)
-		{
-			mydoc.showContent(".how_to_play_section");
-			HOW_TO_IS_HIDDEN = false;
-		}
-		else
-		{
-			mydoc.hideContent(".how_to_play_section");
-			HOW_TO_IS_HIDDEN = true;
-		}
+
+		tooltips = document.querySelectorAll(".howtoplay_tooltip .tooltiptext")
+		tooltips.forEach( (obj)=>{
+
+			hidden = obj.classList.contains("tooltiphidden");
+
+			console.log(obj);
+			if(hidden)
+			{
+				obj.classList.remove("tooltiphidden")
+			} else {
+				obj.classList.add("tooltiphidden")
+			}
+		})
+		// if(HOW_TO_IS_HIDDEN)
+		// {
+		// 	mydoc.showContent(".how_to_play_section");
+		// 	HOW_TO_IS_HIDDEN = false;
+		// }
+		// else
+		// {
+		// 	mydoc.hideContent(".how_to_play_section");
+		// 	HOW_TO_IS_HIDDEN = true;
+		// }
 	}
 
 	// Load the content into the question block;
@@ -561,6 +578,15 @@
 	}
 
 
+	// Set syncing details
+	function setSyncingDetails(message, iconColor)
+	{
+		refreshScores = document.getElementById("team_sync_message");
+		refreshScores.innerHTML = `&nbsp; ${message}`;
+		refreshScores.style.color = iconColor;
+	}
+
+
 
 /******************* EVENT LISTENERS ************************/
 
@@ -618,11 +644,11 @@
 	{
 		// alert("Category Clicked");
 		let element = event.target;
-		let current_value = element.innerHTML;
+		let current_value = element.innerText;
 		let title = element.getAttribute("data-jpd-category-name");
-		if (title != current_value)
+		if (!current_value.includes(title))
 		{
-			element.innerHTML = title;
+			element.innerHTML += title;
 		}
 	}
 
@@ -719,18 +745,22 @@
 		{
 			window.scrollTo(0,0); // Scroll back to the top of the page;
 
-			mydoc.hideContent("#answer_block");
-			mydoc.hideContent("#correct_block");
-			mydoc.showContent("#revealAnswerButton")
+			// Make sure this button is enabled
+			document.querySelector("#nobodyGotItRightButton").disabled = false;
 
-			mydoc.addClass("#question_block", "visibleBlock");
-			mydoc.removeClass("#question_block", "hiddenBlock");
+			//Don't worry about hiding/showing things for host view
+			if(!IS_LIVE_HOST_VIEW)
+			{
+				mydoc.hideContent("#answer_block");
+				mydoc.hideContent("#correct_block");
+				mydoc.showContent("#reveal_answer_block");
 
-			mydoc.addClass("#answer_block", "hiddenBlock");
-			mydoc.removeClass("#answer_block", "visibleBlock");
+				mydoc.addClass("#question_block", "visibleBlock");
+				mydoc.removeClass("#question_block", "hiddenBlock");
 
-			// document.getElementById("answer_block")?.classList.add("hidden");
-			// document.getElementById("correct_block")?.classList.add("hidden");
+				mydoc.addClass("#answer_block", "hiddenBlock");
+				mydoc.removeClass("#answer_block", "visibleBlock");
+			}
 			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
@@ -804,7 +834,7 @@
 		// Show the sections
 		mydoc.showContent("#answer_block");
 		mydoc.showContent("#correct_block");
-		mydoc.hideContent("#revealAnswerButton")
+		mydoc.hideContent("#reveal_answer_block")
 		mydoc.hideContent("#question_block audio")
 
 		mydoc.removeClass("#question_block", "visibleBlock");
@@ -817,6 +847,9 @@
 	// Reveal the game board & set initial team
 	function onStartGame(event)
 	{
+		// Determine if the How To button should display
+		showHowToPlayButton();
+
 		// Sync teams before starting game; True to select random player as well
 		onSyncTeams(true);
 
@@ -841,7 +874,7 @@
 		}
 
 		// Set a comment indicating the game is being played
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
+		if(!IS_TEST_RUN && CURR_GAME_CODE != "TEST")
 		{
 			let date = Helper.getDateFormatted();
 			let comment = `${date} --> ${CURR_GAME_CODE}`;
@@ -865,7 +898,7 @@
 	}
 
 	//Show the Final Jeopardy section
-	function onShowFinalJeopardy()
+	function onFinalJeopardy()
 	{
 
 		// set final jeopardy;
@@ -877,10 +910,13 @@
 		mydoc.hideContent("#current_turn_section");
 		mydoc.hideContent("#time_view_regular");
 		mydoc.hideContent("#finalJeopardyButton");
+		mydoc.hideContent("#assignScoresButton");
+		mydoc.hideContent("#nobodyGotItRightButton");
 
 		// Show Content
 		mydoc.showContent("#final_jeopardy_audio");
 		mydoc.showContent("#final_jeopardy_row");
+		mydoc.showContent("#finalJeopardyAssign");
 		// mydoc.showContent("#highest_score_wager");
 		mydoc.showContent(".wager_row");
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
@@ -905,6 +941,9 @@
 		// Don't try to sync teams if live host view
 		if(IS_LIVE_HOST_VIEW){ return; }
 
+		setSyncingDetails("Syncing", "red");
+
+
 		MyTrello.get_cards(CURR_LIST_ID, function(data){
 
 			response = JSON.parse(data.responseText);
@@ -921,30 +960,36 @@
 				}
 			});
 
-			document.getElementById("team-sync").style.display = "inline";
-			setTimeout(function(){
-				document.getElementById("team-sync").style.display = "none";
-			}, 1000);
-
 			// Sets the first player if it is not already set
 			if(!isCurrentPlayerSet()){ 
 				setFirstPlayer();
 			}
+
+			// Update the sync teams message
+			setTimeout(() => {
+				setSyncingDetails("Synced!", "limegreen");
+				setTimeout(() => {
+					setSyncingDetails("Sync Teams", "white");
+				},2000);
+			}, 1500);
 		});
 	}
 
 	// Check if assigning scores button should be enabled
 	function onTeamGotItRight()
 	{
-		let button = document.querySelector("#assignScoresButton");
+		let assignButton = document.querySelector("#assignScoresButton");
+		let noRightButton = document.querySelector("#nobodyGotItRightButton");
 		var gotItRight = document.querySelectorAll(".who_got_it_right:checked");
 		if(gotItRight.length > 0)
 		{
-			button.disabled = false;
+			assignButton.disabled = false;
+			noRightButton.disabled = true;
 		}
 		else
 		{
-			button.disabled = true;
+			assignButton.disabled = true;
+			noRightButton.disabled = false;
 		}
 	}
 
@@ -1258,7 +1303,7 @@
 		let teamName = document.querySelector("span.team_name[data-jpd-team-code='"+teamCode+"'"); 
 		let teamScore = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'"); 
 		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); 
-		let teamWager2 = document.querySelector("p.team_wager_question_view[data-jpd-team-code='"+teamCode+"'"); 
+		let teamWager2 = document.querySelector("label.team_wager_question_view[data-jpd-team-code='"+teamCode+"'"); 
 
 		let teamDetails = {
 			"name": teamName?.innerText ?? "", 
@@ -1550,7 +1595,7 @@
 		} 
 		else
 		{
-			MyTrello.create_list(game_code,function(data){
+			MyTrello.create_list(CURR_GAME_CODE,function(data){
 				response = JSON.parse(data.responseText);
 				CURR_LIST_ID = response["id"];
 				Logger.log("Current Game List ID: " + CURR_LIST_ID);
@@ -1606,20 +1651,19 @@
 
 		givenHeaders = spreadsheetData["headers"] ?? [];
 		givenRows = spreadSheetData["rows"];
-
-
-		console.log(expectedHeaders)
-		console.log(givenHeaders)
-		console.log(spreadsheetData["rows"])
+		givenRowCount = givenRows?.length ?? 0
 
 		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
-		isExpecedRowCount = (spreadsheetData["rows"]?.length ?? 0) >= 30;
+		isExpecedRowCount = givenRowCount == 31;
 
 		isValid = (isExpectedHeaders && isExpecedRowCount)
 
 		if(!isValid)
 		{
-			err_msg = "ERROR: Your spreadhsheet is not valid. Please refer to the instructions/template (on the Edit page) for a valid sheet configuration.\n\n";
+			reasons = ""
+			reasons += !isExpectedHeaders ? "<br/> -- Incorrect headers" : "";
+			reasons += !isExpecedRowCount ? "<br/> -- Incorrect number of rows" : "";
+			err_msg = `ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>${reasons}`;
 			gameNotification(err_msg, true);
 		}
 
@@ -1710,9 +1754,6 @@
 		return (assignScoresButton.disabled == false)
 	}
 
-	
-	
-	
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
 

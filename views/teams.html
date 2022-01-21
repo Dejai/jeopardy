@@ -1,10 +1,12 @@
 <div id="teams_section">
 	<div id="current_turn_section" class="hidden pre_team_block">
 		
-		<h2 id="current_turn_label">Current Turn:</h2>
-		<p class=" how_to_play_section hidden instruction center_section_50">
-			This section shows which player gets to pick a question from the board.<br/>
-		</p>
+		<h2 id="current_turn_label">
+			<span class="howtoplay_tooltip">
+				Current Turn:
+				<span class="tooltiptext tooltiphidden tooltipright">This section shows whose turn it is</span>
+			</span>
+		</h2>
 		<h2>
 			<span id="current_turn" class="pre_team_block_value" ></span>
 		</h2>
@@ -18,12 +20,12 @@
 	</div>
 	<hr/>
 	<div id="teams_sync_section" class="hidden">
-		<span class="how_to_play_section hidden">Click this to sync the teams, so they appear below.</span>
 		<div style="width:40%;">
 			<h3 style="display:inline-block;">
-				<span class="fa fa-refresh teams_icons" onclick="onSyncTeams()" style="color:white;text-decoration:none;">Sync Teams</span>
-				&nbsp;
-				<span id="team-sync" style="color:limegreen;display:none;">Teams Synced!</span>
+				<span id="team_sync_message" class="fa fa-refresh teams_icons" onclick="onSyncTeams()" style="color:white;text-decoration:none;">Sync Teams</span>
+				<span class="howtoplay_tooltip">
+					<span class="tooltiptext tooltiphidden tooltipright">Sync the teams to table below.</span>
+				</span>
 			</h3>
 		</div>
 	</div>
@@ -32,13 +34,6 @@
 			<col style="width:50%">
 		</colgroup>
 		<thead>
-			<tr class="how_to_play_section hidden">
-				<td colspan="3">
-					<p>
-						This section shows the list of teams &amp; their scores. It will also show their wager value after Final Jeopardy.
-					</p>
-				</td>
-			</tr>
 			<tr>
 				<th><h1>Team Name</h1></th>
 				<th><h1>Score</h1></th>
