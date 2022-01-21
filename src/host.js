@@ -18,6 +18,8 @@ var USE_DEFAULT_RULES = true;
 		// Check for existing player if on player screen
 		let path = location.pathname;
 
+		onKeyboardKeyup();
+
 		if (path.includes("/host/edit"))
 		{
 
@@ -98,6 +100,27 @@ var USE_DEFAULT_RULES = true;
 
 
 /*********** HOST: LOAD GAME (to either PLAY or EDIT) *************************/ 
+
+		// Listener for keyboard event = keyup
+		function onKeyboardKeyup()
+		{
+			document.addEventListener("keyup", function(event)
+			{
+				switch(event.code)
+				{
+					case "Enter":
+						inputEle = document.getElementById("given_game_password");
+						if(inputEle == document.activeElement)
+						{
+							loadGame('edit', false, true)
+
+						}
+						break;
+					default:
+						return;
+				}
+			});
+		}
 
 	// Get the selected game and entered pass phrase
 	function getGameAndPassPhrase()
