@@ -4,6 +4,7 @@
 	var GAME_LIST_ID = "";
 	var TEAM_ID = undefined;
 	var TEAM_SCORES = {};
+	var HAS_WAGER = false;
 
 	var touchEvent = "ontouchstart" in window ? "touchstart" : "click";
 
@@ -20,6 +21,8 @@
 			{
 				let card_id = query_map["teamid"]
 				TEAM_ID = card_id;
+
+				// Pull up the existing team
 				get_existing_team(card_id);
 
 				document.getElementById("refresh_scores").addEventListener(touchEvent, onGetLatestScores);
@@ -80,7 +83,11 @@
 			team_id = response["id"];
 			team_name = response["name"];
 			GAME_LIST_ID = response["idList"];
+
 			show_team_page(team_name, team_id);
+
+			// Get wager if exists
+			getWager(team_id);
 		});
 	}
 
@@ -109,10 +116,19 @@
 		mydoc.showContent("#enter_answers_section");
 	}
 
-	function onFinalJeopardy()
+	function onShowWagerInput()
 	{
+		// Hide the link to trigger this view
 		mydoc.hideContent("#show_wager_link");
-		mydoc.showContent("#wager" );
+		
+	
+		// Temporarily hide the question entry
+		mydoc.hideContent("#answer_input_section");
+		mydoc.hideContent("#submitted_answer_section");
+		
+
+		// Show the section to enter wager input
+		mydoc.showContent("#wager_input_section");
 	}
 
 /*************** TEAM ACTIONS *******************************************/ 
@@ -167,11 +183,42 @@
 		location.replace(loadUrl);
 	}
 
+	// Get the teams current wager (and makes it visible)
+	function getWager(teamCode)
+	{
+		// Get the wager value from the wager field; Set in field
+		MyTrello.get_card_custom_fields(teamCode, function(data){
+			
+			response = JSON.parse(data.responseText);
+			for(var idx = 0; idx < response.length; idx++)
+			{
+				let obj = response[idx];
+
+				// skip any field that is not the wager field
+				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
+				let valueObject = obj["value"] ?? {};
+				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+
+				// Set the wager value
+				value = value.trim();
+				HAS_WAGER = (!isNaN(Number(value)));
+				if (HAS_WAGER)
+				{
+					document.getElementById("submitted_wager_value").innerText = value;
+					mydoc.showContent("#submitted_wager_section");
+					mydoc.hideContent("#wager_input_section");
+					mydoc.hideContent("#show_wager_link");
+				}
+				
+			}
+		});
+	}
+
 	function submit_answer()
 	{
 		let card_id = document.getElementById("team_card_id").value;
 		let answer = document.getElementById("answer").value;
-		let wager = document.getElementById("wager").value;
+		// let wager = document.getElementById("wager").value;
 
 		MyTrello.update_card(card_id, answer);	
 
@@ -179,22 +226,39 @@
 		document.getElementById("submitted_answer_section").classList.remove("hidden");
 		document.getElementById("submitted_answer_value").innerText = answer;
 		document.getElementById("answer").value = "";
-		document.getElementById("wager").value = "";
+		// document.getElementById("wager").value = "";
+
+
+		// If wager is set (meaning final jeopardy)
+		if(HAS_WAGER)
+		{
+			mydoc.hideContent("#answer_input_section");
+			mydoc.hideContent("#submittButton");
+		}
 
 		// Attempt to submit wager as well
-		if(wager != "" && Number.isInteger(Number(wager)))
-		{
-			submit_wager(card_id, String(wager));
-		}
+		// if(wager != "" && Number.isInteger(Number(wager)))
+		// {
+		// 	submit_wager(card_id, String(wager));
+		// }
 	}
 
-	function submit_wager(card_id, wager)
+	function submit_wager()
 	{
+		let card_id = document.getElementById("team_card_id").value;
+		let wager = document.getElementById("wager").value;
+
 		if( !isNaN(Number(wager)))
 		{
 			MyTrello.update_card_custom_field(card_id,MyTrello.custom_field_wager, wager.toString() )
 			document.getElementById("submitted_wager_section").classList.remove("hidden");
 			document.getElementById("submitted_wager_value").innerText = wager;
+
+			// Hide the wager input
+			mydoc.hideContent("#wager_input_section");
+
+			// Show back the question input things
+			mydoc.showContent("#answer_input_section");
 		}
 		else
 		{
@@ -218,8 +282,6 @@
 			mydoc.hideContent("#refresh_info_message");
 		}, 2000)
 	}
-
-	refresh_info_icon
 
 /*************** POLLING FOR SCORES *******************************************/ 
 

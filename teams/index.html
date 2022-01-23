@@ -16,9 +16,6 @@
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
 		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Team View</h1>
-		<a id="home_button" href="../">
-      		<button class="fa fa-caret-square-o-left">&nbsp;Back</button>
-      	</a>
 		<hr/>
 	</div>
 	<div id="main_section">
@@ -44,7 +41,7 @@
 
 		<div id="enter_answers_section" class="hidden">
 			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
-			<h4 style="border-top:3px solid white;border-bottom:3px solid white; padding:1%">				
+			<h4 style="border-top:3px solid navy;border-bottom:3px solid navy; padding:1%">				
 				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
 				<br/>
 				Your Score: <span id="team_score" class="highlight_team_value">0</span>
@@ -56,27 +53,44 @@
 			</h4>
 
 			<input id="team_card_id" type="text" name="team_card_id" value="" hidden>
-			<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
-			<input id="wager" class="hidden" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off">
-			<br/><br/>
-			<button type="submit" value="Submit" class="button_mash" onclick="submit_answer()">
-				Submit
-			</button>
+			
+			<!-- Wager things! -->
+			<h4 id="submitted_wager_section" class="hidden">
+				<span class="submitted_answer">Your wager:</span>
+				<span id="submitted_wager_value" ></span>
+			</h4>
+			<div id="wager_input_section" class="hidden">
+				<p id="wager_instruction" style="color:red;" >Submit your wager before the final question is revealed.</p>
+				<h3><label for="wager">Enter Wager:</label></h3>
+				<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off">
+				<button id="submit_wager" type="submit" value="Submit" class="button_mash" onclick="submit_wager()">
+					Submit Wager
+				</button>
+			</div>
+
+			 <!-- Submitted Answer -->
 			<div id="submitted_answer_section" class="hidden">
 				<h4>
-					<span class="submitted_answer">Last Submitted Answer:</span><br/>
-					<span id="submitted_answer_value" >answer</span>
-				</h4>
-				<h4 id="submitted_wager_section" class="hidden">
-					<span class="submitted_answer">Last Submitted Wager:</span><br/>
-					<span id="submitted_wager_value" ></span>
+					<span class="submitted_answer">Last Submitted Answer:</span>
+					<span id="submitted_answer_value">answer</span>
 				</h4>
 			</div>
-			<br/><br/>
-			<span id="show_wager_link" onclick="onFinalJeopardy()" style="color:lightblue;cursor:pointer;">Click here for Final Jeopardy</span>
+			<!-- Answer things! -->
+			<div id="answer_input_section">
+				<h3><label for="answer">Enter Answer:</label></h3>
+				<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
+				<br/><br/>
+				<button id="submit_answer" type="submit" value="Submit" class="button_mash" onclick="submit_answer()">
+					Submit Answer
+				</button>
+			</div>
+			
+			<div>
+				<br/><br/><br/><br/>
+				<span id="show_wager_link" onclick="onShowWagerInput()" style="color:red;cursor:pointer;">Click here for Final Jeopardy</span>
+			</div>
 		</div>
 
-	
 	</div>
 </body>
 	<!-- Common Code -->

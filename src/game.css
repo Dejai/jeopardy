@@ -135,6 +135,9 @@
 
 	.setTeamDirectly { cursor: pointer; }
 
+	.wager_hidden { color:black; }
+	.wager_hidden::before { content:"*"; color:limegreen; }
+
 	/* OLDER */
 	#teams_block { margin:60%;  margin:auto; border-top:1px solid white; padding-top:1%; }
 	.team_section { border:1px solid black; margin:auto; display:inline-block; margin-right:3%;}
