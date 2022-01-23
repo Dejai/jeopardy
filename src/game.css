@@ -30,6 +30,8 @@
 	.notify_limegreen { color:limegreen !important; }
 	.notify_orange { color:orange !important; }
 
+	.jpd_subtext { font-size: 60%; font-style:italic; }
+
 
 /* HOME PAGE */
 	#main_section { width:80%; margin:auto; text-align:center; font-size:120%; }

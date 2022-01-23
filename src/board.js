@@ -1804,7 +1804,12 @@
 
 		if(value.trim() != "")
 		{
-			let new_value = value.trim().replaceAll("\\n", "<br/>");
+			let new_value = value.trim()
+						.replaceAll("\\n", "<br/>")
+						.replaceAll("{subtext}", "<span class='jpd_subtext'>")
+						.replaceAll("{/subtext}", "</span>")
+						.replaceAll("{bold}", "<strong><em>")
+						.replaceAll("{/bold}", "</em></strong>");
 			formatted = `<span>${new_value}</span>`
 		}
 		return formatted;
