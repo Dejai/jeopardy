@@ -18,6 +18,8 @@
 	// Storing details about the questions and game stage
 	var QA_MAP = {};   //The Question-Answer map;
 	var IS_FINAL_JEOPARDY = false;
+	var IS_GAME_OVER = false;
+
 	// var CURRENT_QUESTION_KEY = undefined;
 	var ASKED_QUESTIONS = [];
 
@@ -745,6 +747,9 @@
 		{
 			window.scrollTo(0,0); // Scroll back to the top of the page;
 
+			// Set the game being over based on if we just closed the final jeopardy question
+			IS_GAME_OVER = IS_FINAL_JEOPARDY
+
 			// Make sure this button is enabled
 			document.querySelector("#nobodyGotItRightButton").disabled = false;
 
@@ -821,14 +826,15 @@
 				response = JSON.parse(data.responseText);
 				obj.innerHTML = response["desc"];
 			});
+		}
 
-			// Set the 
-			// Attempt to set teamCode
-			if(IS_FINAL_JEOPARDY)
-			{
-				let highestScore = getHighestScore();
-				getWagersPerTeam(teamCode, highestScore);		
-			}
+		// Remove the hidden wagers
+		if (IS_FINAL_JEOPARDY)
+		{
+			let hiddenWagers = document.querySelectorAll(".wager_hidden");
+			hiddenWagers.forEach((obj) =>{
+				obj.classList.remove("wager_hidden");
+			});
 		}
 
 		// Show the sections
@@ -958,6 +964,20 @@
 					TEAMS_ADDED.push(teamName);
 					onAddTeam(code, teamName);
 				}
+
+				// If FINAL_JEOPARDY -- set the wager (initially hidden);
+				if(IS_FINAL_JEOPARDY && !IS_GAME_OVER)
+				{
+					let highestScore = getHighestScore();
+					getWagersPerTeam(code, highestScore);		
+				}
+
+				// Only default the score if NOT final jeopardy
+				if(!IS_FINAL_JEOPARDY)
+				{
+					// Add 0 to current score; Ensures a value is in the score field; Adds nothing if something exists
+					calculateTeamNewScore(code,0,true);
+				}
 			});
 
 			// Sets the first player if it is not already set
@@ -1009,7 +1029,7 @@
 				</td>
 				<td class=\"wager_row\">
 					<button class="setTeamDirectly" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
-					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\">000</span></h2>
+					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\"></span></h2>
 				</td>
 			</tr>
 		`;
@@ -1066,7 +1086,7 @@
 		// Get the team inputs for Who Got It Right?
 		var teamInputs = document.querySelectorAll(".who_got_it_right");
 
-		if(teamInputs != undefined)
+		if(teamInputs == undefined)
 		{
 			Logger.log("ERROR! Could not load the team inputs");
 		}
@@ -1080,7 +1100,6 @@
 			if(mode == "2" && obj.checked)
 			{
 				LAST_TEAM_CORRECT = teamCode; //Set the team that got it correct, since they go again;
-
 			}
 
 			// Calculae/set the score based on teamCode and if object is checked
@@ -1204,7 +1223,6 @@
 										<tr>
 											<th>Team</th>
 											<th>Answer</th>
-											<th>Wager</th>
 											<th>Correct?</th>
 										</tr>
 									</thead>`;
@@ -1260,9 +1278,8 @@
 	{
 		label = `<td><label for="checkboxrow_${teamCode}">${teamName}</label><span>&nbsp;</span></td>`;
 		answer = `<td><label for="checkboxrow_${teamCode}" class="team_answer" data-jpd-team-code="${teamCode}"></label></td>`;
-		wager = (includeWager) ? `<td><label for="checkboxrow_${teamCode}" class="team_wager_question_view" data-jpd-team-code="${teamCode}"></label></td>`: "";
 		input = `<td><input id="checkboxrow_${teamCode}" type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}" onchange="onTeamGotItRight()"></td>`;
-		return "<tr>" + label + answer + wager + input + "</tr>";
+		return "<tr>" + label + answer + input + "</tr>";
 	}
 
 	// Get an individual Radio button for a team;
@@ -1303,7 +1320,7 @@
 		let teamName = document.querySelector("span.team_name[data-jpd-team-code='"+teamCode+"'"); 
 		let teamScore = document.querySelector("span.team_score[data-jpd-team-code='"+teamCode+"'"); 
 		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); 
-		let teamWager2 = document.querySelector("label.team_wager_question_view[data-jpd-team-code='"+teamCode+"'"); 
+		// let teamWager2 = document.querySelector("label.team_wager_question_view[data-jpd-team-code='"+teamCode+"'"); 
 
 		let teamDetails = {
 			"name": teamName?.innerText ?? "", 
@@ -1311,8 +1328,7 @@
 			"score": teamScore?.innerText ?? "", 
 			"score_ele": teamScore, 
 			"wager": teamWager?.innerText ?? "",
-			"wager_ele": teamWager,
-			"wager_ele2": teamWager2
+			"wager_ele": teamWager
 		}
 
 		return teamDetails;
@@ -1370,15 +1386,12 @@
 
 		// Reveal the wager element and set to zero by default
 		teamDetails["wager_ele"].classList.remove("hidden"); 
-		teamDetails["wager_ele"].innerText = 0;
-		teamDetails["wager_ele2"].innerText = 0;
 
 		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
 
 		// Get the wager value from the wager field; Set in field
 		MyTrello.get_card_custom_fields(teamCode, function(data){
 			response = JSON.parse(data.responseText);
-
 
 			for(var idx = 0; idx < response.length; idx++)
 			{
@@ -1392,42 +1405,14 @@
 				
 				// Set the wager value
 				value = value.trim();
-				let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
-				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
-				teamDetails["wager_ele"].innerText = wagerValue;
-				teamDetails["wager_ele2"].innerText = wagerValue;
-			}
-		});
-	}
-
-	function getWagers(teamCode, content="0")
-	{
-
-		let max = getMaxPossibleWager();
-		let teamWager = document.querySelector("span.team_wager[data-jpd-team-code='"+teamCode+"'"); // only used in final jeopardy
-		teamWager.classList.remove("hidden");
-		let wager_value = 0;
-
-		// Get the wager value from the wager field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			response = JSON.parse(data.responseText);
-			response.forEach(function(obj){
-
-				let valueObject = obj["value"];
-				let is_wager_field = obj["idCustomField"] == MyTrello.custom_field_wager;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if(is_wager_field && value != "")
+				let wagerValue = (!isNaN(Number(value))) ? Number(value) : undefined;
+				if(wagerValue != undefined)
 				{
-					value = value.trim();
-					Logger.log("User wager: " + value);
-					let wagerValue = (!isNaN(Number(value))) ? Number(value) : 0;
-					Logger.log("Evaluated wager:" + wagerValue);
-					wagerValue = (wagerValue > max) ? max : wagerValue;
-					Logger.log("Final Wager Value: " + wagerValue);
-					teamWager.innerText = wagerValue;
-				}
-			});
+					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+					teamDetails["wager_ele"].innerText = wagerValue;
+					teamDetails["wager_ele"].classList.add("wager_hidden");
+				}				
+			}
 		});
 	}
 
@@ -1468,7 +1453,7 @@
 		teamDetails["score_ele"].innerText = newScore;
 
 		// Update Trello if the score is different;
-		if(team_score != newScore)
+		if( (team_score != newScore) || (team_score == 0) )
 		{
 			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
 		}
@@ -1753,6 +1738,39 @@
 		let assignScoresButton = document.querySelector("#assignScoresButton");
 		return (assignScoresButton.disabled == false)
 	}
+
+	// Check if each team has wager set
+	// Get the teams current wager (and makes it visible)
+	function isWagerSet(teamCode)
+	{
+		// Get the wager value from the wager field; Set in field
+		MyTrello.get_card_custom_fields(teamCode, function(data){
+			
+			response = JSON.parse(data.responseText);
+			for(var idx = 0; idx < response.length; idx++)
+			{
+				let obj = response[idx];
+
+				// skip any field that is not the wager field
+				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
+				let valueObject = obj["value"] ?? {};
+				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+
+				// Set the wager value
+				value = value.trim();
+				HAS_WAGER = (!isNaN(Number(value)));
+				if (HAS_WAGER)
+				{
+					document.getElementById("submitted_wager_value").innerText = value;
+					mydoc.showContent("#submitted_wager_section");
+					mydoc.hideContent("#wager_input_section");
+					mydoc.hideContent("#show_wager_link");
+				}
+				
+			}
+		});
+	}
+
 
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
