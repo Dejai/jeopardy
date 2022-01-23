@@ -51,18 +51,18 @@ const Rules =
 	"Who Goes First?":[
 		{
 			"id": 1,
-			"label": "Random Player",
+			"label": "Random Team",
 			"type": "select",
-			"rule": "The first player is picked randomly.",
-			"subRules": ["The player will be picked from the players loaded when the game is Started", "All players should enter game code and setup their team name before clicking \"Start Game\""],
+			"rule": "The first team is picked randomly.",
+			"subRules": ["The team will be picked from the list of teams loaded when the game is Started", "All teams should enter game code and setup their team name before clicking \"Start Game\""],
 			"suggestion": ""
 		},
 		{
 			"id": 2,
-			"label": "Host Selects Player",
+			"label": "Host Selects Team",
 			"type": "select",
-			"rule": "The host will select the player who goes first.",
-			"subRules": ["The player will be picked from the players loaded when the game is Started", "All players should enter game code and setup their team name before clicking \"Start Game\""],
+			"rule": "The host will select the team who goes first.",
+			"subRules": ["The team will be picked from the list of teams loaded when the game is Started", "All teams should enter game code and setup their team name before clicking \"Start Game\""],
 			"suggestion": ""
 		}
 	],
@@ -72,7 +72,7 @@ const Rules =
 			"id": 1,
 			"label": "15 Seconds to Answer.",
 			"type": "number",
-			"rule":"Each play gets15 seconds to answer the question!",
+			"rule":"Each teams gets 15 seconds to answer the question!",
 			"subRules":["Time starts after the question is read"],
 			"suggestion": ""
 		},
@@ -80,7 +80,7 @@ const Rules =
 			"id": 2,
 			"label": "${VALUE} seconds to Answer.",
 			"type": "custom number",
-			"rule":"Each play gets ${VALUE} seconds to answer the question!",
+			"rule":"Each team gets ${VALUE} seconds to answer the question!",
 			"subRules":["Time starts after the question is read"],
 			"suggestion": ""
 		},
@@ -92,7 +92,7 @@ const Rules =
 			"id": 1,
 			"label": "Classic",
 			"type": "select",
-			"rule": "For FINAL JEOPARDY, a player can only wager as many points as they have.",
+			"rule": "For FINAL JEOPARDY, a team can only wager as many points as they have.",
 			"subRules": [],
 			"suggestion" : ""
 		},
@@ -101,7 +101,7 @@ const Rules =
 			"label": "Max Wager is Highest Score",
 			"type": "select",
 			"rule":"For FINAL JEOPARDY, you can wager as much as the HIGHEST OVERALL SCORE!",
-			"subRules":["The max amount that a player can wager is based on the highest overall score!",
+			"subRules":["The max amount that a team can wager is based on the highest overall score!",
 						"So, you could come from behind &amp; beat the team in the lead &#128578;",
 						"Or, you could lose it all and possibly end up with negative points. &#128579;"
 						],
