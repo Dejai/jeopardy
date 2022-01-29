@@ -11,7 +11,7 @@ function test_trello()
 			MyTrello.get_custom_fields(print_data);
 			break;
 		case "lists":
-			MyTrello.get_lists(print_data);
+			MyTrello.get_open_lists(print_data);
 			break;
 		case "labels":
 			MyTrello.get_labels(print_data);

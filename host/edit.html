@@ -14,18 +14,15 @@
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
 		<h1 id="homemade_jeopardy_title">Homemade Jeopardy<br/>Edit Game</h1>
-		<a id="home_button" href="../host/">
-      		<button class="fa fa-caret-square-o-left">&nbsp;Back</button>
-      	</a>
 		<div class="center_section_50 centered">
-			<button class="button_mash play_button" onclick="onNavigateToGameURL('play')">
-				PLAY GAME
+			<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
+				TEST GAME
 			</button>
 			<button class="button_mash play_button" onclick="onNavigateToGameURL('host')">
 				HOST VIEW
 			</button>
-			<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
-				TEST GAME
+			<button class="button_mash play_button" onclick="onNavigateToGameURL('play')">
+				PLAY GAME
 			</button>
 		</div>
 		<hr/>
@@ -40,6 +37,7 @@
 			<span id="saving_results_section"></span>
 		</div>
 		<div class="center_section_50">
+			
 			<div class="edit_game_subsection">
 				<h2>Game Name
 					<button class="save_component_button save_button" onclick="onSaveGameComponent('GameName')">Save</button>
