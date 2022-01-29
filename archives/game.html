@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team</title>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="../src/game.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="../src/game.css">
+</head>
+<body>
+	<div id="homemade_jeopardy_title" class="centered">
+		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Archived Game</h1>
+		<hr/>
+	</div>
+	<div class="archive_section">
+
+		<h2>
+			<span class="notify_orange">
+				<span id="archived_game_name"></span>
+				<span id="archived_game_code"></span>
+			</span><br/>
+			<span id="archived_game_date"></span><br/><br/>
+			<button id="toggleScores" onclick="onToggleScores()">
+				Show Score Before Wager
+			</button>
+		</h2>
+
+		<div class="archive_table_section" style="padding-bottom:5%">
+			<table id="archive_table">
+				<colgroup>
+					<col style="width:5%;">
+					<col style="width:33%;">
+					<col style="width:33%;">
+					<col style="width:33%;">
+				</colgroup>
+				<thead>
+					<tr>
+						<th>#</th>
+						<th><h3>Team <br/>Name</h3></th>
+						<th><h3 id="scoreHeader">Final <br/>Score</h3></th>
+						<th><h3>Wager</h3></th>
+					</tr>
+				</thead>
+				<tbody id="archive_table_body"></tbody>
+			</table>
+		</div>
+	</div>
+</body>
+	<!-- Common Code -->
+	<script src="../src/common.js"></script>
+	<!-- My Trello code -->
+	<script src="../src/trello.js"></script>
+	<script src="../src/archives.js"></script>
+
+</html>

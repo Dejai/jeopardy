@@ -3,6 +3,12 @@
 	.how_to_play_section { background-color:red;color:white; text-align:center; }
 	.how_to_play_section .instruction { font-size:150%; }
 
+	.newliner { display:inline; }
+	@media screen and (min-width: 768px ){
+		.newliner { display:none;}
+	}
+
+
 /* GENERAL */
 	body{ margin:0px; padding:0px; background-color:black; color:#F5F5F5; }
 	.hidden { display:none; }
@@ -10,6 +16,7 @@
 	#home_button button { background-color:black; color:gray; }
 	.header { font-size:50px !important; }
 	.centered{ text-align:center;  }
+	.center_section_40 { width:40%; margin:auto; }
 	.center_section_50 { width:50%; margin:auto; }
 	.center_section_60 { width:60%; margin:auto; }
 	.center_section_70 { width:70%; margin:auto; }
@@ -32,6 +39,29 @@
 
 	.jpd_subtext { font-size: 60%; font-style:italic; }
 
+
+/* Archive section */
+	.archive_section { width:90%; margin:auto; text-align:center; }
+
+	@media screen and (min-width: 768px ){
+		.archive_section { width:50%; }
+	}
+	.openGameButton{ background-color:inherit; color:inherit; border-color:black !important;}
+
+	#archive_table { width:100%; border-spacing:0px; }
+	/* #archive_table tr td,th { border-bottom:2px solid white; } */
+	#archive_table_body tr td { padding-top:3%; padding-bottom:3%; }
+	/* #archive_table_body tr:hover { background-color:white; color:black; } */
+	#archive_table_body tr:nth-child(even) { background-color:goldenrod; color:black; }
+	#archive_table_body tr:nth-child(odd) { background-color:blue; color:yellow; }
+	#archive_table button {cursor: pointer; }
+
+	#archived_game_table { width:100%;}
+	#toggleScores { cursor:pointer; }
+
+	#archived_game_date { font-style:italic; font-size:smaller; }
+	#archived_game_code { font-size:smaller; }
+	.gameCodeSmaller { font-size:smaller; }
 
 /* HOME PAGE */
 	#main_section { width:80%; margin:auto; text-align:center; font-size:120%; }

@@ -1,102 +1,29 @@
 <!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Team</title>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="../src/game.css">
+	<title>Homemade Jeopardy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-    <!-- jQuery library -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-	<!-- Latest compiled JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 	<link rel="stylesheet" type="text/css" href="../src/game.css">
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Team View</h1>
+		<h1 id="homemade_jeopardy_title">Homemade Jeopardy<br/>Team View</h1>
 		<hr/>
 	</div>
-	<div id="main_section">
-
-		<div id="enter_game_code_section" class="hidden">
-			<h2>Step 1: Enter Game Code</h2>
-			<input id="player_game_code" type="text" name="player_game_code">
-			<br/><br/>
-			<button type="submit" value="Enter" class="button_mash" onclick="lookup_game()">
-				Enter
-			</button>
-		</div>
-
-		<div id="enter_team_name_section" class="hidden">
-			<h2>Step 2: Enter Team Name</h2>
-			<input id="team_name" type="text" name="team_name">
-			<br/><br/>
-			<button id="create_team_button" type="submit" value="Enter" class="button_mash" onclick="create_team()">
-				Create/Load Team
-			</button><br/>
-			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden">
-		</div>
-
-		<div id="enter_answers_section" class="hidden">
-			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
-			<h4 style="border-top:3px solid navy;border-bottom:3px solid navy; padding:1%">				
-				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
-				<br/>
-				Your Score: <span id="team_score" class="highlight_team_value">0</span>
-				<br/><br/>
-				<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;text-decoration:none;font-size:smaller">
-					&nbsp; Refresh Scores
-				</span>&nbsp;<span id="refresh_info_icon" onclick="onRefreshInfoClick()" style="color:red; font-size:smaller;" title="Automatically refreshes every 60 seconds." class="fa fa-question-circle pointer" style="font-size:60%"></span>
-				<span id="refresh_info_message" style="font-size:smaller;" class="hidden"><br/>Automatically refreshes every 60 seconds.</span>
+	<div style="text-align:center; ">
+		<h2>What would you like to do?</h2>
+		<a href="./load.html" class="identify_yourself">
+			<h4>
+				JOIN A GAME
 			</h4>
-
-			<input id="team_card_id" type="text" name="team_card_id" value="" hidden>
-			
-			<!-- Wager things! -->
-			<h4 id="submitted_wager_section" class="hidden">
-				<span class="submitted_answer">Your wager:</span>
-				<span id="submitted_wager_value" ></span>
+		</a>
+		<a href="../archives/" class="identify_yourself">
+			<h4>
+				VIEW ARCHIVES
 			</h4>
-			<div id="wager_input_section" class="hidden">
-				<p id="wager_instruction" style="color:red;" >Submit your wager before the final question is revealed.</p>
-				<h3><label for="wager">Enter Wager:</label></h3>
-				<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off">
-				<button id="submit_wager" type="submit" value="Submit" class="button_mash" onclick="submit_wager()">
-					Submit Wager
-				</button>
-			</div>
-
-			 <!-- Submitted Answer -->
-			<div id="submitted_answer_section" class="hidden">
-				<h4>
-					<span class="submitted_answer">Last Submitted Answer:</span>
-					<span id="submitted_answer_value">answer</span>
-				</h4>
-			</div>
-			<!-- Answer things! -->
-			<div id="answer_input_section">
-				<h3><label for="answer">Enter Answer:</label></h3>
-				<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
-				<br/><br/>
-				<button id="submit_answer" type="submit" value="Submit" class="button_mash" onclick="submit_answer()">
-					Submit Answer
-				</button>
-			</div>
-			
-			<div>
-				<br/><br/><br/><br/>
-				<span id="show_wager_link" onclick="onShowWagerInput()" style="color:red;cursor:pointer;">Click here for Final Jeopardy</span>
-			</div>
-		</div>
-
+		</a>
 	</div>
 </body>
-	<!-- Common Code -->
-	<script src="../src/common.js"></script>
-	<!-- My Trello code -->
-	<script src="../src/trello.js"></script>
-	<script src="../src/teams.js"></script>
-
 </html>

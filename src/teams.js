@@ -41,7 +41,7 @@
 		let code_input = document.getElementById("player_game_code");
 		let code = code_input.value;
 
-		MyTrello.get_lists(function(data)
+		MyTrello.get_open_lists(function(data)
 		{
 			Logger.log(data);
 
@@ -90,8 +90,6 @@
 			getWager(team_id);
 		});
 	}
-
-
 
 /************* SECTION VISIBILITY ***************************************/ 
 
@@ -178,7 +176,8 @@
 
 	function loadTeamUrl(teamID)
 	{
-		var loadUrl =`http://${location.host}${location.pathname}?teamid=${teamID}`;
+		let newPathname = location.pathname.replace("load", "team");
+		var loadUrl =`http://${location.host}${newPathname}?teamid=${teamID}`;
 		//  "http://" + location.host + location.pathname + "?teamid=" + team_id + ""
 		location.replace(loadUrl);
 	}

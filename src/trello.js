@@ -18,12 +18,15 @@ const MyTrello = {
 	test_list_id: "60115ebf2caf916afa9cc107",
 	admin_list_id: "6007bbc9ec73367514314430",
 
+	archive_label_id: "61ef60e5065fef026c1b491e",
 	
 	custom_field_edit_url: "601cc5e0b397f3851991919a",
 	custom_field_pub_url: "601eb6d45a6cfd723772f978",
 	custom_field_phrase: "601eb6e52f10e63f573f187f",
 	custom_field_score:   "601eb6ed9695ad33f90f6f14",
 	custom_field_wager: "601eb6fa16ebab868c557f2e",
+
+
 
 	authorizeTrello: function(){ return true; },
 
@@ -128,6 +131,13 @@ const MyTrello = {
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorMessage});
 	},
 
+	// Get the comments
+	get_comments: function(card_id, successCallback){
+		let param = "filter=commentCard";
+		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/actions/?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
+		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorMessage});
+	},
+
 	// Gets a single trello card's actions
 	get_card_attachments: function(card_id, successCallback){
 		let trello_path = `${MyTrello.endpoint}/cards/${card_id}/attachments/?key=${MyTrello.key}&token=${MyTrello.token}`;
@@ -153,8 +163,15 @@ const MyTrello = {
 	},
 
 	// Gets the set of Trello Lists
-	get_lists: function(successCallback){
+	get_open_lists: function(successCallback){
 		let param="filter=open";
+		let trello_path = `${MyTrello.endpoint}/boards/${MyTrello.board_id}/lists?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
+		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorMessage});
+	},
+
+	// Get the archived lists
+	get_closed_lists: function(successCallback){
+		let param="filter=closed";
 		let trello_path = `${MyTrello.endpoint}/boards/${MyTrello.board_id}/lists?key=${MyTrello.key}&token=${MyTrello.token}&${param}`;
 		myajax.AJAX({ method: "GET", path:trello_path, success: successCallback, failure:Logger.errorMessage});
 	},
