@@ -25,7 +25,7 @@ const Rules =
 			"subRules":["If the person who buzzes doesn't get it correct, the next person to buzz in gets to answer",
 						"NOTE: The game doesn't have any buzz-in feature, so you'll have to use your own buzzers"
 						],
-			"suggestion": "Be sure to use the 'Host View' to see the answers while asking the question. To know if person got it right;"
+			"suggestion": "Be sure to use the 'Host View' to see the answers while asking the question."
 		}
 	],
 
@@ -45,6 +45,14 @@ const Rules =
 			"rule":"The first person to buzz-in AND get the question correct gets to pick the next question",
 			"subRules":["If nobody gets the current question correct, the last person to got a question correct continues picking."],
 			"suggestion": "If using this setting, the 'Answering Questions' setting should be 'First to Buzz!'"
+		},
+		{
+			"id": 3,
+			"label": "Randomly Suggested by Game",
+			"type": "select",
+			"rule":"The questions are randomly suggested by the game.",
+			"subRules":["The host still has to pick the suggested question."],
+			"suggestion": "If using this setting for 'Selecting Questions', also use it for 'Who Goes First?'"
 		}
 	],
 
@@ -64,6 +72,14 @@ const Rules =
 			"rule": "The host will select the team who goes first.",
 			"subRules": ["The team will be picked from the list of teams loaded when the game is Started", "All teams should enter game code and setup their team name before clicking \"Start Game\""],
 			"suggestion": ""
+		},
+		{
+			"id": 3,
+			"label": "Randomly Suggested by Game",
+			"type": "select",
+			"rule":"The first question is randomly suggested by the game.",
+			"subRules":["The host still has to pick the suggested question."],
+			"suggestion": "If using this setting for 'Who Goes First?', also use it for 'Selecting Questions'"
 		}
 	],
 

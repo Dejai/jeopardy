@@ -696,8 +696,7 @@
 		loadTeamNamesInCorrectAnswerBlock();
 
 		// Set the selected cell to disabled;
-		cell.style.backgroundColor = "gray";
-		cell.style.color = "black";
+		cell.classList.add("category_option_selected");
 		cell.disabled = true;
 
 		// Get the mapped object from the Question/Answer Map
@@ -774,18 +773,13 @@
 	// End the game and archive the list
 	function onEndGame()
 	{
-		let confirmAction = confirm("Would you like to end this game and archive it?");
-
-		if(confirmAction && !IS_TEST_RUN && !IS_DEMO_RUN)
+		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
 			MyTrello.update_list_to_archive(CURR_LIST_ID, archive_name , function(){
-				alert("Game archived!");
-				mydoc.hideContent("#endGameButton");
-				mydoc.hideContent("#game_board_section");
-				mydoc.hideContent(".pre_team_block");
+				alert("Game has been archived");
 			});
 		}
 	}
@@ -886,21 +880,6 @@
 			let comment = `${date} --> ${CURR_GAME_CODE}`;
 			MyTrello.create_card_comment(CURR_GAME_ID, comment);
 		}
-
-		// Only used if multiple rounds are set;
-		let nextRound = document.getElementById("next_round");
-		if (nextRound != undefined)
-		{
-			nextRound.classList.remove("hidden");
-		}
-	}
-
-	// Show the next set of questions in the second round
-	function onNextRound(event)
-	{
-		document.getElementById("next_round").classList.add("hidden");
-		document.getElementById("round_1_row").classList.add("hidden");
-		document.getElementById("round_2_row").classList.remove("hidden");
 	}
 
 	//Show the Final Jeopardy section
@@ -923,7 +902,6 @@
 		mydoc.showContent("#final_jeopardy_audio");
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
-		// mydoc.showContent("#highest_score_wager");
 		mydoc.showContent(".wager_row");
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -1073,6 +1051,19 @@
 			// Reset the answers for each team, so it no longer shows
 			resetAnswers(); // Reset the answers for each team.
 		}
+		else if (IS_FINAL_JEOPARDY)
+		{
+			
+			// Indicate the end of the game.
+			let gameBoardSect = document.getElementById("game_board_section")
+			let currContent = gameBoardSect.innerHTML;
+			gameBoardSect.innerHTML = "<h2 style='text-align:center;'>Thanks for Playing!</h2>" + currContent;
+			
+			// Archive the game a few seconds after assigning final points
+			setTimeout(()=>{
+				onEndGame();
+			},5000);
+		}
 	}
 
 	// Update the score for all teams that got the question correct
@@ -1125,6 +1116,9 @@
 				teamDetails = getTeamDetails(LAST_TEAM_CORRECT);
 				teamName = teamDetails["name"];
 				setCurrentPlayerByName(teamName);
+				break;
+			case "3":
+				setRandomQuestion();
 				break;
 			default:
 				setCurrentPlayer(CURRENT_TEAM_IDX); // default is to keep the same index;
@@ -1367,15 +1361,6 @@
 		return max;
 	}
 
-	// Purpose: Returns a random character from the alphabet; Used to generate team codes
-	// Get a random character in the alphabet
-	function getRandomCharacter()
-	{
-		characters = "abcdefghijklmnopqrstuvwxyz";
-		randChar = Math.floor(Math.random()*characters.length);
-		return characters[randChar].toUpperCase();
-	}
-
 	// Get the wager for the current team (adjust to max possible - in case someone tries to cheat)
 	function getWagersPerTeam(teamCode, highestScore)
 	{
@@ -1483,6 +1468,14 @@
 		if(setting.option == "1")
 		{
 			setCurrentPlayerRandomly();
+		}
+		else if (setting.option == "3")
+		{
+			// Account for things typically associated with selecting a team
+			hideSetTeamButton();
+			CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
+
+			setRandomQuestion();
 		}
 	}
 
@@ -1611,6 +1604,39 @@
 		
 	}
 
+	// Select a random question
+	function setRandomQuestion()
+	{
+		let availableQuestions = document.querySelectorAll(".category_option:not(.category_option_selected)");
+
+		let limit = availableQuestions.length;
+	
+		let nextQuestion = "";
+
+		if (limit > 1)
+		{
+			while(true)
+			{
+				let randIdx = Math.floor(Math.random()*limit);
+				let cell = availableQuestions[randIdx];
+				nextQuestion = cell?.getAttribute("data-jpd-quest-key");
+				if(!nextQuestion.includes("FINAL JEOPARDY"))
+				{
+					break;
+				}
+			}	
+			// Set the value; Show the section
+			document.getElementById("current_turn").innerText = nextQuestion;
+			mydoc.showContent("#current_turn_section");
+		}
+		else
+		{
+			// Set the value; Show the section
+			document.getElementById("current_turn").innerText = "N/A";
+			mydoc.showContent("#current_turn_section");
+		}
+	}
+
 
 /********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
 
@@ -1638,21 +1664,41 @@
 		givenRows = spreadSheetData["rows"];
 		givenRowCount = givenRows?.length ?? 0
 
-		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
-		isExpecedRowCount = givenRowCount == 31;
-
-		isValid = (isExpectedHeaders && isExpecedRowCount)
+		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","));
+		isExpecedRowCount = (givenRowCount - 1) % 5 == 0  // must be a multiple of 5 - indicating each category has 5 questions
+		isExpectedCategoryCount = isValidCategories(givenRows);
+		console.log(spreadSheetData);
+		isValid = (isExpectedHeaders && isExpecedRowCount && isExpectedCategoryCount)
 
 		if(!isValid)
 		{
 			reasons = ""
-			reasons += !isExpectedHeaders ? "<br/> -- Incorrect headers" : "";
-			reasons += !isExpecedRowCount ? "<br/> -- Incorrect number of rows" : "";
-			err_msg = `ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>${reasons}`;
+			reasons += !isExpectedHeaders ? "<br/>Make sure you have the right headers." : "";
+			reasons += !isExpecedRowCount ? "<br/>Make sure every category has 5 questions." : "";
+			reasons += !isExpectedCategoryCount ? "<br/>Make sure you have at least one category <br/>(not including Final Jeopardy)" : "";
+			err_msg = `ERROR:<br/>Your spreadhsheet is not valid.<br/>${reasons}`;
 			gameNotification(err_msg, true);
 		}
 
 		return isValid;
+	}
+
+	// Check setup of Categories and questions
+	function isValidCategories(rows)
+	{
+		let uniqueCategories = []
+
+		// Get count of questions per category
+		rows.forEach((obj)=> {
+			let categoryName = obj["Category Name"];
+			// Ensure name is in frequency map;
+			if(!uniqueCategories.includes(categoryName))
+			{
+				uniqueCategories.push(categoryName);
+			} 
+		});
+
+		return (uniqueCategories.length > 1);
 	}
 	
 	// check if a current player has been set
@@ -1660,13 +1706,7 @@
 	{
 		return (CURRENT_TEAM_IDX > -1);
 	}
-
-	function isReservedCode(code)
-	{
-		let reserved = ["DEMO", "TEST"];
-		return reserved.includes(code.toUpperCase());
-	}
-
+	
 	// Validate the headers are shown
 	function isHeadersVisible()
 	{

@@ -13,100 +13,138 @@
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy<br/>Edit Game</h1>
-		<div class="center_section_50 centered">
-			<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
-				TEST GAME
-			</button>
-			<button class="button_mash play_button" onclick="onNavigateToGameURL('host')">
-				HOST VIEW
-			</button>
-			<button class="button_mash play_button" onclick="onNavigateToGameURL('play')">
-				PLAY GAME
-			</button>
-		</div>
+		<h1 id="homemade_jeopardy_title">
+			Homemade Jeopardy
+			<br/>
+			Edit Game:
+			<br/><br/>
+			<span id="edit_game_name"></span>
+		</h1>
 		<hr/>
 	</div>
 	<div id="edit_game_section" class="hidden">
-		<div class="center_section_50 centered">
-			<button id="save_game_button" class="button_mash save_button" onclick="onSaveGame()">
-				SAVE ALL
-			</button>			
-			<br/>
-			<img id="saving_gif" class="hidden" src="../assets/img/loading1.gif" style="width:50px;height:50px;">
-			<span id="saving_results_section"></span>
-		</div>
-		<div class="center_section_50">
+		<div class="center_section_70">
 			
-			<div class="edit_game_subsection">
-				<h2>Game Name
-					<button class="save_component_button save_button" onclick="onSaveGameComponent('GameName')">Save</button>
-					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
-				</h2>
-				<p>Enter a name for your game. This is displayed at the top when playing the game.</p>
-				<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value">
+			<div id="host_edit_tab_section">
+				<h2 class="host_edit_tab selected_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_details">General Details</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_settings">Settings/Rules</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_media">Game Media</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_play">Test/Play Game</h2>
 			</div>
-			<div class="edit_game_subsection">	
-				<h2>Pass Phrase
-					<button class="save_component_button save_button" onclick="onSaveGameComponent('PassPhrase')">Save</button>
-					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
-				</h2>
-				<p>
-					This pass phrase is used to access the edit page as well as to play/host the game. 
+			<div class="center_section_70 centered hidden">
+				<p id="loading_results_section"></p>
+			</div>
+
+			<div id="edit_section_game_details" class="edit_section selected_section">
+				<p class="section_description">
+					Set the name of the game, the passphrase, and the Google Sheet URLs.
 				</p>
-				<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password">
-			</div>
-			<div class="edit_game_subsection">
-				<h2>Published Sheet URL
-					<button class="save_component_button save_button" onclick="onSaveGameComponent('PublishedSheetURL')">Save</button>
-					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
-				</h2>
-				<p>
-					Use the instructions in the <a class="hyperlink" target="_blank" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTwUkX8fG2cwDAI4M6AUx4AulguXYVaP277_tjxTS18trOlaBEes2ocR3UGBm_eRsAWShmI4gse7dk1/pubhtml" title="Game Template">Game Template</a> to setup your Game spreadsheet.<br/>Then, paste the published URL here. 
+				<p id="creating_first_spreadsheet" class="hidden">
+					<a class="hyperlink2" style="color:red;font-size:150%;" target="_blank" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS_d0_C5zkCpcZweTeHs2eTZgheytNfsGET_BcO7tErNFuncQ4JY4e6LZD0y0FnpVo3wIIpRXdU6dHg/pubhtml" title="Game Template">
+						Click here for instructions on creating your Google Sheet.
+					</a>
 				</p>
-				<textarea id="game_url_value" class="edit_game_value" placeholder="Paste the Published URL Here" style="width:100%;" rows="4"/></textarea>
-			</div>
-			<div class="edit_game_subsection">
-				<h2>Edit Sheet URL
-					<button class="save_component_button save_button" onclick="onSaveGameComponent('EditSheetURL')">Save</button>
-					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
-				</h2>
-				<p>
-					This is the URL to the actual Google Sheet, so you can quickly edit it. 
-					<a id="go_to_edit_sheet" href="" class="hyperlink" target="_blank"></a> 
-				</p>
-				<textarea id="game_edit_sheet_value" class="edit_game_value" placeholder="Paste the Edit Sheet URL Here" style="width:100%;" rows="3"/></textarea>
-			</div>
-			<div class="edit_game_subsection">
-				<h2>Game Settings
-					<button class="save_component_button save_button" onclick="onSaveGameComponent('GameSettings')">Save</button>
-					<img class="component_saving_gif hidden" src="../assets/img/loading1.gif" style="float:right; width:5%;height:5%;">
-				</h2>
-				<p>Configure the settings that you want to use for your game.</p>
-				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
-				<table id="settings_table" style="width:100%;">
+				<table style="width:100%;" class="edit_game_section_table">
 					<colgroup>
-						<col style="width:25%; text-align:left;"/>
-						<col style="width:75%; text-align:left;"/>
+						<col style="width:20%;">
+						<col/>
 					</colgroup>
-					<thead>
+					<tbody>
 						<tr>
-							<th>Rule Name</th>
-							<th>Options</th>
+							<td>&nbsp;</td>
+							<td>
+								<p id="save_game_details" style="width:90%;text-align:right;">
+									<button class="save_button pointer" onclick="onSaveGame(event)">
+										SAVE ALL
+									</button>
+								</p>
+							</td>
 						</tr>
-					</thead>
-					<tbody id="settings_table_body"></tbody>
+						<tr>
+							<td>
+								<h3>
+									Game Name
+								</h3>
+							</td>
+							<td>
+								<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value">
+								<span title="This is the name of your game." class="description fa fa-question-circle"></span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<h3>
+									Pass Phrase
+								</h3>
+							</td>
+							<td>
+								<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password">
+								<span title="This pass phrase is used to access this edit page." class="description fa fa-question-circle"></span>
+
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<h3>Published Sheet URL</h3>
+							</td>
+							<td>
+								<textarea id="game_url_value" class="edit_game_value" placeholder="Paste the Published URL Here" style="width:80%;" rows="4"/></textarea>
+								<span title="This is the Google Sheet URL phrase is used to access this edit page." class="description fa fa-question-circle"></span>
+
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<h3>Edit Sheet URL</h3>
+							</td>
+							<td>
+								<a id="go_to_edit_sheet" href="" class="hyperlink" target="_blank" style="text-align:left;">
+									Open Spreadsheet
+								</a> 
+								<textarea id="game_edit_sheet_value" class="edit_game_value" placeholder="Paste the Edit Sheet URL Here" style="width:80%;" rows="3"/></textarea>
+								<span title="This is the URL to edit your spreadsheet of questions." class="description fa fa-question-circle"></span>
+								
+
+							</td>
+						</tr>
+					</tbody>
 				</table>
 			</div>
-			<div class="edit_game_subsection">
-				<h2>
-					Game Media
-					<span style="font-size:smaller">(OPTIONAL)</span>
-				</h2>
-				<p>If you want to include images/audio as a part of your game, use the <strong>Google Form</strong> link below.
-					The file name you enter via this upload must match a file name entered in your game spreadsheet (above)
-					When it asks for a <strong>Game ID</strong>, use the value below. 
+
+			<div id="edit_section_game_settings" class="edit_section hidden">
+				<p class="section_description">
+					Configure the settings that you want to use for your game.
 				</p>
+				<!-- <button style="text-align:left;" class="save_button" onclick="onSaveGameSettings()">
+					SAVE ALL
+				</button> -->
+				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
+				<table id="settings_table" class="edit_game_section_table" style="width:100%;">
+					<colgroup>
+						<col style="width:20%; text-align:left;"/>
+						<col style="width:65%; text-align:left;"/>
+					</colgroup>
+					<tbody id="settings_table_body">
+						<tr>
+							<td>&nbsp;</td>
+							<td>
+								<p id="save_game_settings" style="width:90%;text-align:right;">
+									<button class="save_button pointer" onclick="onSaveGame(event)">
+										SAVE ALL
+									</button>
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div id="edit_section_game_media" class="edit_section hidden">
+
+				<p class="section_description">
+					OPTIONAL: Upload any images or audio you want to use in your game.
+				</p>
+
 				<table id="game_media_details_table">
 					<colgroup>
 						<col style="width:25%;">
@@ -114,7 +152,11 @@
 					</colgroup>
 					<tbody>
 						<tr>
-							<th>Upload Form:</th>
+							<th>
+								<h3>
+									Upload Form
+								</h3>
+							</th>
 							<td>
 								<a class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
 									Upload Game Media
@@ -122,26 +164,77 @@
 							</td>
 						</tr>
 						<tr>
-							<th>Game ID:</th>
+							<th><h3>Game ID</h3></th>
 							<td>
+								<p>
+									When it asks for a <strong>Game ID</strong>, use this value.
+								</p>
 								<span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span>
+							</td>
+						</tr>
+						<tr>
+							<th></th>
+							<td style="text-align:left;">
+								<h3>Synced Game Media</h3>
+								<button class="pointer" onclick="onSyncGameMedia()">Sync Game Media</button> <span id="syncNotifier"></span>
+								<ul id="game_media"></ul>
 							</td>
 						</tr>
 					</tbody>
 					
 				</table>
-				<br>
-				<button class="pointer" onclick="onSyncGameMedia()">Sync Game Media</button> <span id="syncNotifier"></span>
-				<ul id="game_media"></ul>
 			</div>
-			
+
+			<div id="edit_section_play" class="edit_section hidden">
+				<p class="section_description">
+					Use these buttons to test or play this game. 
+				</p>
+				<div class="center_section_60">
+					<table class="edit_game_section_table" style="width:100%;text-align:left;">
+						<colgroup>
+							<col style="width:40%;"/>
+							<col style="width:65%;"/>
+						</colgroup>
+						<tbody>
+							<tr>
+								<td>
+									<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
+										TEST GAME
+									</button>
+								</td>
+								<td>
+									<p>Use this to do a TEST run of your game.</p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button class="button_mash play_button" onclick="onNavigateToGameURL('host')">
+										HOST VIEW
+									</button>
+								</td>
+								<td>
+									<p>Use this to open the "Host" view - where you can see questions & answers at the same time.</p>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button class="button_mash save_button" onclick="onNavigateToGameURL('play')">
+										PLAY GAME
+									</button>
+								</td>
+								<td>
+									<p>Use this to play a <strong>real game</strong>.</p>
+								</td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+
+			</div>			
 		</div>
 	</div>
-	<div class="center_section_50 centered">
-		<p id="loading_results_section"></p>
-	</div>
 
-<!--  -->
 </body>
 	<!-- Common Code -->
 	<script src="../src/common.js"></script>
