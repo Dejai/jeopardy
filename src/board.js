@@ -697,8 +697,6 @@
 
 		// Set the selected cell to disabled;
 		cell.classList.add("category_option_selected");
-		// cell.style.backgroundColor = "gray";
-		// cell.style.color = "black";
 		cell.disabled = true;
 
 		// Get the mapped object from the Question/Answer Map
@@ -1371,15 +1369,6 @@
 		return max;
 	}
 
-	// Purpose: Returns a random character from the alphabet; Used to generate team codes
-	// Get a random character in the alphabet
-	function getRandomCharacter()
-	{
-		characters = "abcdefghijklmnopqrstuvwxyz";
-		randChar = Math.floor(Math.random()*characters.length);
-		return characters[randChar].toUpperCase();
-	}
-
 	// Get the wager for the current team (adjust to max possible - in case someone tries to cheat)
 	function getWagersPerTeam(teamCode, highestScore)
 	{
@@ -1697,13 +1686,7 @@
 	{
 		return (CURRENT_TEAM_IDX > -1);
 	}
-
-	function isReservedCode(code)
-	{
-		let reserved = ["DEMO", "TEST"];
-		return reserved.includes(code.toUpperCase());
-	}
-
+	
 	// Validate the headers are shown
 	function isHeadersVisible()
 	{
