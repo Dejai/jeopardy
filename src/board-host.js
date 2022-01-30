@@ -52,7 +52,7 @@
 
 		// Check if this is the live host view
 		let path = location.pathname;
-		IS_LIVE_HOST_VIEW = path.includes("host.html");
+		IS_LIVE_HOST_VIEW = path.includes("/host");
 
 		// Load the additional views
 		loadGameViews();
@@ -680,7 +680,6 @@
 		mydoc.showContent("#final_jeopardy_audio");
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
-		// mydoc.showContent("#highest_score_wager");
 		mydoc.showContent(".wager_row");
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -689,12 +688,6 @@
 
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
-
-		// var team_scores = document.querySelectorAll("span.team_score");
-		// let highest_score  = (team_scores.length > 0) ? team_scores[0].innerText : "0";
-		// document.getElementById("highest_score_value").innerText = highest_score;
-
-		// Logger.log("Highest score: " + highest_score);
 
 	}
 

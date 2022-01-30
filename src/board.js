@@ -773,18 +773,15 @@
 	// End the game and archive the list
 	function onEndGame()
 	{
-		let confirmAction = confirm("Would you like to end this game and archive it?");
-
-		if(confirmAction && !IS_TEST_RUN && !IS_DEMO_RUN)
+		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
 			MyTrello.update_list_to_archive(CURR_LIST_ID, archive_name , function(){
-				alert("Game archived!");
-				mydoc.hideContent("#endGameButton");
-				mydoc.hideContent("#game_board_section");
-				mydoc.hideContent(".pre_team_block");
+				let gameBoardSect = document.getElementById("game_board_section")
+				let currContent = gameBoardSect.innerHTML;
+				gameBoardSect.innerHTML = "<h2 style='text-align:center;'>Thanks for Playing!</h2>" + currContent;
 			});
 		}
 	}
@@ -922,7 +919,6 @@
 		mydoc.showContent("#final_jeopardy_audio");
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
-		// mydoc.showContent("#highest_score_wager");
 		mydoc.showContent(".wager_row");
 		if(!IS_TEST_RUN && !IS_DEMO_RUN)
 		{
@@ -1071,6 +1067,13 @@
 
 			// Reset the answers for each team, so it no longer shows
 			resetAnswers(); // Reset the answers for each team.
+		}
+		else if (IS_FINAL_JEOPARDY)
+		{
+			// Archive the game a few seconds after assigning final points
+			setTimeout(()=>{
+				onEndGame();
+			},1000);
 		}
 	}
 
