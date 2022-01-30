@@ -779,9 +779,7 @@
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
 			MyTrello.update_list_to_archive(CURR_LIST_ID, archive_name , function(){
-				let gameBoardSect = document.getElementById("game_board_section")
-				let currContent = gameBoardSect.innerHTML;
-				gameBoardSect.innerHTML = "<h2 style='text-align:center;'>Thanks for Playing!</h2>" + currContent;
+				alert("Game has been archived");
 			});
 		}
 	}
@@ -1070,10 +1068,16 @@
 		}
 		else if (IS_FINAL_JEOPARDY)
 		{
+			
+			// Indicate the end of the game.
+			let gameBoardSect = document.getElementById("game_board_section")
+			let currContent = gameBoardSect.innerHTML;
+			gameBoardSect.innerHTML = "<h2 style='text-align:center;'>Thanks for Playing!</h2>" + currContent;
+			
 			// Archive the game a few seconds after assigning final points
 			setTimeout(()=>{
 				onEndGame();
-			},1000);
+			},5000);
 		}
 	}
 
@@ -1482,6 +1486,10 @@
 		}
 		else if (setting.option == "3")
 		{
+			// Account for things typically associated with selecting a team
+			hideSetTeamButton();
+			CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
+
 			setRandomQuestion();
 		}
 	}
@@ -1620,24 +1628,28 @@
 	
 		let nextQuestion = "";
 
-		while(true)
+		if (limit > 1)
 		{
-			let randIdx = Math.floor(Math.random()*limit);
-			let cell = availableQuestions[randIdx];
-			nextQuestion = cell?.getAttribute("data-jpd-quest-key");
-			if(!nextQuestion.includes("FINAL JEOPARDY"))
+			while(true)
 			{
-				break;
-			}
-		}	
-
-		// Set the value; Show the section
-		document.getElementById("current_turn").innerText = nextQuestion;
-		mydoc.showContent("#current_turn_section");
-
-		// Account for things typically associated with selecting a team
-		hideSetTeamButton();
-		CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
+				let randIdx = Math.floor(Math.random()*limit);
+				let cell = availableQuestions[randIdx];
+				nextQuestion = cell?.getAttribute("data-jpd-quest-key");
+				if(!nextQuestion.includes("FINAL JEOPARDY"))
+				{
+					break;
+				}
+			}	
+			// Set the value; Show the section
+			document.getElementById("current_turn").innerText = nextQuestion;
+			mydoc.showContent("#current_turn_section");
+		}
+		else
+		{
+			// Set the value; Show the section
+			document.getElementById("current_turn").innerText = "N/A";
+			mydoc.showContent("#current_turn_section");
+		}
 	}
 
 

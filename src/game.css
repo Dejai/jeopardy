@@ -28,7 +28,7 @@
 	.play_button { background-color:#060CE9; color:yellow;}
 	.hyperlink { background-color:blue; color:white;}
 
-	.jeopardy_image{ max-width:95%; }
+	.jeopardy_image{ max-width:95%; max-height:400px; }
 	#homemade_jeopardy_title { text-decoration:underline; }
 
 	.notify_limegreen { color:limegreen !important; }
