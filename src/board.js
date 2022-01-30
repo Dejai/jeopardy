@@ -880,21 +880,6 @@
 			let comment = `${date} --> ${CURR_GAME_CODE}`;
 			MyTrello.create_card_comment(CURR_GAME_ID, comment);
 		}
-
-		// Only used if multiple rounds are set;
-		let nextRound = document.getElementById("next_round");
-		if (nextRound != undefined)
-		{
-			nextRound.classList.remove("hidden");
-		}
-	}
-
-	// Show the next set of questions in the second round
-	function onNextRound(event)
-	{
-		document.getElementById("next_round").classList.add("hidden");
-		document.getElementById("round_1_row").classList.add("hidden");
-		document.getElementById("round_2_row").classList.remove("hidden");
 	}
 
 	//Show the Final Jeopardy section
@@ -1679,21 +1664,41 @@
 		givenRows = spreadSheetData["rows"];
 		givenRowCount = givenRows?.length ?? 0
 
-		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
-		isExpecedRowCount = givenRowCount == 31;
-
-		isValid = (isExpectedHeaders && isExpecedRowCount)
+		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","));
+		isExpecedRowCount = (givenRowCount - 1) % 5 == 0  // must be a multiple of 5 - indicating each category has 5 questions
+		isExpectedCategoryCount = isValidCategories(givenRows);
+		console.log(spreadSheetData);
+		isValid = (isExpectedHeaders && isExpecedRowCount && isExpectedCategoryCount)
 
 		if(!isValid)
 		{
 			reasons = ""
-			reasons += !isExpectedHeaders ? "<br/> -- Incorrect headers" : "";
-			reasons += !isExpecedRowCount ? "<br/> -- Incorrect number of rows" : "";
-			err_msg = `ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>${reasons}`;
+			reasons += !isExpectedHeaders ? "<br/>Make sure you have the right headers." : "";
+			reasons += !isExpecedRowCount ? "<br/>Make sure every category has 5 questions." : "";
+			reasons += !isExpectedCategoryCount ? "<br/>Make sure you have at least one category <br/>(not including Final Jeopardy)" : "";
+			err_msg = `ERROR:<br/>Your spreadhsheet is not valid.<br/>${reasons}`;
 			gameNotification(err_msg, true);
 		}
 
 		return isValid;
+	}
+
+	// Check setup of Categories and questions
+	function isValidCategories(rows)
+	{
+		let uniqueCategories = []
+
+		// Get count of questions per category
+		rows.forEach((obj)=> {
+			let categoryName = obj["Category Name"];
+			// Ensure name is in frequency map;
+			if(!uniqueCategories.includes(categoryName))
+			{
+				uniqueCategories.push(categoryName);
+			} 
+		});
+
+		return (uniqueCategories.length > 1);
 	}
 	
 	// check if a current player has been set

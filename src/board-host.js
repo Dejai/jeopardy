@@ -643,21 +643,6 @@
 		mydoc.hideContent("#teams_sync_section");
 		// Auto-show the headers
 		onCategoryClickAuto();
-
-		// Only used if multiple rounds are set;
-		let nextRound = document.getElementById("next_round");
-		if (nextRound != undefined)
-		{
-			nextRound.classList.remove("hidden");
-		}
-	}
-
-	// Show the next set of questions in the second round
-	function onNextRound(event)
-	{
-		document.getElementById("next_round").classList.add("hidden");
-		document.getElementById("round_1_row").classList.add("hidden");
-		document.getElementById("round_2_row").classList.remove("hidden");
 	}
 
 	//Show the Final Jeopardy section
