@@ -149,6 +149,7 @@ var USE_DEFAULT_RULES = true;
 		// Set the current game name;
 		CURR_GAME_NAME = response["name"];
 		document.getElementById("game_name_value").value = CURR_GAME_NAME;
+		document.getElementById("edit_game_name").innerText = CURR_GAME_NAME;
 
 		// Set the current game rules
 		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
@@ -229,7 +230,7 @@ var USE_DEFAULT_RULES = true;
 	{
 		let table_body = document.getElementById("settings_table_body")
 
-		table_body.innerHTML = get_formatted_rules(settingsJSON);
+		table_body.innerHTML += get_formatted_rules(settingsJSON);
 
 		onShowRuleDetails(); // Ensure values are displayed;
 	}
@@ -266,6 +267,27 @@ var USE_DEFAULT_RULES = true;
 	}
 
 /************* HOST: EVENT LISTENERS ************************************/ 
+
+	// Toggle the tabs
+	function onSwitchTab(event)
+	{
+		let target = event.target;
+
+		// Remove the current selected things
+		let selectedTab = document.querySelector(".selected_tab");
+		selectedTab?.classList.remove("selected_tab");
+
+		let selectedSection = document.querySelector(".edit_section.selected_section");
+		selectedSection?.classList.remove("selected_section");
+		selectedSection?.classList.add("hidden");
+
+		// Add the new tab and section
+		let sectionID = target.getAttribute("data-section-id");
+		target.classList.add("selected_tab");
+		let newSection = document.getElementById(sectionID);
+		newSection.classList.remove("hidden");
+		newSection.classList.add("selected_section");
+	}
 
 	// Open a game URL
 	function onNavigateToGameURL(type, isTest=false, samePageLoad=false)
@@ -363,14 +385,62 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Handler for saving the game components
-	function onSaveGame()
+	function onSaveGame(event)
 	{
-		// Save the different components
+
+		let target = event.target;
+		let parent = target?.parentElement;
+
+
+		let original_html = parent.innerHTML;
+		let identifier = parent.id;
+
+		// Start the loading process
+		loading_html = `
+			<span>Saving </span>
+			<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
+			`;
+		MyNotification.notify(`#${identifier}`, loading_html, "notify_orange");
+
+		
+		if(identifier == "save_game_details")
+		{
+			onSaveGameComponent("GameName");
+			onSaveGameComponent("PassPhrase");
+			onSaveGameComponent("PublishedSheetURL");
+			onSaveGameComponent("EditSheetURL");
+		}
+		else
+		{
+			onSaveGameComponent("GameSettings");
+		}
+
+		// Finally, end the save mode
+		setTimeout(()=>{
+			MyNotification.clear(`#${identifier}`, "notify_orange");
+			MyNotification.notify(`#${identifier}`, "<span>DONE!</span>", "notify_limegreen");
+
+			setTimeout(()=>{
+				MyNotification.clear(`#${identifier}`, "notify_limegreen");
+				document.getElementById(identifier).innerHTML = original_html;
+			},1500)
+		}, 2500);
+	}
+
+	// Save the Game Details
+	function onSaveGameDetails()
+	{
 		onSaveGameComponent("GameName");
 		onSaveGameComponent("PassPhrase");
 		onSaveGameComponent("PublishedSheetURL");
 		onSaveGameComponent("EditSheetURL");
+	}
+
+	// Save the Game settings
+	function onSaveGameSettings()
+	{
 		onSaveGameComponent("GameSettings");
+
 	}
 
 	// function New way to save game component
@@ -442,7 +512,7 @@ var USE_DEFAULT_RULES = true;
 		}
 
 		// First, start the load of the toggler 
-		onToggleSaveComponentState(identifier, true);
+		// onToggleSaveComponentState(".save_button", true);
 
 		// Then check if updates should be made; 
 		if(isUpdate && (parameters.length == expectedParams) )
@@ -451,24 +521,23 @@ var USE_DEFAULT_RULES = true;
 			updateFunc(...parameters);
 		}
 
-		// Finally, end the save mode
-		setTimeout(()=>{
-			onToggleSaveComponentState(identifier);
-		}, timeout);
+		// // Finally, end the save mode
+		// setTimeout(()=>{
+		// 	onToggleSaveComponentState(".save_button");
+		// }, timeout);
 	}	
 
 	// Toggle the state of each component being saved;
 	function onToggleSaveComponentState(identifier, isSaving=false)
 	{
-
 		// Get the related element and parent;
-		let element = document.querySelector(`#${identifier}`);
+		let element = document.querySelector(`${identifier}`);
 		let parent = element?.parentElement;
 
 		if(parent != undefined)
 		{
-			let saving_gif = parent.querySelector('.component_saving_gif');
-			let save_button = parent.querySelector(".save_component_button");
+			let saving_gif = document.querySelector('.component_saving_gif');
+			let save_button = document.querySelector(".save_button");
 
 			if(isSaving)
 			{
@@ -683,6 +752,9 @@ var USE_DEFAULT_RULES = true;
 		MyTrello.get_card_custom_fields(card_id, function(data){
 			response = JSON.parse(data.responseText);
 
+
+			let foundPublishedURL = false;
+
 			response.forEach(function(obj){
 				let valueObject = obj["value"];
 				let is_published_field = obj["idCustomField"] == MyTrello.custom_field_pub_url;
@@ -692,8 +764,13 @@ var USE_DEFAULT_RULES = true;
 				{
 					CURR_PUB_SHEET_URL = value;
 					document.getElementById("game_url_value").value = value;
+					foundPublishedURL = true;
 				}
 			});
+			if(!foundPublishedURL)
+			{
+				mydoc.showContent("#creating_first_spreadsheet");
+			}
 		});
 	}
 
@@ -712,7 +789,7 @@ var USE_DEFAULT_RULES = true;
 					CURR_EDIT_SHEET_URL = value;
 					document.getElementById("game_edit_sheet_value").value = value;
 					document.getElementById("go_to_edit_sheet").href = value;
-					document.getElementById("go_to_edit_sheet").innerText = "Go to Edit Sheet";
+					// document.getElementById("go_to_edit_sheet").innerText = "Go to Edit Sheet";
 				}
 			});
 		});
@@ -813,15 +890,16 @@ var USE_DEFAULT_RULES = true;
 									</option>`;
 			});	
 
-			// let showSuggestion = (suggestion.length > 0) ? "" : "hidden";
-
-			inputElement = `<select id="${ruleInputID}" data-jpd-rule-name="${rule}" class="ruleOption" onChange="onRuleOptionChange(event)">
+			inputElement = `<select id="${ruleInputID}" data-jpd-rule-name="${rule}" class="ruleOption input_mash" onChange="onRuleOptionChange(event)">
 								${optionElements}
 							</select>`
 
 			// Set the row element to be returned;
 			let row = `<tr>
-							<th>${rule}</th>
+							<th>
+									<h3>${rule}</h3>
+									<p>&nbsp;</p>
+							</th>
 							<td>
 								${inputElement}
 								<div class="rule_details_div">
@@ -831,9 +909,6 @@ var USE_DEFAULT_RULES = true;
 								</div>
 							</td>
 						</tr>`;
-					// 	<td>
-					// 	<input type="text" placeholder="Enter custom \${VALUE} name="customValue" class="hidden"/>
-					// </td>
 			rulesFormatted += row;
 		});
 
@@ -963,6 +1038,7 @@ var USE_DEFAULT_RULES = true;
 	{
 		toggle_loading_gif(true);
 		let section = document.getElementById("loading_results_section");
+		section.parentElement.classList.remove("hidden");
 		section.innerHTML = value;
 	}
 

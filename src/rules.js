@@ -25,7 +25,7 @@ const Rules =
 			"subRules":["If the person who buzzes doesn't get it correct, the next person to buzz in gets to answer",
 						"NOTE: The game doesn't have any buzz-in feature, so you'll have to use your own buzzers"
 						],
-			"suggestion": "Be sure to use the 'Host View' to see the answers while asking the question. To know if person got it right;"
+			"suggestion": "Be sure to use the 'Host View' to see the answers while asking the question."
 		}
 	],
 
