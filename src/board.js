@@ -696,8 +696,9 @@
 		loadTeamNamesInCorrectAnswerBlock();
 
 		// Set the selected cell to disabled;
-		cell.style.backgroundColor = "gray";
-		cell.style.color = "black";
+		cell.classList.add("category_option_selected");
+		// cell.style.backgroundColor = "gray";
+		// cell.style.color = "black";
 		cell.disabled = true;
 
 		// Get the mapped object from the Question/Answer Map
@@ -1126,6 +1127,9 @@
 				teamName = teamDetails["name"];
 				setCurrentPlayerByName(teamName);
 				break;
+			case "3":
+				setRandomQuestion();
+				break;
 			default:
 				setCurrentPlayer(CURRENT_TEAM_IDX); // default is to keep the same index;
 		}	
@@ -1484,6 +1488,10 @@
 		{
 			setCurrentPlayerRandomly();
 		}
+		else if (setting.option == "3")
+		{
+			setRandomQuestion();
+		}
 	}
 
 	// Take in a team name and set that team to current player
@@ -1609,6 +1617,35 @@
 		}
 
 		
+	}
+
+	// Select a random question
+	function setRandomQuestion()
+	{
+		let availableQuestions = document.querySelectorAll(".category_option:not(.category_option_selected)");
+
+		let limit = availableQuestions.length;
+	
+		let nextQuestion = "";
+
+		while(true)
+		{
+			let randIdx = Math.floor(Math.random()*limit);
+			let cell = availableQuestions[randIdx];
+			nextQuestion = cell?.getAttribute("data-jpd-quest-key");
+			if(!nextQuestion.includes("FINAL JEOPARDY"))
+			{
+				break;
+			}
+		}	
+
+		// Set the value; Show the section
+		document.getElementById("current_turn").innerText = nextQuestion;
+		mydoc.showContent("#current_turn_section");
+
+		// Account for things typically associated with selecting a team
+		hideSetTeamButton();
+		CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
 	}
 
 
