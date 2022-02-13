@@ -806,7 +806,6 @@
 		var answers = document.querySelectorAll(".team_answer");
 
 		// Loop through all possible teams;
-
 		for(var idx = 0; idx < answers.length; idx++)
 		{
 			let obj = answers[idx];
@@ -842,6 +841,16 @@
 
 		mydoc.removeClass("#answer_block", "hiddenBlock");
 		mydoc.addClass("#answer_block", "visibleBlock");
+
+		// Add reveal timestamp
+		let d = new Date()
+		let hour = d.getHours()
+		let minute = d.getMinutes();
+		let seconds = d.getSeconds();
+		let state = (hour >= 12) ? "PM" : "AM";
+		hour = hour > 12 ? 12 - hour : hour;
+		let time = `Revealed: ${hour}:${minute}:${seconds} ${state}`;
+		mydoc.loadContent(time, "answer_revealed_time");
 	}
 
 	// Reveal the game board & set initial team
