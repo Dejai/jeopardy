@@ -22,15 +22,20 @@
 
 		<div id="enter_answers_section" class="hidden">
 			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
-			<h4 style="border-top:3px solid navy;border-bottom:3px solid navy; padding:1%">				
+			<button id="show_wager_link" style="float:right;" onclick="onShowWagerInput()" class="dlf_button_round_corners dlf_button_medium dlf_button_red">
+				Final Jeopardy!
+			</button>
+			<div style="text-align:left;">
+				<span id="refresh_scores" class="fa fa-refresh pointer" style="text-align:left; color:white;text-decoration:none;font-size:smaller">
+					&nbsp; Refresh Scores
+				</span>&nbsp;<span id="refresh_info_icon" onclick="onRefreshInfoClick()" style="color:red; font-size:smaller;" title="Automatically refreshes every 60 seconds." class="fa fa-question-circle pointer" style="font-size:60%"></span>
+				<span id="refresh_info_message" style="font-size:smaller;" class="hidden"><br/>Automatically refreshes every 60 seconds.</span>	
+			</div>
+			
+			<h4 style="clear:both;margin:0px; border-top:3px solid navy;border-bottom:3px solid navy; padding: 0% 1%">				
 				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
 				<br/>
 				Your Score: <span id="team_score" class="highlight_team_value">0</span>
-				<br/><br/>
-				<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;text-decoration:none;font-size:smaller">
-					&nbsp; Refresh Scores
-				</span>&nbsp;<span id="refresh_info_icon" onclick="onRefreshInfoClick()" style="color:red; font-size:smaller;" title="Automatically refreshes every 60 seconds." class="fa fa-question-circle pointer" style="font-size:60%"></span>
-				<span id="refresh_info_message" style="font-size:smaller;" class="hidden"><br/>Automatically refreshes every 60 seconds.</span>
 			</h4>
 
 			<input id="team_card_id" type="text" name="team_card_id" value="" hidden>
@@ -41,34 +46,32 @@
 				<span id="submitted_wager_value" ></span>
 			</h4>
 			<div id="wager_input_section" class="hidden">
-				<p id="wager_instruction" style="color:red;" >Submit your wager before the final question is revealed.</p>
-				<h3><label for="wager">Enter Wager:</label></h3>
+				<p id="wager_instruction" style="color:red; margin:20px 0px 0px 0px;" >Submit your wager before the final question is revealed.</p>
+				<h3 style="margin:0px 0px 0px 0px;"><label for="wager">Enter Wager:</label></h3>
 				<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off">
-				<button id="submit_wager" type="submit" value="Submit" class="button_mash" onclick="submit_wager()">
+				<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_red" onclick="submit_wager()">
 					Submit Wager
 				</button>
 			</div>
 
 			 <!-- Submitted Answer -->
 			<div id="submitted_answer_section" class="hidden">
-				<h4>
-					<span class="submitted_answer">Last Submitted Answer:</span>
-					<span id="submitted_answer_value">answer</span>
+				<h4 style="margin:0px;">
+					<span class="submitted_answer">Last Submitted Answer:</span><br/>
+					<span id="submitted_answer_value"></span>&nbsp;
+					@ 
+					<span id="submitted_answer_time" class="answer_timestamp"></span>
 				</h4>
 			</div>
+
 			<!-- Answer things! -->
 			<div id="answer_input_section">
-				<h3><label for="answer">Enter Answer:</label></h3>
+				<h3 style="margin:20px 0px 0px 0px;"><label for="answer">Enter Answer:</label></h3>
 				<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
-				<br/><br/>
-				<button id="submit_answer" type="submit" value="Submit" class="button_mash" onclick="submit_answer()">
+				<br/>
+				<button id="submit_answer" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="submit_answer()">
 					Submit Answer
 				</button>
-			</div>
-			
-			<div>
-				<br/><br/><br/><br/>
-				<span id="show_wager_link" onclick="onShowWagerInput()" style="color:red;cursor:pointer;">Click here for Final Jeopardy</span>
 			</div>
 		</div>
 	</div>

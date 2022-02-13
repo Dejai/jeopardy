@@ -133,15 +133,20 @@
 
 	function create_team()
 	{
+		let team_input = document.getElementById("team_name");
+		let team_name = team_input.value;
+		let existing_team_id = undefined;
+
+		if(team_name == '')
+		{
+			alert("Enter a team name!");
+			return;
+		}
+		
 		// Disable the button and show loading gif;
 		document.getElementById("create_team_button").disabled = true;
 		mydoc.showContent("#loading_gif");
 
-		let team_input = document.getElementById("team_name");
-		let team_name = team_input.value;
-
-		let existing_team_id = undefined;
-		
 		// Check for existing cards before creating a new card; Match on name
 		MyTrello.get_cards(GAME_LIST_ID, function(data){
 
@@ -217,8 +222,22 @@
 	{
 		let card_id = document.getElementById("team_card_id").value;
 		let answer = document.getElementById("answer").value;
-		// let wager = document.getElementById("wager").value;
 
+		// Temporarily disable button;
+		submitButton = document.getElementById("submit_answer");
+		submitButton.disabled = true;
+		submitButton.classList.add("dlf_button_gray");
+		setTimeout(()=>{
+			document.getElementById("submit_answer").disabled = false;
+			submitButton.disabled = false;
+			submitButton.classList.remove("dlf_button_gray");
+		},2000);
+
+		// Set time of submission
+		let time = getTimeOfSubmission();
+		mydoc.loadContent(time, "submitted_answer_time");
+
+		// Submit answer to Trell card
 		MyTrello.update_card(card_id, answer);	
 
 		// Clear answers
@@ -280,6 +299,28 @@
 		setTimeout(()=>{
 			mydoc.hideContent("#refresh_info_message");
 		}, 2000)
+	}
+
+	// Get the date/time stamp
+	function getTimeOfSubmission()
+	{
+		let d = new Date()
+
+		let hour = d.getHours();
+		hour = hour > 12 ? hour - 12 : hour;
+		hour = (hour < 10) ? "0"+hour : hour;
+		
+		let minute = d.getMinutes();
+		minute = (minute < 10) ? "0"+minute : minute;
+
+		let seconds = d.getSeconds();
+		seconds = (seconds < 10) ? "0"+seconds : seconds;
+
+		let state = (d.getHours() >= 12) ? "PM" : "AM";
+
+		let time = `${hour}:${minute}:${seconds} ${state}`;
+
+		return time;
 	}
 
 /*************** POLLING FOR SCORES *******************************************/ 

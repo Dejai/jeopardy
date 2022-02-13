@@ -21,7 +21,10 @@ const mydoc = {
 	loadContent: function(content, identifier)
 	{
 		element = document.getElementById(identifier);
-		element.innerHTML = content;
+		if(element != undefined)
+		{
+			element.innerHTML = content;
+		}
 	},
 
 	// Add a test banner to indicate this is a test run;
