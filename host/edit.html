@@ -22,10 +22,16 @@
 		</h1>
 		<hr/>
 	</div>
+	<div id="load_game_section" style="text-align:center;">
+		<img id="loading_gif" src="../assets/img/loading1.gif" class="">
+		<div id="loading_results_section"></div>
+	</div>
+	<div id="new_game_section">
+
+	</div>
 	<div id="edit_game_section" class="hidden">
 		<div class="center_section_70">
-			
-			<div id="host_edit_tab_section">
+			<div id="host_edit_tab_section" class="hidden">
 				<h2 class="host_edit_tab selected_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_details">General Details</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_settings">Settings/Rules</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_media">Game Media</h2>
@@ -36,27 +42,35 @@
 			</div>
 
 			<div id="edit_section_game_details" class="edit_section selected_section">
-				<p class="section_description">
-					Set the name of the game, the passphrase, and the Google Sheet URLs.
-				</p>
-				<p id="creating_first_spreadsheet" class="hidden">
+				<!-- <p id="creating_first_spreadsheet" class="hidden">
 					<a class="hyperlink2" style="color:red;font-size:150%;" target="_blank" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS_d0_C5zkCpcZweTeHs2eTZgheytNfsGET_BcO7tErNFuncQ4JY4e6LZD0y0FnpVo3wIIpRXdU6dHg/pubhtml" title="Game Template">
 						Click here for instructions on creating your Google Sheet.
 					</a>
-				</p>
-				<table style="width:100%;" class="edit_game_section_table">
+				</p> -->
+				<table id="edit_game_details_table" style="width:100%;" class="edit_game_section_table hidden">
 					<colgroup>
-						<col style="width:20%;">
+						<col style="width:25%;">
 						<col/>
 					</colgroup>
 					<tbody>
 						<tr>
 							<td>&nbsp;</td>
 							<td>
-								<p id="save_game_details" style="width:90%;text-align:right;">
-									<button class="save_button pointer" onclick="onSaveGame(event)">
-										SAVE ALL
+								<p id="save_game_details" style="width:90%;text-align:right; margin:0px;">
+									<button id="save_button_game_details" class="save_button pointer" onclick="onSaveGame(event)">
+										SAVE
 									</button>
+								</p>
+							</td>
+						</tr>
+						<tr class="section_description_row hidden">
+							<td>&nbsp;</td>
+							<td>
+								<p class="section_description" style="margin:0px;">
+									Configure the general details for the Game.<br/>
+									<a class="hyperlink" href="https://docs.google.com/document/d/e/2PACX-1vRjnaLU6wc6eKwh9xieikP5dtcBeMN26kvRgxLGpJxUB3B2stspVZ8GbQgtjoJtkKA7NiMiX9yTMNeA/pub" target="_blank">
+										Click here for for tips on editing the Game Sheet.
+									</a>
 								</p>
 							</td>
 						</tr>
@@ -85,39 +99,46 @@
 						</tr>
 						<tr>
 							<td>
-								<h3>Published Sheet URL</h3>
+								<h3>Google Sheet URL</h3>
 							</td>
 							<td>
-								<textarea id="game_url_value" class="edit_game_value" placeholder="Paste the Published URL Here" style="width:80%;" rows="4"/></textarea>
-								<span title="This is the Google Sheet URL phrase is used to access this edit page." class="description fa fa-question-circle"></span>
-
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<h3>Edit Sheet URL</h3>
-							</td>
-							<td>
-								<a id="go_to_edit_sheet" href="" class="hyperlink" target="_blank" style="text-align:left;">
+								<p style='margin:0px;' class="game_details_step1_instruction hidden">
+									<span style='color:red'>NEXT:</span> &nbsp; 
+									Create a Google Sheet.
+									<a class="hyperlink" href="https://docs.google.com/document/d/e/2PACX-1vSkHp97bk4pvQxL_azYywj5W2B-asID3WhtCgLfK930-wAzFnY2mYahfhZLenPn7mZRyZk5HODT633n/pub" target="_blank">
+										Click here for instructions.
+									</a>
+								</p>
+								<a id="go_to_edit_sheet" href="" class="hyperlink hidden" target="_blank" style="text-align:left;">
 									Open Spreadsheet
 								</a> 
-								<textarea id="game_edit_sheet_value" class="edit_game_value" placeholder="Paste the Edit Sheet URL Here" style="width:80%;" rows="3"/></textarea>
-								<span title="This is the URL to edit your spreadsheet of questions." class="description fa fa-question-circle"></span>
-								
-
+								<br/>
+								<textarea id="game_edit_sheet_url_value" class="edit_game_value" placeholder="Paste the Google Sheet URL Here" style="width:80%;" rows="3"/></textarea>
+								<span title="This is the Google Sheet URL to edit your questions." class="description fa fa-question-circle"></span>
 							</td>
 						</tr>
+						<tr class="game_details_step2 hidden">
+							<td>
+								<h3>Published URL</h3>
+							</td>
+							<td>
+								<p class="game_details_step2_instruction hidden" style="margin:0px;">
+									<span style='color:red'>FINALLY:</span> &nbsp; 
+									Publish your Google Sheet.
+									<a class="hyperlink" href="https://docs.google.com/document/d/e/2PACX-1vQqouGot5Rd3uL4qFGZRVfnJG698rY8Cv5WH_ClJY4SaKUIElSEvE7YE-Um04UwRdnJ8LMyJ7_vQ6Cj/pub" target="_blank">
+										Click here for instructions.
+									</a>
+								</p>
+								<textarea id="game_published_url_value" class="edit_game_value" placeholder="Paste the Published URL Here" style="width:80%;" rows="4"/></textarea>
+								<span title="This is the Google Sheet URL phrase to display your questions." class="description fa fa-question-circle"></span>
+							</td>
+						</tr>
+						
 					</tbody>
 				</table>
 			</div>
 
 			<div id="edit_section_game_settings" class="edit_section hidden">
-				<p class="section_description">
-					Configure the settings that you want to use for your game.
-				</p>
-				<!-- <button style="text-align:left;" class="save_button" onclick="onSaveGameSettings()">
-					SAVE ALL
-				</button> -->
 				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
 				<table id="settings_table" class="edit_game_section_table" style="width:100%;">
 					<colgroup>
@@ -130,8 +151,16 @@
 							<td>
 								<p id="save_game_settings" style="width:90%;text-align:right;">
 									<button class="save_button pointer" onclick="onSaveGame(event)">
-										SAVE ALL
+										SAVE
 									</button>
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+							<td>
+								<p class="section_description" style="margin:0px;">
+									Configure the settings that you want to use for your game.
 								</p>
 							</td>
 						</tr>

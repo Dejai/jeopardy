@@ -101,26 +101,26 @@ var USE_DEFAULT_RULES = true;
 
 /*********** HOST: LOAD GAME (to either PLAY or EDIT) *************************/ 
 
-		// Listener for keyboard event = keyup
-		function onKeyboardKeyup()
+	// Listener for keyboard event = keyup
+	function onKeyboardKeyup()
+	{
+		document.addEventListener("keyup", function(event)
 		{
-			document.addEventListener("keyup", function(event)
+			switch(event.code)
 			{
-				switch(event.code)
-				{
-					case "Enter":
-						inputEle = document.getElementById("given_game_password");
-						if(inputEle == document.activeElement)
-						{
-							loadGame('edit', false, true)
+				case "Enter":
+					inputEle = document.getElementById("given_game_password");
+					if(inputEle == document.activeElement)
+					{
+						loadGame('edit', false, true)
 
-						}
-						break;
-					default:
-						return;
-				}
-			});
-		}
+					}
+					break;
+				default:
+					return;
+			}
+		});
+	}
 
 	// Get the selected game and entered pass phrase
 	function getGameAndPassPhrase()
@@ -136,38 +136,6 @@ var USE_DEFAULT_RULES = true;
 		return obj;
 	}
 
-	// // Load the details for editing the game details:
-	function loadEditGamePage(response)
-	{
-		// Set the current game ID; Also show it in read-only field
-		CURR_GAME_ID = response["id"];
-		document.getElementById("read_only_game_id").innerText = CURR_GAME_ID;
-
-		// Set the Media Checklist ID
-		CURR_MEDIA_CHECKLIST_ID = response["idChecklists"][0] ?? "";
-
-		// Set the current game name;
-		CURR_GAME_NAME = response["name"];
-		document.getElementById("game_name_value").value = CURR_GAME_NAME;
-		document.getElementById("edit_game_name").innerText = CURR_GAME_NAME;
-
-		// Set the current game rules
-		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
-		loadGameSettings(CURR_GAME_RULES);
-
-		// Determine if this should be a DEMO link
-		let demoParam = (CURR_GAME_NAME.toUpperCase() == "DEMO") ? "&demo=1" : "";
-
-		// Get password, and then callback to show game page
-		get_existing_password(CURR_GAME_ID);
-		get_existing_media(CURR_MEDIA_CHECKLIST_ID);
-		get_existing_edit_sheet_url(CURR_GAME_ID);
-		get_existing_published_sheet_url(CURR_GAME_ID, demoParam);
-
-		// Adjust visibility of sections
-		mydoc.hideContent("#enter_game_name_section");
-		mydoc.showContent("#edit_game_section");
-	}
 
 	// Looks up the lists from the board and tries to find the one matching the given game code
 	function loadGame(action, isTestRun=false, samePageLoad=false)
@@ -194,35 +162,37 @@ var USE_DEFAULT_RULES = true;
 		}
 	}
 
-	// Validate the password
-	function validate_password(game_id, password, callback)
+	// // Load the details for editing the game details:
+	function loadEditGamePage(response)
 	{
+		// Set the current game ID; Also show it in read-only field
+		CURR_GAME_ID = response["id"];
+		document.getElementById("read_only_game_id").innerText = CURR_GAME_ID;
 
-		MyTrello.get_card_custom_fields(game_id, function(data){
-			response = JSON.parse(data.responseText);
+		// Set the Media Checklist ID
+		CURR_MEDIA_CHECKLIST_ID = response["idChecklists"][0] ?? "";
 
-			failure = true;			
-			response.forEach(function(obj){
-				let valueObject = obj["value"];
-				let is_phrase_field = obj["idCustomField"] == MyTrello.custom_field_phrase;
-				let is_edit_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
-				let customFieldValue = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if( (is_phrase_field || is_edit_field) && customFieldValue != "")
-				{
-					if(customFieldValue.toUpperCase() == password.toUpperCase())
-					{
-						failure = false;
-						callback();
-					}
-				}
-			});
-			if(failure)
-			{
-				result = "Invalid credentials for this game";
-				set_loading_results(result);
-			}
-		});
+		// Set the current game name;
+		CURR_GAME_NAME = response["name"];
+		document.getElementById("game_name_value").value = CURR_GAME_NAME;
+		document.getElementById("edit_game_name").innerText = CURR_GAME_NAME;
+
+		// Set the current game rules
+		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
+		loadGameSettings(CURR_GAME_RULES);
+
+		// Determine if this should be a DEMO link
+		let demoParam = (CURR_GAME_NAME.toUpperCase() == "DEMO") ? "&demo=1" : "";
+
+		// Get password, and then callback to show game page
+		getPassPhraseFromTrello(CURR_GAME_ID);
+		getMediaFromTrello(CURR_MEDIA_CHECKLIST_ID);
+		getEditSheetUrlFromTrello(CURR_GAME_ID);
+		getPublishedUrlFromTrello(CURR_GAME_ID, demoParam);
+
+		// Adjust visibility of sections
+		mydoc.hideContent("#enter_game_name_section");
+		mydoc.showContent("#edit_game_section");
 	}
 
 	// Load the game settings
@@ -272,6 +242,15 @@ var USE_DEFAULT_RULES = true;
 	function onSwitchTab(event)
 	{
 		let target = event.target;
+
+		// Check if it is disabled
+		let isDisabled = target.classList.contains("host_edit_tab_disabled");
+
+		if(isDisabled)
+		{
+			alert("Please enter the Game URLs in order to access this tab.");
+			return;
+		}
 
 		// Remove the current selected things
 		let selectedTab = document.querySelector(".selected_tab");
@@ -387,7 +366,6 @@ var USE_DEFAULT_RULES = true;
 	// Handler for saving the game components
 	function onSaveGame(event)
 	{
-
 		let target = event.target;
 		let parent = target?.parentElement;
 
@@ -423,24 +401,10 @@ var USE_DEFAULT_RULES = true;
 			setTimeout(()=>{
 				MyNotification.clear(`#${identifier}`, "notify_limegreen");
 				document.getElementById(identifier).innerHTML = original_html;
+				
+				showEditPageSections(); // See if we can show other sections now;
 			},1500)
 		}, 2500);
-	}
-
-	// Save the Game Details
-	function onSaveGameDetails()
-	{
-		onSaveGameComponent("GameName");
-		onSaveGameComponent("PassPhrase");
-		onSaveGameComponent("PublishedSheetURL");
-		onSaveGameComponent("EditSheetURL");
-	}
-
-	// Save the Game settings
-	function onSaveGameSettings()
-	{
-		onSaveGameComponent("GameSettings");
-
 	}
 
 	// function New way to save game component
@@ -478,7 +442,7 @@ var USE_DEFAULT_RULES = true;
 				CURR_GAME_PASSWORD = checkValue.value;
 				break;
 			case "PublishedSheetURL":
-				identifier = "game_url_value";
+				identifier = "game_published_url_value";
 				saved_value = CURR_PUB_SHEET_URL;
 				updateFunc = MyTrello.update_card_custom_field;
 				expectedParams = 3;
@@ -489,7 +453,7 @@ var USE_DEFAULT_RULES = true;
 				CURR_PUB_SHEET_URL = checkValue.value;
 				break;
 			case "EditSheetURL":
-				identifier = "game_edit_sheet_value";
+				identifier = "game_edit_sheet_url_value";
 				saved_value = CURR_EDIT_SHEET_URL;
 				updateFunc = MyTrello.update_card_custom_field;
 				expectedParams = 3;
@@ -662,8 +626,8 @@ var USE_DEFAULT_RULES = true;
 					
 					// Finally load the values on the page
 					setTimeout( ()=>{
-						get_existing_media(CURR_MEDIA_CHECKLIST_ID);
-					}, 2000)
+						getMediaFromTrello(CURR_MEDIA_CHECKLIST_ID);
+					}, 1000);
 				});
 
 			});
@@ -694,7 +658,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the card's checklsit item based on checklist id
-	function get_existing_media(checklist_id)
+	function getMediaFromTrello(checklist_id)
 	{
 
 		MyNotification.clear("#syncNotifier", "notify_limegreen");
@@ -746,8 +710,30 @@ var USE_DEFAULT_RULES = true;
 		
 	}
 
+	// Get the edit sheet URL - if set
+	function getEditSheetUrlFromTrello(card_id)
+	{
+		MyTrello.get_card_custom_fields(card_id, function(data){
+			response = JSON.parse(data.responseText);
+
+			response.forEach( (obj)=> {
+				let valueObject = obj["value"];
+				let is_sheet_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
+				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+				
+				if(is_sheet_field && value != "")
+				{
+					CURR_EDIT_SHEET_URL = value;
+					document.getElementById("game_edit_sheet_url_value").value = value;
+					document.getElementById("go_to_edit_sheet").href = value;
+					// document.getElementById("go_to_edit_sheet").innerText = "Go to Edit Sheet";
+				}
+			});
+		});
+	}
+
 	// Get the published sheet URL stored in the game
-	function get_existing_published_sheet_url(card_id, demoParam="")
+	function getPublishedUrlFromTrello(card_id, demoParam="")
 	{
 		MyTrello.get_card_custom_fields(card_id, function(data){
 			response = JSON.parse(data.responseText);
@@ -763,39 +749,25 @@ var USE_DEFAULT_RULES = true;
 				if(is_published_field && value != "")
 				{
 					CURR_PUB_SHEET_URL = value;
-					document.getElementById("game_url_value").value = value;
+					document.getElementById("game_published_url_value").value = value;
 					foundPublishedURL = true;
 				}
 			});
-			if(!foundPublishedURL)
-			{
-				mydoc.showContent("#creating_first_spreadsheet");
-			}
+
+			// See what sections can be shown after checking for published URL
+			setTimeout( ()=>{
+				showEditPageSections();
+			},1000);
+
+			// if(!foundPublishedURL)
+			// {
+			// 	mydoc.showContent("#creating_first_spreadsheet");
+			// }
 		});
 	}
 
-	function get_existing_edit_sheet_url(card_id)
-	{
-		MyTrello.get_card_custom_fields(card_id, function(data){
-			response = JSON.parse(data.responseText);
-
-			response.forEach(function(obj){
-				let valueObject = obj["value"];
-				let is_sheet_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if(is_sheet_field && value != "")
-				{
-					CURR_EDIT_SHEET_URL = value;
-					document.getElementById("game_edit_sheet_value").value = value;
-					document.getElementById("go_to_edit_sheet").href = value;
-					// document.getElementById("go_to_edit_sheet").innerText = "Go to Edit Sheet";
-				}
-			});
-		});
-	}
-
-	function get_existing_password(game_id, callback=undefined)
+	// Get the existing pass phrase for the game
+	function getPassPhraseFromTrello(game_id, callback=undefined)
 	{
 
 		MyTrello.get_card_custom_fields(game_id, function(data){
@@ -1042,6 +1014,61 @@ var USE_DEFAULT_RULES = true;
 		section.innerHTML = value;
 	}
 
+	// Show the edit page sections, depending on what value is set
+	function showEditPageSections()
+	{
+		let editURL = document.getElementById("game_edit_sheet_url_value");
+		let pubURL = document.getElementById("game_published_url_value");
+
+		// Always show the edit table; 
+		// Only Name and Pass Phrase will be visible by default; 
+		mydoc.showContent("#edit_game_details_table");
+
+		// Hide the loading
+		mydoc.hideContent("#load_game_section");
+
+		// When things are EMPTY
+		if(editURL.value == "" || pubURL.value == "")
+		{
+			mydoc.hideContent("#host_edit_tab_section");
+			mydoc.hideContent(".section_description_row");
+
+			// Hide things specifically for Edit Url state
+			if(editURL.value == "")
+			{
+				// Show the edit URL instructions
+				mydoc.showContent(".game_details_step1_instruction");
+				mydoc.hideContent(".game_details_step2");
+				mydoc.hideContent("#go_to_edit_sheet"); // the link to open edit sheet;
+
+			}
+		}
+
+		// When things are NOT EMPTY
+		if(editURL.value != "" && pubURL.value != "")
+		{
+			
+			// Show the all the sections
+			mydoc.showContent("#host_edit_tab_section");
+			mydoc.showContent(".game_details_step2");
+			mydoc.showContent(".section_description_row");
+			mydoc.showContent("#go_to_edit_sheet"); // the link to open edit sheet;
+
+			// Hide instructions
+			mydoc.hideContent(".game_details_step1_instruction");
+			mydoc.hideContent(".game_details_step2_instruction");
+		}
+		else if (editURL.value != "" && pubURL.value == "")
+		{
+			// hide instructinos
+			mydoc.hideContent(".game_details_step1_instruction");
+
+			mydoc.showContent(".game_details_step2_instruction");
+			mydoc.showContent(".game_details_step2");
+			mydoc.showContent("#go_to_edit_sheet"); // the link to open edit sheet;
+		}
+	}
+
 /******************** ATTEST ***********************************/ 
 
 	// Validate New Game
@@ -1104,3 +1131,35 @@ var USE_DEFAULT_RULES = true;
 		let newValueObj = {"isNewValue":isDifference, "value": elementValue }
 		return newValueObj;
 	}
+
+
+	// Validate the password
+	function validate_password(game_id, password, callback)
+	{
+		MyTrello.get_card_custom_fields(game_id, function(data){
+			response = JSON.parse(data.responseText);
+
+			failure = true;			
+			response.forEach(function(obj){
+				let valueObject = obj["value"];
+				let is_phrase_field = obj["idCustomField"] == MyTrello.custom_field_phrase;
+				let is_edit_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
+				let customFieldValue = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+				
+				if( (is_phrase_field || is_edit_field) && customFieldValue != "")
+				{
+					if(customFieldValue.toUpperCase() == password.toUpperCase())
+					{
+						failure = false;
+						callback();
+					}
+				}
+			});
+			if(failure)
+			{
+				result = "Invalid credentials for this game";
+				set_loading_results(result);
+			}
+		});
+	}
+
