@@ -302,30 +302,33 @@
 
 			// General content
 			category_name = row["Category Name"];
-			value = row["Score Value"];
-			daily_double = row["Daily Double?"];
-			// question content
-			question_text = row["Question (Text)"];
-			question_audio = row["Question (Audio)"];
-			question_image = row["Question (Image)"];
-			question_url = row["Question (URL)"];
-			// Answer content
-			answer_text = row["Answer (Text)"];
-			answer_audio = row["Answer (Audio)"];
-			answer_image = row["Answer (Image)"];
-			answer_url = row["Answer (URL)"];
-
-			// Setup the new question
-			new_question = new Question(question_text, question_audio, question_image, question_url,
-				answer_text, answer_audio, answer_image, answer_url, value, daily_double);
-
-			// If category does not exist yet, add it;
-			if(!JeopardyGame.categoryExists(category_name))
+			if(categoryName != "")
 			{
-				JeopardyGame.addCategory( new Category(category_name) );
-			}
+				value = row["Score Value"];
+				daily_double = row["Daily Double?"];
+				// question content
+				question_text = row["Question (Text)"];
+				question_audio = row["Question (Audio)"];
+				question_image = row["Question (Image)"];
+				question_url = row["Question (URL)"];
+				// Answer content
+				answer_text = row["Answer (Text)"];
+				answer_audio = row["Answer (Audio)"];
+				answer_image = row["Answer (Image)"];
+				answer_url = row["Answer (URL)"];
 
-			JeopardyGame.getCategory(category_name).addQuestion(new_question);
+				// Setup the new question
+				new_question = new Question(question_text, question_audio, question_image, question_url,
+					answer_text, answer_audio, answer_image, answer_url, value, daily_double);
+
+				// If category does not exist yet, add it;
+				if(!JeopardyGame.categoryExists(category_name))
+				{
+					JeopardyGame.addCategory( new Category(category_name) );
+				}
+
+				JeopardyGame.getCategory(category_name).addQuestion(new_question);
+			}
 		});
 	}
 
@@ -1701,7 +1704,7 @@
 		rows.forEach((obj)=> {
 			let categoryName = obj["Category Name"];
 			// Ensure name is in frequency map;
-			if(!uniqueCategories.includes(categoryName))
+			if(categoryName != "" && !uniqueCategories.includes(categoryName))
 			{
 				uniqueCategories.push(categoryName);
 			} 
