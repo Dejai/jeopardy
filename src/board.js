@@ -1,7 +1,7 @@
 
 /************************ GLOBAL VARIABLES ************************/
 
-	var JeopardyGame = undefined;
+	// var JeopardyGame = undefined;
 	var CURR_GAME_ID = undefined;
 	var CURR_LIST_ID = undefined;
 	var CURR_MEDIA_CHECKLIST_ID = undefined;
@@ -16,7 +16,6 @@
 	};
 
 	// Storing details about the questions and game stage
-	var QA_MAP = {};   //The Question-Answer map;
 	var IS_FINAL_JEOPARDY = false;
 	var IS_GAME_OVER = false;
 
@@ -260,7 +259,7 @@
 	}
 
 	// Initialize New Game
-	function initializeGame(spreadsheetData)
+	function initializeGame(spreadSheetData)
 	{
 
 		isValid = isValidSpreadsheet(spreadSheetData);
@@ -273,9 +272,10 @@
 		setTimerDetails();
 
 		// Setup the Jeopardy Game object
+		givenRows = spreadSheetData["rows"];
 		createJeopardyObject(givenRows);
 
-		// Create/show the board
+		// Create the board
 		createGameBoard();
 
 		// Toggle visibility of sections
@@ -294,42 +294,8 @@
 	// Used to create a Jeopardy game object;
 	function createJeopardyObject(rows)
 	{
-
 		Logger.log("Creating Jeopardy Objects");
-		JeopardyGame = new Jeopardy();
-
-		rows.forEach( (row) => {
-
-			// General content
-			category_name = row["Category Name"];
-			if(categoryName != "")
-			{
-				value = row["Score Value"];
-				daily_double = row["Daily Double?"];
-				// question content
-				question_text = row["Question (Text)"];
-				question_audio = row["Question (Audio)"];
-				question_image = row["Question (Image)"];
-				question_url = row["Question (URL)"];
-				// Answer content
-				answer_text = row["Answer (Text)"];
-				answer_audio = row["Answer (Audio)"];
-				answer_image = row["Answer (Image)"];
-				answer_url = row["Answer (URL)"];
-
-				// Setup the new question
-				new_question = new Question(question_text, question_audio, question_image, question_url,
-					answer_text, answer_audio, answer_image, answer_url, value, daily_double);
-
-				// If category does not exist yet, add it;
-				if(!JeopardyGame.categoryExists(category_name))
-				{
-					JeopardyGame.addCategory( new Category(category_name) );
-				}
-
-				JeopardyGame.getCategory(category_name).addQuestion(new_question);
-			}
-		});
+		JEOPARDY_GAME = new Jeopardy(rows);		
 	}
 
 /************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
@@ -338,77 +304,8 @@
 	function createGameBoard()
 	{
 		Logger.log("Creating the Game Board.");
-
-		// Two "boards" - regular round and final jeopardy
-		var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
-		var final_board = "<tr id=\"final_jeopardy_row\" class=\"hidden\">";
-
-		// Get categories;
-		let categories = JeopardyGame.getCategories();
-		let categoriesLength = categories.length-1;
-		let categoryCount = 0;
-
-		categories.forEach(function(category){
-
-			categoryCount++;
-
-			isFinalJeopardy = category.isFinalJeopardy();
-
-			// Properties for the table rows
-			colspan 		= (isFinalJeopardy) ? 3 : 1;
-			dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
-
-			category_name 	= category.getName();
-			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
-
-			// Values for the "how to play" tooltip
-			let howToPlayClass = categoryCount == 3 ? "howtoplay_tooltip" : "";
-			let howToPlaySpan = categoryCount == 3 ? "<span class='tooltiptext tooltiphidden tooltipvisible tooltipabove'>Click to reveal the category names.</span>" : "";
-
-			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name=\"${category_name}\">${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
-			
-			// Set the questions 
-			category_questions_row	= "";
-			questions = category.getQuestions();
-			questions.forEach(function(question){
-				
-
-				quest = question.getQuestion();
-				ans   = question.getAnswer();
-				key = (isFinalJeopardy) ? category_name : (category_name + " - " + quest["value"]);
-
-				QA_MAP[key] = {
-					"question": quest,
-					"answer"  : ans
-				}
-				
-				category_questions_row += `<tr><td class='category category_option' data-jpd-quest-key=\"${key}\">${quest["value"]}</tr></td>`;
-			});
-			
-			// The column
-			let column = `<td colspan=\"colspan\" style='width:${dynamic_width}%;'><table class='category_column'>${category_name_row} ${category_questions_row}</table></td>`;
-
-			if(isFinalJeopardy)
-			{
-				final_board += column;
-			}
-			else
-			{
-				// Add column for category to Game Board
-				main_board += column;
-			}
-				
-			// }
-		});
-
-		// Close both rows;
-		main_board += "</tr>";
-		final_board += "</tr>";
-		
-		let game_board = main_board + final_board;
-
-		document.getElementById("game_board_body").innerHTML = game_board;
+		game_board = getJeopardyGameBoard();
+		mydoc.loadContent(game_board, "game_board_body");
 	}
 
 	// Add game name to the board
@@ -703,7 +600,7 @@
 		cell.disabled = true;
 
 		// Get the mapped object from the Question/Answer Map
-		let map = QA_MAP[key];
+		let map = JEOPARDY_QA_MAP[key];
 
 		// Format the questions and answers
 		let isDailyDouble = map["question"]["dailydouble"];
