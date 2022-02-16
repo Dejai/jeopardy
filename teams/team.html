@@ -22,7 +22,7 @@
 
 		<div id="enter_answers_section" class="hidden">
 			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
-			<button id="show_wager_link" style="float:right;" onclick="onShowWagerInput()" class="dlf_button_round_corners dlf_button_medium dlf_button_red">
+			<button id="show_wager_link" style="float:right;" class="dlf_button_round_corners dlf_button_medium dlf_button_red hidden"  onclick="onShowWagerInput()">
 				Final Jeopardy!
 			</button>
 			<div style="text-align:left;">
@@ -43,23 +43,38 @@
 			<!-- Wager things! -->
 			<h4 id="submitted_wager_section" class="hidden">
 				<span class="submitted_answer">Your wager:</span>
-				<span id="submitted_wager_value" ></span>
+				<span id="submitted_wager_value" style="color:red;" ></span>
 			</h4>
 			<div id="wager_input_section" class="hidden">
-				<p id="wager_instruction" style="color:red; margin:20px 0px 0px 0px;" >Submit your wager before the final question is revealed.</p>
-				<h3 style="margin:0px 0px 0px 0px;"><label for="wager">Enter Wager:</label></h3>
-				<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off">
-				<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_red" onclick="submit_wager()">
-					Submit Wager
-				</button>
+				<div id="wager_input_pt1">
+					<p id="wager_instruction" style="color:red; margin:20px 0px 0px 0px;" >Submit your wager before the final question is revealed.</p>
+					<h3 style="margin:0px 0px 0px 0px;"><label for="wager">Enter Wager:</label></h3>
+					<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off"><br/>
+					<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onConfirmWager()">
+						Submit Wager
+					</button>
+				</div>
+				<div id="wager_input_pt2" class="hidden">
+					<h4 id="wager_warning" style="color:red; margin-bottom:0px;">CONFIRM YOUR WAGER:</h4>
+					<p style="margin:0px;">Are you sure you would like to submit the following wager? </p>
+					<h3 id="wager_input_preview"style="color:red;"></h3>
+					<button id="cancel_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_red" onclick="onCancelWager()">
+						Cancel
+					</button>
+					<button id="confirm_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_limegreen" onclick="onSubmitWager()">
+						Submit
+					</button>
+				</div>
+				
+
 			</div>
 
 			 <!-- Submitted Answer -->
 			<div id="submitted_answer_section" class="hidden">
 				<h4 style="margin:0px;">
-					<span class="submitted_answer">Last Submitted Answer:</span><br/>
-					<span id="submitted_answer_value"></span>&nbsp;
-					@ 
+					<span class="submitted_answer">Last Answer:</span>
+					<span id="submitted_answer_value"></span>
+					<br/>
 					<span id="submitted_answer_time" class="answer_timestamp"></span>
 				</h4>
 			</div>
