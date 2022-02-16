@@ -190,10 +190,13 @@
 	// Get the teams current wager (and makes it visible)
 	function getWager(teamCode)
 	{
+		console.log("Getting team wager");
+
 		// Get the wager value from the wager field; Set in field
 		MyTrello.get_card_custom_fields(teamCode, function(data){
 			
 			response = JSON.parse(data.responseText);
+			wager_value = "";
 			for(var idx = 0; idx < response.length; idx++)
 			{
 				let obj = response[idx];
@@ -208,12 +211,21 @@
 				HAS_WAGER = (!isNaN(Number(value)));
 				if (HAS_WAGER)
 				{
-					document.getElementById("submitted_wager_value").innerText = value;
-					mydoc.showContent("#submitted_wager_section");
-					mydoc.hideContent("#wager_input_section");
-					mydoc.hideContent("#show_wager_link");
+					wager_value = value;
 				}
+				console.log("Wager?" + HAS_WAGER)
 				
+				
+			}
+			if (HAS_WAGER)
+			{
+				document.getElementById("submitted_wager_value").innerText = wager_value;
+				mydoc.showContent("#submitted_wager_section");
+				mydoc.hideContent("#wager_input_section");
+			}
+			else
+			{
+				mydoc.showContent("#show_wager_link");
 			}
 		});
 	}
@@ -234,7 +246,7 @@
 		},2000);
 
 		// Set time of submission
-		let time = getTimeOfSubmission();
+		let time = Helper.getDate("H:m:s K");
 		mydoc.loadContent(time, "submitted_answer_time");
 
 		// Submit answer to Trell card
@@ -253,15 +265,41 @@
 			mydoc.hideContent("#answer_input_section");
 			mydoc.hideContent("#submittButton");
 		}
-
-		// Attempt to submit wager as well
-		// if(wager != "" && Number.isInteger(Number(wager)))
-		// {
-		// 	submit_wager(card_id, String(wager));
-		// }
 	}
 
-	function submit_wager()
+	// First, confirm the wager 
+	function onConfirmWager()
+	{
+		let wager = document.getElementById("wager").value;
+		wagerValue = (wager == "") ? "empty" : wager;
+		if( !isNaN(Number(wagerValue)))
+		{
+			// Hide the wager input part 1
+			mydoc.hideContent("#wager_input_pt1");
+
+			// Show the wager input part 2: confirmation
+			mydoc.showContent("#wager_input_pt2");
+
+			// Add the score to the preview
+			mydoc.loadContent(wagerValue,"wager_input_preview");
+		}
+		else
+		{
+			alert("Invalid wager value! Please enter a number");
+		}
+	}
+
+	// Cancel the wager to go back to entering one
+	function onCancelWager()
+	{
+		// Hide the wager input part 2: confirmation
+		mydoc.hideContent("#wager_input_pt2");
+
+		// Show the wager input part 1: entry
+		mydoc.showContent("#wager_input_pt1");
+	}
+
+	function onSubmitWager()
 	{
 		let card_id = document.getElementById("team_card_id").value;
 		let wager = document.getElementById("wager").value;
@@ -299,28 +337,6 @@
 		setTimeout(()=>{
 			mydoc.hideContent("#refresh_info_message");
 		}, 2000)
-	}
-
-	// Get the date/time stamp
-	function getTimeOfSubmission()
-	{
-		let d = new Date()
-
-		let hour = d.getHours();
-		hour = hour > 12 ? hour - 12 : hour;
-		hour = (hour < 10) ? "0"+hour : hour;
-		
-		let minute = d.getMinutes();
-		minute = (minute < 10) ? "0"+minute : minute;
-
-		let seconds = d.getSeconds();
-		seconds = (seconds < 10) ? "0"+seconds : seconds;
-
-		let state = (d.getHours() >= 12) ? "PM" : "AM";
-
-		let time = `${hour}:${minute}:${seconds} ${state}`;
-
-		return time;
 	}
 
 /*************** POLLING FOR SCORES *******************************************/ 

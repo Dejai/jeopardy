@@ -743,13 +743,7 @@
 		mydoc.addClass("#answer_block", "visibleBlock");
 
 		// Add reveal timestamp
-		let d = new Date()
-		let hour = d.getHours()
-		let minute = d.getMinutes();
-		let seconds = d.getSeconds();
-		let state = (hour >= 12) ? "PM" : "AM";
-		hour = hour > 12 ? 12 - hour : hour;
-		let time = `Revealed: ${hour}:${minute}:${seconds} ${state}`;
+		let time = Helper.getDate("H:m:s K");
 		mydoc.loadContent(time, "answer_revealed_time");
 	}
 

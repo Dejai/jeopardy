@@ -133,7 +133,7 @@
 		.newliner { display:none;}
 	}
 
-	.answer_timestamp { color:red; }
+	.answer_timestamp { color:red; font-size:smaller; }
 
 
 /* Archive section */

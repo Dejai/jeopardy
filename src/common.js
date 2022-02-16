@@ -475,15 +475,66 @@ const Helper = {
 		return code;
 	},
 
-	getDate: function(){
+	getDate: function(format=undefined){
 		let dd = new Date();
+
+		// Get the year; Replaces "yyyy" or "YYYY" in the format;
 		let year = dd.getFullYear().toString();
+		
+		// Get the month; Replaces "MM" in the format
 		let monthIdx = dd.getMonth()+1;
-		let month = (monthIdx<9) ? "0"+monthIdx : monthIdx;
+		let month = (monthIdx < 10) ? "0"+monthIdx : monthIdx;
+		
+		// Get the day of the month; Replaces "dd" in the format
 		let dayIdx = dd.getDate();
-		let day = (dayIdx < 9 ) ? "0"+dayIdx : dayIdx;
-		var myDateObj = { "year":year, "month":month, "day":day };
-		return myDateObj;
+		let day = (dayIdx < 10) ? "0"+dayIdx : dayIdx;
+		
+		// Get the hour; Replaces "H" in the format;
+		let hour = dd.getHours();
+		hour = hour > 12 ? hour - 12 : hour;
+		hour = (hour < 10) ? "0"+hour : hour;
+
+		// Get the minute; Replaces "m" in the format;
+		let minute = dd.getMinutes();
+		minute = (minute < 10) ? "0"+minute : minute;
+
+		// Get the seconds; Replaces "s" in the format;
+		let seconds = dd.getSeconds();
+		seconds = (seconds < 10) ? "0"+seconds : seconds;
+		
+		// Get the state of the day (AM vs PM); Replaces "K" in the format
+		let state = (hour >= 12) ? "PM" : "AM";
+
+		// What to return;
+		var result = undefined; 
+		if(format != undefined)
+		{
+			let dt = format.replace("YYYY",year)
+					.replace("yyyy",year)
+					.replace("MM",month)
+					.replace("dd",year)
+					.replace("H",hour)
+					.replace("m",minute)
+					.replace("s",seconds)
+					.replace("K",state);
+			
+			result = dt;
+		}
+		else
+		{
+			var dateObj = { 
+							"year":year,
+							"month":month,
+							 "day":day,
+							"hour":hour,
+							"minute":minute,
+							"seconds":seconds,
+							"state":state
+						};
+			result = dateObj;
+		}
+
+		return result;
 	},
 
 	getDateFormatted: function(format=undefined){
