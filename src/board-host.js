@@ -1,13 +1,10 @@
 
 /************************ GLOBAL VARIABLES ************************/
 
-	var JeopardyGame = undefined;
-	var CURR_GAME_ID = undefined;
+var CURR_GAME_ID = undefined;
 	var CURR_MEDIA_CHECKLIST_ID = undefined;
 
-	var CURR_GAME_CODE = "";
 	var GAME_NAME  = "Home-made Jeopardy";
-	var HOW_TO_IS_HIDDEN = true;
 
 	var GAME_MEDIA = {
 		"_daily_double_audio":"../assets/audio/daily_double.m4a",
@@ -15,27 +12,7 @@
 	};
 
 	// Storing details about the questions and game stage
-	var QA_MAP = {};   //The Question-Answer map;
 	var IS_FINAL_JEOPARDY = false;
-	var IS_GAME_OVER = false;
-
-	// var CURRENT_QUESTION_KEY = undefined;
-	var ASKED_QUESTIONS = [];
-
-	// Storing the current players
-	var TEAMS_ADDED = [];
-	var CURRENT_TEAM_IDX = -1;
-	var LAST_TEAM_CORRECT = undefined; // only used in game mode with single answerer
-
-	var NUMBER_OF_PLAYERS = 0;
-	var PLAYER_MAPPING = {};
-
-	var SETTINGS_MAPPING = {};
-
-	var IS_LIVE_HOST_VIEW = false;
-
-	var IS_TEST_RUN = false;
-	var IS_DEMO_RUN = false;
 
 /************************ GETTING STARTED ************************/
 
@@ -43,16 +20,11 @@
 
 		// Load the game params to determine what should happen next
 		validParams = loadGameParams();
-
-		// Make sure the page doesn't close once the game starts
-		// window.addEventListener("beforeunload", onClosePage);
-
 		// Set the game board listeners
 		onKeyboardKeyup();
 
 		// Check if this is the live host view
 		let path = location.pathname;
-		IS_LIVE_HOST_VIEW = path.includes("/host");
 
 		// Load the additional views
 		loadGameViews();
@@ -65,26 +37,19 @@
 	function loadGameParams()
 	{
 		let query_map = mydoc.get_query_map();
-
-		IS_DEMO_RUN = (query_map["demo"] ?? 0) == 1;
-		IS_TEST_RUN = (query_map["test"] ?? 0) == 1;
 		CURR_GAME_ID = query_map["gameid"] ?? undefined;
-		
-		if(IS_TEST_RUN){ 
-			mydoc.addTestBanner(); 
-		}
 	}
 
 	// Load the individual Views used for the game
 	function loadGameViews()
 	{
 		$("#menu_section").load("../views/menu.html");
-		$("#rules_section").load("../views/rules.html");
+		// $("#rules_section").load("../views/rules.html");
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
 
-		// IS_LIVE_HOST_VIEW
+		// Show the question host section
 		$("#show_question_section").load(`../views/showQuestionHost.html`, function(data){
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
@@ -116,9 +81,6 @@
 
 				//Load the Attachments on the Game (if any);
 				loadGameMedia();
-
-				// Load the game settings
-				loadSettingsMapping(response["desc"]);
 
 				// Get the published URL from the card custom field
 				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
@@ -156,66 +118,6 @@
 		}
 	}
 
-	// Load the settings from Trello card
-	function loadSettingsMapping(jsonString)
-	{
-		try
-		{
-			jsonObj = myajax.GetJSON(jsonString);
-			settings = Settings.GetSettings(jsonObj) ?? [];
-
-			settings.forEach( (setting) => {
-				ruleObj = setting["rule"];
-				ruleName = setting["name"];
-				optionID = setting["option"];
-				customValue = setting["value"] ?? "";
-
-				// Create the Setting mapping:
-				SETTINGS_MAPPING[ruleName] = {"option": optionID, "customValue": customValue, "rule": ruleObj };
-			});
-		}
-		catch(error)
-		{
-			err_msg = "Sorry, something went wrong trying to open rules!\n\n"+error;
-			gameNotification(err_msg, true);
-		}
-	}
-
-	// Parse and load the game rules
-	function loadGameRules()
-	{
-		try
-		{
-			rulesListItems = "";
-
-			Object.keys(SETTINGS_MAPPING).forEach( (key) => {
-
-				setting = SETTINGS_MAPPING[key];
-
-				ruleObj = setting["rule"];
-				rule = ruleObj["rule"];
-				subRules = ruleObj["subRules"];
-
-				ruleElement = `<strong class='rule'>${rule}</strong>`
-				subRulesElements = "";
-					
-				subRules.forEach(function(sub){
-					subRulesElements += `<li class='subrule'>${sub}</li>`
-				});
-				// Create the overall rule item; Append to the list
-				rulesListItems += `<li class='rule_item'>${ruleElement}<ul>${subRulesElements}</ul></li>`;
-			});
-
-			// Set the rules
-			document.getElementById("rules_list").innerHTML = rulesListItems;
-
-		}
-		catch(error)
-		{
-			err_msg = "Sorry, something went wrong trying to open rules!\n\n"+error
-			gameNotification(err_msg, true);
-		}
-	}
 	
 	// Get the attachments on the card (if any)
 	function loadGameMedia()
@@ -253,14 +155,26 @@
 	function initializeGame(spreadsheetData)
 	{
 
-		isValid = isValidSpreadsheet(spreadSheetData);
-		if(!isValid){ return; }  // If not valid, return without doing anything else;
+		console.log(spreadSheetData);
 
-		// Load the game rules if valid sheet
-		loadGameRules();
+		// First, check for valid spreadsheet columns
+		errors = validateSpreadsheetColumns(spreadSheetData);
+		if(errors.length > 0)
+		{
+			printErrors(errors);
+			return;
+		}
 
 		// Setup the Jeopardy Game object
-		createJeopardyObject(givenRows);
+		createJeopardyObject( spreadSheetData["rows"] );
+
+		// Check if any errors and handle accordingly;
+		errors = validateJeopardyGame();
+		if(errors.length > 0)
+		{
+			printErrors(errors);
+			return;
+		}
 
 		// Create/show the board
 		createGameBoard();
@@ -268,49 +182,14 @@
 		// Toggle visibility of sections
 		showGameSections();
 		addGameName();
-		addGameCode();
+		mydoc.hideContent("#game_code_header");
 
 		// Add listeners
 		addListenerCategoryClick();
 		addListenerQuestionClick();
-	}
 
-	// Used to create a Jeopardy game object;
-	function createJeopardyObject(rows)
-	{
-
-		Logger.log("Creating Jeopardy Objects");
-		JeopardyGame = new Jeopardy();
-
-		rows.forEach( (row) => {
-
-			// General content
-			category_name = row["Category Name"];
-			value = row["Score Value"];
-			daily_double = row["Daily Double?"];
-			// question content
-			question_text = row["Question (Text)"];
-			question_audio = row["Question (Audio)"];
-			question_image = row["Question (Image)"];
-			question_url = row["Question (URL)"];
-			// Answer content
-			answer_text = row["Answer (Text)"];
-			answer_audio = row["Answer (Audio)"];
-			answer_image = row["Answer (Image)"];
-			answer_url = row["Answer (URL)"];
-
-			// Setup the new question
-			new_question = new Question(question_text, question_audio, question_image, question_url,
-				answer_text, answer_audio, answer_image, answer_url, value, daily_double);
-
-			// If category does not exist yet, add it;
-			if(!JeopardyGame.categoryExists(category_name))
-			{
-				JeopardyGame.addCategory( new Category(category_name) );
-			}
-
-			JeopardyGame.getCategory(category_name).addQuestion(new_question);
-		});
+		// Start Game once all things are set
+		onStartGame();
 	}
 
 /************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
@@ -319,84 +198,25 @@
 	function createGameBoard()
 	{
 		Logger.log("Creating the Game Board.");
+		game_board = getJeopardyGameBoard();
+		mydoc.loadContent(game_board, "game_board_body");
+	}
 
-		// Two "boards" - regular round and final jeopardy
-		var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
-		var final_board = "<tr id=\"final_jeopardy_row\" class=\"hidden\">";
-
-		// Get categories;
-		let categories = JeopardyGame.getCategories();
-		let categoriesLength = categories.length-1;
-		let categoryCount = 0;
-
-		categories.forEach(function(category){
-
-			categoryCount++;
-
-			isFinalJeopardy = category.isFinalJeopardy();
-
-			// Properties for the table rows
-			colspan 		= (isFinalJeopardy) ? 3 : 1;
-			dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
-
-			category_name 	= category.getName();
-			let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
-
-			// Values for the "how to play" tooltip
-			let howToPlayClass = categoryCount == 3 ? "howtoplay_tooltip" : "";
-			let howToPlaySpan = categoryCount == 3 ? "<span class='tooltiptext tooltiphidden tooltipvisible tooltipabove'>Click to reveal the category names.</span>" : "";
-
-			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name=\"${category_name}\">${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
-			
-			// Set the questions 
-			category_questions_row	= "";
-			questions = category.getQuestions();
-			questions.forEach(function(question){
-				
-
-				quest = question.getQuestion();
-				ans   = question.getAnswer();
-				key = (isFinalJeopardy) ? category_name : (category_name + " - " + quest["value"]);
-
-				QA_MAP[key] = {
-					"question": quest,
-					"answer"  : ans
-				}
-				
-				category_questions_row += `<tr><td class='category category_option' data-jpd-quest-key=\"${key}\">${quest["value"]}</tr></td>`;
-			});
-			
-			// The column
-			let column = `<td colspan=\"colspan\" style='width:${dynamic_width}%;'><table class='category_column'>${category_name_row} ${category_questions_row}</table></td>`;
-
-			if(isFinalJeopardy)
-			{
-				final_board += column;
-			}
-			else
-			{
-				// Add column for category to Game Board
-				main_board += column;
-			}
-				
-			// }
+	// Print the errors
+	function printErrors(errors)
+	{
+		console.log(errors)
+		let errorMessage = "ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>";
+		errors.forEach( (err)=>{
+			errorMessage += `<br/>${err}`;
 		});
-
-		// Close both rows;
-		main_board += "</tr>";
-		final_board += "</tr>";
-		
-		let game_board = main_board + final_board;
-
-		document.getElementById("game_board_body").innerHTML = game_board;
+		gameNotification(errorMessage, true);
 	}
 
 	// Add game name to the board
 	function addGameName()
 	{
 		// Set Game Name on the board
-		// let gameNameLiveHostView = (IS_LIVE_HOST_VIEW) ? " (Host View) " : ""
 		document.getElementById("game_name").innerHTML = GAME_NAME + "<br/>(Host View) ";
 	}
 
@@ -409,21 +229,6 @@
 
 		// Show Content
 		mydoc.showContent("#game_section");
-	}
-
-	// Add the game code to the page
-	function addGameCode()
-	{
-		// Set the game code
-		let game_code = (IS_TEST_RUN) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
-		CURR_GAME_CODE = game_code;
-		document.getElementById("game_code").innerHTML = game_code;
-
-		// // Hide the game code section if not being used
-		if(IS_LIVE_HOST_VIEW)
-		{
-			document.getElementById("game_code_header")?.classList.add("hidden")
-		}
 	}
 
 	// Manage the notifications on the page
@@ -566,15 +371,12 @@
 		Logger.log("Loading Question");
 		Logger.log(cell);
 
-		let setting = SETTINGS_MAPPING["Answering Questions"];
-		let mode = setting.option;
-
 		// Set the selected cell to disabled;
 		cell.classList.add("category_option_selected");
 		cell.disabled = true;
 
 		// Get the mapped object from the Question/Answer Map
-		let map = QA_MAP[key];
+		let map = JEOPARDY_QA_MAP[key];
 
 		// Format the questions and answers
 		let isDailyDouble = map["question"]["dailydouble"];
@@ -589,12 +391,12 @@
 		questionValue = (isDailyDouble) ? (2 * questionValue) : questionValue;
 		
 		// Load the different sections
+		let mode = undefined;
 		loadQuestionViewSection("question_block", question, mode, true);
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
 
-		// if (IS_LIVE_HOST_VIEW)
 		// Auto-show the answer block in this view
 		document.getElementById("answer_block")?.classList.remove("hidden");
 		
@@ -666,10 +468,6 @@
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
 		mydoc.showContent(".wager_row");
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
-		{
-			mydoc.showContent("#endGameButton")
-		}
 
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
@@ -705,46 +503,6 @@
 
 /********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
 
-	// Validate the spreadsheet data
-	function isValidSpreadsheet(spreadsheetData)
-	{
-		isValid = true; 
-
-		// First, determine if the data is as expected
-		expectedHeaders = [
-				"Category Name",
-				"Score Value",
-				"Daily Double?",
-				"Question (Text)",
-				"Question (Audio)",
-				"Question (Image)",
-				"Question (URL)",
-				"Answer (Text)",
-				"Answer (Audio)",
-				"Answer (Image)",
-				"Answer (URL)"
-			];
-
-		givenHeaders = spreadsheetData["headers"] ?? [];
-		givenRows = spreadSheetData["rows"];
-		givenRowCount = givenRows?.length ?? 0
-
-		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","))
-		isExpecedRowCount = givenRowCount == 31;
-
-		isValid = (isExpectedHeaders && isExpecedRowCount)
-
-		if(!isValid)
-		{
-			reasons = ""
-			reasons += !isExpectedHeaders ? "<br/> -- Incorrect headers" : "";
-			reasons += !isExpecedRowCount ? "<br/> -- Incorrect number of rows" : "";
-			err_msg = `ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>${reasons}`;
-			gameNotification(err_msg, true);
-		}
-
-		return isValid;
-	}
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
 

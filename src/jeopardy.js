@@ -1,18 +1,14 @@
-/*************************************
-	Joepardy Generic Variables
-***********************************/
+/************Jeopardy Generic Variables**********************/
 	var JEOPARDY_GAME = undefined;
 	var JEOPARDY_QA_MAP = {};
 
-/*************************************
-	Joepardy Classes/Models
-***********************************/
+/*************Jeopardy Classes/Models**********************/
+	
 	class Jeopardy
 	{
 		constructor(rows)
 		{
-			// this.name = name
-			this.categories = [];
+			this.categories = {}
 			this.initialize(rows);
 		}
 
@@ -25,13 +21,16 @@
 				let category_name = row["Category Name"];
 				if(category_name != "")
 				{
+					// question value
 					let value = row["Score Value"];
 					let daily_double = row["Daily Double?"];
+
 					// question content
 					let question_text = row["Question (Text)"];
 					let question_audio = row["Question (Audio)"];
 					let question_image = row["Question (Image)"];
 					let question_url = row["Question (URL)"];
+
 					// Answer content
 					let answer_text = row["Answer (Text)"];
 					let answer_audio = row["Answer (Audio)"];
@@ -42,84 +41,81 @@
 					let new_question = new Question(question_text, question_audio, question_image, question_url,
 						answer_text, answer_audio, answer_image, answer_url, value, daily_double);
 	
-					// If category does not exist yet, add it;
-					if(!this.categoryExists(category_name))
-					{
-						this.addCategory( new Category(category_name) );
-					}
-	
-					this.getCategory(category_name).addQuestion(new_question);
+
+					// Add the question to the game; 
+					this.addQuestion(category_name, new_question);
+					// this.getCategory(category_name).addQuestion(new_question);
 				}
 			});
 		}
 
-		addCategory(category)
+		// Add the question specifically to a category
+		addQuestion(categoryName, question)
 		{
-			this.categories.push(category);
+			let category = this.getCategory(categoryName);
+			category.addQuestion( question );
 		}
 
-		getCategories()
-		{
-			return this.categories;
-		}
+		// Get the set of category objects;
+		getCategories() { return Object.values(this.categories); }
 
+		// Get a specific category from this game;
 		getCategory(name)
 		{
-			let theCategory = {};
-			this.categories.forEach(function(obj){
-				if(obj.getName() == name)
-				{
-					theCategory = obj; 
-				}
-			});
-			return theCategory;
-		}
 
-		categoryExists(name)
-		{
-			let names = [];
-			this.categories.forEach(function(obj){
-				names.push(obj.getName());
-			});
-			return names.includes(name);
+			let keys = Object.keys(this.categories);
+
+			// If category not created yet; make sure it is
+			if(!keys.includes(name))
+			{
+				this.categories[name] = new Category(name);
+			}
+
+			// Return the category;
+			return this.categories[name];
 		}
 	};
 
+	/* The Category object */
 	class Category
 	{
 		constructor(name)
 		{
 			this.name = name;
 			this.questions = [];
-			this.finalJeopardy = this.setIsFinalJeopardy();
+			this.finalJeopardy = false;
+
+			// Check for final jeopardy;
+			this.checkFinalJeopardy();
 		}
 
-		setIsFinalJeopardy()
+		// Check if this category is a final jeopardy category
+		checkFinalJeopardy()
 		{
-			let bool = false;
-			let formatted = this.name.toUpperCase().replace(" ", "");
-			if(formatted == "FINALJEOPARDY" || formatted == "FINALJEOPARDY!")
-			{
-				bool = true;
-			}
-			return bool;
+			let formatted = this.name.toUpperCase().replaceAll (" ", "").replaceAll("!","");
+			this.finalJeopardy = (formatted == "FINALJEOPARDY");
 		}
 
+		// Return if this category is the final jeopardy
+		isFinalJeopardy() { return this.finalJeopardy; }
+
+		// Add a question to this category
 		addQuestion(question)
 		{
 			this.questions.push(question);
 		}
 
+		// Get the category name;
 		getName(){ return this.name; }
 
-		isFinalJeopardy() { return this.finalJeopardy; }
+		// Get the questions of this category;
+		getQuestions(){ return this.questions; }
 
-		getQuestions()
-		{
-			return this.questions;
-		}
+		// Get the question count of this category;
+		getQuestionCount(){ return this.questions.length; }
 	}
 
+	/* The Question object */
 	class Question
 	{
 		constructor(question, questAudio, questImg, questURL, 
@@ -184,15 +180,20 @@
 	}
 
 
-/*************************************
-	Joepardy Helper Functions
-***********************************/
+/*********** Jeopardy Helper Functions *********************/
+
+	// Used to create a Jeopardy game object;
+	function createJeopardyObject(rows)
+	{
+		Logger.log("Creating Jeopardy Objects");
+		JEOPARDY_GAME = new Jeopardy(rows);
+		console.log(JEOPARDY_GAME);		
+	}
 
 	// Create the Game Board TABLE
 	function getJeopardyGameBoard()
 	{
 		Logger.log("Creating the Game Board.");
-		console.log("THE NEW WAY!");
 
 		// Two "boards" - regular round and final jeopardy
 		var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
@@ -264,4 +265,76 @@
 		let game_board = main_board + final_board;
 
 		return game_board;
+	}
+
+
+	// Validate the game
+	function validateJeopardyGame()
+	{
+		// Game categories;
+		let categories = JEOPARDY_GAME.getCategories();
+
+		// The errors list;
+		let errors = []; 
+		let finalJeopardyExists = false;
+
+		// Loop through the categories;
+		categories.forEach( (category) =>{
+
+			let categoryCount = category.getQuestionCount();
+			let categoryName = category.getName();
+
+			// Check if category has enough questions
+			if ( categoryCount  != 5 && !category.isFinalJeopardy )
+			{
+				errors.push(`The category ${categoryName} has ${categoryCount} questions. It should have 5.`);
+			}
+
+			// Check if Final Jeopardy is correct
+			if ( category.isFinalJeopardy()  )
+			{
+				if(finalJeopardyExists)
+				{
+					errors.push(`There should be a single "Final Jeopardy!" category.`)
+				}
+				else
+				{
+					finalJeopardyExists = true;
+				}
+			}
+		});
+
+		return errors;
+
+	}
+
+
+	// Validate the spreadsheet data
+	function validateSpreadsheetColumns(spreadsheetData)
+	{
+		// First, determine if the data is as expected
+		expectedHeaders = [
+				"Category Name",
+				"Score Value",
+				"Daily Double?",
+				"Question (Text)",
+				"Question (Audio)",
+				"Question (Image)",
+				"Question (URL)",
+				"Answer (Text)",
+				"Answer (Audio)",
+				"Answer (Image)",
+				"Answer (URL)"
+			];
+
+		givenHeaders = spreadsheetData["headers"] ?? [];
+		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","));
+
+		errors = [];
+
+		if(!isExpectedHeaders)
+		{
+			errors.push("<br/>Make sure you have the right headers.")
+		}
+		return errors
 	}

@@ -1,8 +1,7 @@
 
 /************************ GLOBAL VARIABLES ************************/
 
-	// var JeopardyGame = undefined;
-	var CURR_GAME_ID = undefined;
+var CURR_GAME_ID = undefined;
 	var CURR_LIST_ID = undefined;
 	var CURR_MEDIA_CHECKLIST_ID = undefined;
 
@@ -262,18 +261,32 @@
 	function initializeGame(spreadSheetData)
 	{
 
-		isValid = isValidSpreadsheet(spreadSheetData);
-		if(!isValid){ return; }  // If not valid, return without doing anything else;
+		console.log(spreadSheetData);
+
+		// First, check for valid spreadsheet columns
+		errors = validateSpreadsheetColumns(spreadSheetData);
+		if(errors.length > 0)
+		{
+			printErrors(errors);
+			return;
+		}
+
+		// Setup the Jeopardy Game object
+		createJeopardyObject( spreadSheetData["rows"] );
+
+		// Check if any errors and handle accordingly;
+		errors = validateJeopardyGame();
+		if(errors.length > 0)
+		{
+			printErrors(errors);
+			return;
+		}
 
 		// Load the game rules if valid sheet
 		loadGameRules();
 
 		// Set timer details for default;
 		setTimerDetails();
-
-		// Setup the Jeopardy Game object
-		givenRows = spreadSheetData["rows"];
-		createJeopardyObject(givenRows);
 
 		// Create the board
 		createGameBoard();
@@ -291,12 +304,7 @@
 		setListID();
 	}
 
-	// Used to create a Jeopardy game object;
-	function createJeopardyObject(rows)
-	{
-		Logger.log("Creating Jeopardy Objects");
-		JEOPARDY_GAME = new Jeopardy(rows);		
-	}
+	
 
 /************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
 
@@ -306,6 +314,17 @@
 		Logger.log("Creating the Game Board.");
 		game_board = getJeopardyGameBoard();
 		mydoc.loadContent(game_board, "game_board_body");
+	}
+
+	// Print the errors
+	function printErrors(errors)
+	{
+		console.log(errors)
+		let errorMessage = "ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>";
+		errors.forEach( (err)=>{
+			errorMessage += `<br/>${err}`;
+		});
+		gameNotification(errorMessage, true);
 	}
 
 	// Add game name to the board
@@ -1543,67 +1562,6 @@
 
 /********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
 
-	// Validate the spreadsheet data
-	function isValidSpreadsheet(spreadsheetData)
-	{
-		isValid = true; 
-
-		// First, determine if the data is as expected
-		expectedHeaders = [
-				"Category Name",
-				"Score Value",
-				"Daily Double?",
-				"Question (Text)",
-				"Question (Audio)",
-				"Question (Image)",
-				"Question (URL)",
-				"Answer (Text)",
-				"Answer (Audio)",
-				"Answer (Image)",
-				"Answer (URL)"
-			];
-
-		givenHeaders = spreadsheetData["headers"] ?? [];
-		givenRows = spreadSheetData["rows"];
-		givenRowCount = givenRows?.length ?? 0
-
-		isExpectedHeaders = (expectedHeaders.join(",") == givenHeaders.join(","));
-		isExpecedRowCount = (givenRowCount - 1) % 5 == 0  // must be a multiple of 5 - indicating each category has 5 questions
-		isExpectedCategoryCount = isValidCategories(givenRows);
-		console.log(spreadSheetData);
-		isValid = (isExpectedHeaders && isExpecedRowCount && isExpectedCategoryCount)
-
-		if(!isValid)
-		{
-			reasons = ""
-			reasons += !isExpectedHeaders ? "<br/>Make sure you have the right headers." : "";
-			reasons += !isExpecedRowCount ? "<br/>Make sure every category has 5 questions." : "";
-			reasons += !isExpectedCategoryCount ? "<br/>Make sure you have at least one category <br/>(not including Final Jeopardy)" : "";
-			err_msg = `ERROR:<br/>Your spreadhsheet is not valid.<br/>${reasons}`;
-			gameNotification(err_msg, true);
-		}
-
-		return isValid;
-	}
-
-	// Check setup of Categories and questions
-	function isValidCategories(rows)
-	{
-		let uniqueCategories = []
-
-		// Get count of questions per category
-		rows.forEach((obj)=> {
-			let categoryName = obj["Category Name"];
-			// Ensure name is in frequency map;
-			if(categoryName != "" && !uniqueCategories.includes(categoryName))
-			{
-				uniqueCategories.push(categoryName);
-			} 
-		});
-
-		return (uniqueCategories.length > 1);
-	}
-	
 	// check if a current player has been set
 	function isCurrentPlayerSet()
 	{
