@@ -222,7 +222,7 @@
 			let howToPlaySpan = categoryCount == 3 ? "<span class='tooltiptext tooltiphidden tooltipvisible tooltipabove'>Click to reveal the category names.</span>" : "";
 
 			// Set the header for the category
-			category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name=\"${category_name}\">${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
+			category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name='${category_name}'>${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
 			
 			// Set the questions 
 			category_questions_row	= "";
@@ -281,26 +281,29 @@
 		// Loop through the categories;
 		categories.forEach( (category) =>{
 
-			let categoryCount = category.getQuestionCount();
+			let questionCount = category.getQuestionCount();
 			let categoryName = category.getName();
 
 			// Check if category has enough questions
-			if ( categoryCount  != 5 && !category.isFinalJeopardy )
+			if ( questionCount  != 5 && !category.isFinalJeopardy() )
 			{
-				errors.push(`The category ${categoryName} has ${categoryCount} questions. It should have 5.`);
+				errors.push(`The category ${categoryName} has ${questionCount} questions. It should have 5.`);
 			}
 
-			// Check if Final Jeopardy is correct
-			if ( category.isFinalJeopardy()  )
+			// Check if Final Jeopardy is setup incorrect;
+			if ( category.isFinalJeopardy() )
 			{
 				if(finalJeopardyExists)
 				{
-					errors.push(`There should be a single "Final Jeopardy!" category.`)
+					errors.push(`There should be a single "FINAL JEOPARDY" category.`)
 				}
-				else
+				else if (questionCount > 1)
 				{
-					finalJeopardyExists = true;
+					errors.push(`The FINAL JEOPARDY! category should only have 1 question. You have ${questionCount}`);
 				}
+
+				// Indicate that a final jeopardy exists
+				finalJeopardyExists = true;
 			}
 		});
 

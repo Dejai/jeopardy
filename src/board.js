@@ -276,6 +276,7 @@ var CURR_GAME_ID = undefined;
 
 		// Check if any errors and handle accordingly;
 		errors = validateJeopardyGame();
+		console.log(errors);
 		if(errors.length > 0)
 		{
 			printErrors(errors);
@@ -319,10 +320,9 @@ var CURR_GAME_ID = undefined;
 	// Print the errors
 	function printErrors(errors)
 	{
-		console.log(errors)
-		let errorMessage = "ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/>";
+		let errorMessage = "ERROR:<br/>Your spreadhsheet is not valid for the following reasons:<br/><hr/>";
 		errors.forEach( (err)=>{
-			errorMessage += `<br/>${err}`;
+			errorMessage += `<li style='font-style:smaller;'>${err}</li><br/>`;
 		});
 		gameNotification(errorMessage, true);
 	}
