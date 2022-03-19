@@ -1,7 +1,7 @@
 
 /************************ GLOBAL VARIABLES ************************/
 
-var CURR_GAME_ID = undefined;
+	var CURR_GAME_ID = undefined;
 	var CURR_MEDIA_CHECKLIST_ID = undefined;
 
 	var GAME_NAME  = "Home-made Jeopardy";
@@ -83,27 +83,18 @@ var CURR_GAME_ID = undefined;
 				loadGameMedia();
 
 				// Get the published URL from the card custom field
-				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
-					
-					custom_fields = JSON.parse(data2.responseText);
+				MyTrello.get_card_custom_field_by_name(CURR_GAME_ID, "Published URL", (data) =>{
 
-					// Loop through custom fields;
-					for (var idx = 0; idx < custom_fields.length; idx++)
+					let resp = JSON.parse(data.responseText);
+					custom_value = resp[0]?.value?.text ?? "";
+					if(custom_value != "")
 					{
-						field = custom_fields[idx];
-						field_id = field["idCustomField"] ?? "";
-						if(field_id != MyTrello.custom_field_pub_url) continue;
-
-						// Get the custom value;
-						custom_value = field?.value?.text ?? "";
-						if(custom_value != "")
-						{
-							MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
-								spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
-								initializeGame(spreadSheetData);
-							});
-						}
+						MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
+							spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
+							initializeGame(spreadSheetData);
+						});
 					}
+
 				});
 			}, 
 			(data) => {
@@ -496,13 +487,6 @@ var CURR_GAME_ID = undefined;
 		}
 		return url;
 	}
-
-
-/********** HELPER FUNCTIONS -- SETTERS, UPDATERS, and RESETERS **************************************/
-
-
-/********** HELPER FUNCTIONS -- ASSERTIONS **************************************/
-
 
 /********** HELPER FUNCTIONS -- FORMAT CONTENT **************************************/
 

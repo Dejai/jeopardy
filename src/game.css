@@ -75,6 +75,8 @@
 	.dlf_button_yellow { background-color:yellow !important; color:black !important;}
 	.dlf_button_gray { background-color:gray !important; color:lightgray !important;}
 
+	/* Button spacing */
+	.dlf_button_padding2 { padding:2%; }
 
 	/* Select Inputs */
 	.dlf_select { padding:3%; border:none; }
@@ -125,6 +127,8 @@
 
 	.notify_limegreen { color:limegreen !important; }
 	.notify_orange { color:orange !important; }
+	.notify_red { color:red !important; }
+	.notify_white { color:white !important; }
 
 	.jpd_subtext { font-size: 60%; font-style:italic; }
 
@@ -272,6 +276,8 @@
 	#teams_table tbody tr td{ border-bottom:2px solid white; border-top:2px solid white; }
 	.team_score { padding:1% }
 	.team_name { border-bottom:2px solid black; }
+
+	.hiddenShortCode { padding-left: 2%; color:orange; font-weight:bolder; }
 
 	.setTeamDirectly { cursor: pointer; }
 

@@ -21,19 +21,21 @@
 	<div id="main_section">
 
 		<div id="enter_answers_section" class="hidden">
-			<h2>Team: <span id="team_code" class="highlight_team_value"></span></h2>
+			<h2 style="margin-bottom:0px;">Team: <span id="team_code" class="highlight_team_value"></span></h2>
 			<button id="show_wager_link" style="float:right;" class="dlf_button_round_corners dlf_button_medium dlf_button_red hidden"  onclick="onShowWagerInput()">
 				Final Jeopardy!
 			</button>
-			<div style="text-align:left;">
-				<span id="refresh_scores" class="fa fa-refresh pointer" style="text-align:left; color:white;text-decoration:none;font-size:smaller">
-					&nbsp; Refresh Scores
-				</span>&nbsp;<span id="refresh_info_icon" onclick="onRefreshInfoClick()" style="color:red; font-size:smaller;" title="Automatically refreshes every 60 seconds." class="fa fa-question-circle pointer" style="font-size:60%"></span>
-				<span id="refresh_info_message" style="font-size:smaller;" class="hidden"><br/>Automatically refreshes every 60 seconds.</span>	
-			</div>
-			
+			<!-- <div style="text-align:left;"> -->
+				<button class="dlf_button_round_corners dlf_button_medium dlf_button_green" style="color:white;float:left; " onclick="onGetLatestScores()">
+					<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;">
+						&nbsp; Refresh Scores
+					</span>
+				</button>							
+			<!-- </div> -->
 			<h4 style="clear:both;margin:0px; border-top:3px solid navy;border-bottom:3px solid navy; padding: 0% 1%">				
+				<p style="font-style:italic;font-size:smaller;">Scores are automatically refreshed <span style="color:orange;">every 30 seconds</span>.</p>
 				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
+				<br/>
 				<br/>
 				Your Score: <span id="team_score" class="highlight_team_value">0</span>
 			</h4>
@@ -92,9 +94,9 @@
 	</div>
 </body>
 	<!-- Common Code -->
-	<script src="../src/common.js"></script>
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
-	<script src="../src/trello.js"></script>
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<script src="../src/teams.js"></script>
 
 </html>

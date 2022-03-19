@@ -8,6 +8,8 @@ var CURR_PUB_SHEET_URL = "";
 var CURR_GAME_PASSWORD = "";
 var CURR_MEDIA_CHECKLIST_ID = "";
 
+var TRELLO_IDS = {};
+
 var CURR_GAME_RULES =  undefined;
 var USE_DEFAULT_RULES = true;
 
@@ -15,6 +17,10 @@ var USE_DEFAULT_RULES = true;
 	
 	mydoc.ready(function()
 	{
+		// Set board name
+		MyTrello.SetBoardName("jeopardy");
+
+
 		// Check for existing player if on player screen
 		let path = location.pathname;
 
@@ -40,7 +46,6 @@ var USE_DEFAULT_RULES = true;
 		if (path.includes("/host/load"))
 		{
 			loadListOfGames();
-
 		}
 
 		// If gameid is set, avoid accidentally exiting
@@ -64,33 +69,42 @@ var USE_DEFAULT_RULES = true;
 		try
 		{
 			let games_select_list = document.getElementById("list_of_games");
-			MyTrello.get_cards(MyTrello.admin_list_id, function(data){
-				response = JSON.parse(data.responseText);
 
-				let cardMap = {};
-				response.forEach((card) => {
-					cardName = card["name"];
-					cardID = card["id"];
-					cardMap[cardName] = cardID;
-				});
-
-				// Get the names and sort;
-				let cardNames = Object.keys(cardMap);
-				cardNames.sort();
-
-				let options = "";
-
-				// Loop throught the games
-				for(var idx = 0; idx < cardNames.length; idx++)
-				{
-					singleCardName = cardNames[idx];
-					singleCardID = cardMap[singleCardName];
-
-					options += `<option value=${singleCardID}>${singleCardName}</option>`;
-				}
+			// Get the ADMIN_LIST id and then get cards
+			MyTrello.get_list_by_name( "ADMIN_LIST", (listData)=>{
 				
-				games_select_list.innerHTML += options;
-			});
+				let listResp = JSON.parse(listData.responseText);
+				let listID = listResp[0]?.id;
+
+				MyTrello.get_cards(listID, (data2) => {
+
+					let response = JSON.parse(data2.responseText);
+
+					let cardMap = {};
+					response.forEach((card) => {
+						cardName = card["name"];
+						cardID = card["id"];
+						cardMap[cardName] = cardID;
+					});
+
+					// Get the names and sort;
+					let cardNames = Object.keys(cardMap);
+					cardNames.sort();
+
+					let options = "";
+
+					// Loop through the games
+					for(var idx = 0; idx < cardNames.length; idx++)
+					{
+						singleCardName = cardNames[idx];
+						singleCardID = cardMap[singleCardName];
+
+						options += `<option value=${singleCardID}>${singleCardName}</option>`;
+					}
+					
+					games_select_list.innerHTML += options;
+				});
+			});			
 		}
 		catch(error)
 		{
@@ -151,7 +165,7 @@ var USE_DEFAULT_RULES = true;
 		if (current_game_id != undefined && current_game_id != "")
 		{
 			CURR_GAME_ID = current_game_id;
-			validate_password(current_game_id, given_password, function(){
+			validate_password(current_game_id, given_password, ()=>{
 				onNavigateToGameURL(action, isTestRun, samePageLoad);
 			});
 		}
@@ -190,6 +204,11 @@ var USE_DEFAULT_RULES = true;
 		getEditSheetUrlFromTrello(CURR_GAME_ID);
 		getPublishedUrlFromTrello(CURR_GAME_ID, demoParam);
 
+		// See what sections can be shown after getting the diff components
+		setTimeout( ()=>{
+			showEditPageSections();
+		},2000);
+
 		// Adjust visibility of sections
 		mydoc.hideContent("#enter_game_name_section");
 		mydoc.showContent("#edit_game_section");
@@ -208,31 +227,42 @@ var USE_DEFAULT_RULES = true;
 	// Create the new game;
 	function create_game(game_name, pass_phrase)
 	{
-		MyTrello.create_game_card(MyTrello.admin_list_id, game_name, function(data)
-		{
-			response = JSON.parse(data.responseText);
-			game_id = response["id"];
 
-			// Get the URL to use once created;
-			load_url = get_game_url(game_id, "edit");
+		MyTrello.get_list_by_name("ADMIN_LIST", (listData)=>{
 
-			// Update the description with the default settings
-			let defaultRules = Settings.GetDefaultSettings();
-			MyTrello.update_card_description(game_id, defaultRules);
+			let listResp = JSON.parse(listData.responseText);
+			let listID = listResp[0]?.id;
 
-			// Add the pass to the custom field
-			MyTrello.update_card_custom_field(game_id,MyTrello.custom_field_phrase,pass_phrase)
+			MyTrello.create_card(listID, game_name, (data) => 
+			{
+				response = JSON.parse(data.responseText);
+				game_id = response["id"];
 
-			// Also add a new checklist
-			MyTrello.create_checklist(game_id, (data) =>{
+				// Get the URL to use once created;
+				load_url = get_game_url(game_id, "edit");
 
-				// Navigate to new page once created
-				setTimeout(function(){
-					location.replace(load_url);
-				}, 2000);
+				// Update the description with the default settings
+				let defaultRules = Settings.GetDefaultSettings();
+				MyTrello.update_card_description(game_id, defaultRules);
+
+				// Add the pass to the custom field
+				MyTrello.get_custom_field_by_name("Pass Phrase", (customFieldData)=>{
+
+					let fieldResp = JSON.parse(customFieldData.responseText);
+					let customFieldID = fieldResp[0]?.id;
+		
+					MyTrello.update_card_custom_field(game_id,customFieldID,pass_phrase)
+				});
+
+				// Also add a new checklist
+				MyTrello.create_checklist(game_id, (data) =>{
+
+					// Navigate to new page once created
+					setTimeout(function(){
+						location.replace(load_url);
+					}, 2000);
+				});				
 			});
-
-			
 		});
 	}
 
@@ -271,7 +301,25 @@ var USE_DEFAULT_RULES = true;
 	// Open a game URL
 	function onNavigateToGameURL(type, isTest=false, samePageLoad=false)
 	{
+
+		if(type == "play" && !isTest)
+		{
+			let canPlay = onConfirmForPlay();
+			console.log("Can I Play?" + canPlay)
+			if(!canPlay)
+			{
+				mydoc.showContent("#play_game_confirmation_error");
+				return;
+			}
+			else
+			{
+				mydoc.hideContent("#play_game_confirmation_error");
+			}
+		}
+
+		// Load the page URl;
 		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
+
 		if(samePageLoad)
 		{
 			location.replace(newURL);
@@ -280,6 +328,33 @@ var USE_DEFAULT_RULES = true;
 		{
 			window.open(newURL, "_blank");
 		}
+	}
+
+	// Confirming that things are ready to play
+	function onConfirmForPlay()
+	{
+		let confirmSetting = document.querySelector("#confirm_settings");
+		let confirmTest = document.querySelector("#confirm_testing");
+		let confirmReal = document.querySelector("#confirm_real_game");
+		let button = document.querySelector("#play_button");
+
+		// Confirm if all checked;
+		let allChecked = confirmSetting.checked && confirmTest.checked && confirmReal.checked
+
+		// Update color of button according to clickability
+		if(allChecked)
+		{
+			button.classList.remove("dlf_button_gray");
+			button.classList.add("dlf_button_limegreen");
+			mydoc.hideContent("#play_game_confirmation_error");
+		}
+		else
+		{
+			button.classList.add("dlf_button_gray");
+			button.classList.remove("dlf_button_limegreen");
+		}
+
+		return allChecked;
 	}
 
 	// When the list of games changes
@@ -410,85 +485,123 @@ var USE_DEFAULT_RULES = true;
 	// function New way to save game component
 	function onSaveGameComponent(componentName)
 	{
+
+
+
+
 		let identifier = undefined;
-		let saved_value = undefined;
+		let savedValue = undefined;
+		let fieldValue = undefined;
+		let isDiffValue = false;
+		let customFieldName = undefined; // used to update custom fields
+
+
+
 		let updateFunc = undefined;
 		let expectedParams = 2;
 		let parameters = [CURR_GAME_ID];
 
+
 		let isUpdate = false; // by default, nothing to update;
 		let timeout = 1000; //default timeout of 1 second;
+
+		// PLAN --- break this out to IF/ELSE statment for updating things
 
 		switch(componentName)
 		{
 			case "GameName":
 				identifier = "game_name_value";
-				saved_value = CURR_GAME_NAME;
-				updateFunc = MyTrello.update_card_name
-				checkValue = checkIfNewValue(identifier, saved_value);
-				isUpdate = checkValue.isNewValue;
-				parameters.push(checkValue.value);
-				CURR_GAME_NAME = checkValue.value;
+				savedValue = CURR_GAME_NAME;
+				fieldValue = document.getElementById(identifier)?.value ?? savedValue;
+				isDiffValue = compareFieldValue(savedValue, fieldValue);
+				CURR_GAME_NAME = (isDiffValue) ? fieldValue : savedValue;
 				break;
+
 			case "PassPhrase":
 				identifier = "game_pass_phrase";
-				saved_value = CURR_GAME_PASSWORD;
-				updateFunc = MyTrello.update_card_custom_field;
-				expectedParams = 3;
-				parameters.push(MyTrello.custom_field_phrase);
-				checkValue = checkIfNewValue(identifier, saved_value);
-				isUpdate = checkValue.isNewValue;
-				parameters.push(checkValue.value);
-				CURR_GAME_PASSWORD = checkValue.value;
+				customFieldName = "Pass Phrase";
+				savedValue = CURR_GAME_PASSWORD;
+				fieldValue = document.getElementById(identifier)?.value ?? savedValue;
+				isDiffValue = compareFieldValue(savedValue, fieldValue);
+				CURR_GAME_PASSWORD = (isDiffValue) ? fieldValue : savedValue;
 				break;
 			case "PublishedSheetURL":
 				identifier = "game_published_url_value";
-				saved_value = CURR_PUB_SHEET_URL;
-				updateFunc = MyTrello.update_card_custom_field;
-				expectedParams = 3;
-				parameters.push(MyTrello.custom_field_pub_url);
-				checkValue = checkIfNewValue(identifier, saved_value);
-				isUpdate = checkValue.isNewValue;
-				parameters.push(checkValue.value);
-				CURR_PUB_SHEET_URL = checkValue.value;
+				customFieldName = "Published URL";
+				savedValue = CURR_PUB_SHEET_URL;
+				fieldValue = document.getElementById(identifier)?.value ?? savedValue;
+				isDiffValue = compareFieldValue(savedValue, fieldValue);
+				CURR_PUB_SHEET_URL = (isDiffValue) ? fieldValue : savedValue;
 				break;
+
 			case "EditSheetURL":
 				identifier = "game_edit_sheet_url_value";
-				saved_value = CURR_EDIT_SHEET_URL;
-				updateFunc = MyTrello.update_card_custom_field;
-				expectedParams = 3;
-				parameters.push(MyTrello.custom_field_edit_url);
-				checkValue = checkIfNewValue(identifier, saved_value);
-				isUpdate = checkValue.isNewValue;
-				parameters.push(checkValue.value);
-				CURR_EDIT_SHEET_URL = checkValue.value;
+				customFieldName = "Edit URL";
+				savedValue = CURR_EDIT_SHEET_URL;
+				fieldValue = document.getElementById(identifier)?.value ?? savedValue;
+				isDiffValue = compareFieldValue(savedValue, fieldValue);
+				CURR_EDIT_SHEET_URL = (isDiffValue) ? fieldValue : savedValue;
 				break;
 			case "GameSettings":
 				identifier = "settings_identifier";
-				updateFunc = MyTrello.update_card_description
-				isUpdate = true; // Always update settings;
-				savedRules = get_saved_rules();
-				savedRulesJSON = JSON.stringify(savedRules);
-				parameters.push(savedRulesJSON);
+				savedValue = CURR_EDIT_SHEET_URL;
+				fieldValue = document.getElementById(identifier)?.value ?? savedValue;
+				isDiffValue = true;
 				break;
 			default:
 				Logger.log("Could not set values");
 		}
 
-		// First, start the load of the toggler 
-		// onToggleSaveComponentState(".save_button", true);
 
-		// Then check if updates should be made; 
-		if(isUpdate && (parameters.length == expectedParams) )
+		// Running the fuctions based on if a new value is present
+		if(isDiffValue)
 		{
-			timeout = 3000; // make the timeout longer; 
-			updateFunc(...parameters);
+			if(customFieldName != undefined)
+			{
+				MyTrello.get_custom_field_by_name(customFieldName,(customFieldData)=>{
+
+					let fieldResp = JSON.parse(customFieldData.responseText);
+					let customFieldID = fieldResp[0]?.id;
+
+					MyTrello.update_card_custom_field(CURR_GAME_ID,customFieldID, fieldValue, (data)=> {
+
+						if(data.status >= 200 && data.status < 300)
+						{
+							console.log("Updated custom field == " + customFieldName);
+						}
+					});
+				});
+			}
+			else if (identifier == "settings_identifier")
+			{
+				savedRules = get_saved_rules();
+				savedRulesJSON = JSON.stringify(savedRules);
+				MyTrello.update_card_description(CURR_GAME_ID,savedRulesJSON,(data)=>{
+					if(data.status >= 200 && data.status < 300)
+					{
+						console.log("Updated game settings: ");
+						console.log(savedRules);
+					}
+				});
+			}
+			else if (identifier == "game_name_value")
+			{
+				MyTrello.update_card_name(CURR_GAME_ID,fieldValue, (data)=>{
+					if(data.status >= 200 && data.status < 300)
+					{
+						console.log("Updated game name: " + fieldValue);
+					}
+				} )
+			}
 		}
 
-		// // Finally, end the save mode
-		// setTimeout(()=>{
-		// 	onToggleSaveComponentState(".save_button");
-		// }, timeout);
+		// Then check if updates should be made; 
+		// if(isUpdate && (parameters.length == expectedParams) )
+		// {
+		// 	timeout = 3000; // make the timeout longer; 
+		// 	updateFunc(...parameters);
+		// }
+
 	}	
 
 	// Toggle the state of each component being saved;
@@ -713,82 +826,53 @@ var USE_DEFAULT_RULES = true;
 	// Get the edit sheet URL - if set
 	function getEditSheetUrlFromTrello(card_id)
 	{
-		MyTrello.get_card_custom_fields(card_id, function(data){
-			response = JSON.parse(data.responseText);
 
-			response.forEach( (obj)=> {
-				let valueObject = obj["value"];
-				let is_sheet_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if(is_sheet_field && value != "")
-				{
-					CURR_EDIT_SHEET_URL = value;
-					document.getElementById("game_edit_sheet_url_value").value = value;
-					document.getElementById("go_to_edit_sheet").href = value;
-					// document.getElementById("go_to_edit_sheet").innerText = "Go to Edit Sheet";
-				}
-			});
+		MyTrello.get_card_custom_field_by_name(card_id, "Edit URL", (data) => {
+
+			let response = JSON.parse(data.responseText);
+			let value = response[0]?.value?.text ?? "";
+
+			if(value != "")
+			{
+				CURR_EDIT_SHEET_URL = value;
+				document.getElementById("game_edit_sheet_url_value").value = value;
+				document.getElementById("go_to_edit_sheet").href = value;
+			}
 		});
 	}
 
 	// Get the published sheet URL stored in the game
 	function getPublishedUrlFromTrello(card_id, demoParam="")
 	{
-		MyTrello.get_card_custom_fields(card_id, function(data){
-			response = JSON.parse(data.responseText);
-
-
-			let foundPublishedURL = false;
-
-			response.forEach(function(obj){
-				let valueObject = obj["value"];
-				let is_published_field = obj["idCustomField"] == MyTrello.custom_field_pub_url;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
+		MyTrello.get_card_custom_field_by_name(card_id, "Published URL", (data) => {
 			
-				if(is_published_field && value != "")
-				{
-					CURR_PUB_SHEET_URL = value;
-					document.getElementById("game_published_url_value").value = value;
-					foundPublishedURL = true;
-				}
-			});
-
-			// See what sections can be shown after checking for published URL
-			setTimeout( ()=>{
-				showEditPageSections();
-			},1000);
-
-			// if(!foundPublishedURL)
-			// {
-			// 	mydoc.showContent("#creating_first_spreadsheet");
-			// }
+			let response = JSON.parse(data.responseText);
+			let value = response[0]?.value?.text ?? "";
+			if(value != "")
+			{
+				CURR_PUB_SHEET_URL = value;
+				document.getElementById("game_published_url_value").value = value;
+				foundPublishedURL = true;
+			}
 		});
 	}
 
 	// Get the existing pass phrase for the game
 	function getPassPhraseFromTrello(game_id, callback=undefined)
 	{
-
-		MyTrello.get_card_custom_fields(game_id, function(data){
-			response = JSON.parse(data.responseText);
-
-			response.forEach(function(obj){
-				let valueObject = obj["value"];
-				let is_phrase_field = obj["idCustomField"] == MyTrello.custom_field_phrase;
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if(is_phrase_field && value != "")
-				{
-					CURR_GAME_PASSWORD = value;
-					document.getElementById("game_pass_phrase").value = CURR_GAME_PASSWORD;
-				}
-
-				if(callback!=undefined)
-				{
-					callback();
-				}
-			});
+		MyTrello.get_card_custom_field_by_name(game_id, "Pass Phrase", (data) => {
+			
+			let response = JSON.parse(data.responseText);
+			let value = response[0]?.value?.text ?? "";
+			if(value != "")
+			{
+				CURR_GAME_PASSWORD = value;
+				document.getElementById("game_pass_phrase").value = CURR_GAME_PASSWORD;
+			}
+			if(callback!=undefined)
+			{
+				callback();
+			}
 		});
 	}
 
@@ -1086,26 +1170,30 @@ var USE_DEFAULT_RULES = true;
 
 		if(has_game_name && has_pass_phrase)
 		{
-			MyTrello.get_cards(MyTrello.admin_list_id, function(data){
-				response = JSON.parse(data.responseText);
+			MyTrello.get_list_by_name( "ADMIN_LIST", (data)=>{
 
-				let name_already_exists = false;
-				response.forEach(function(obj){
-					card_name = obj["name"];
-					if(card_name.toLowerCase() == game_name.toLowerCase())
-					{
-						name_already_exists = true;
-					}
-				});
+				let listsResp = JSON.parse(data.responseText);
+				let listID = listsResp[0]?.id;
 
-				if(!name_already_exists)
+				if(listID != undefined)
 				{
-					create_game(game_name, pass_phrase);
-				}
-				else
-				{
-					results = "Cannot Use This Game Name!<br/> Name Already Exists!";
-					set_loading_results(results);
+					MyTrello.get_cards(listID, (data2) => {
+
+						let response = JSON.parse(data2.responseText);
+						let existing = response.filter((val)=>{
+							return (val.name.toLowerCase() == game_name.toLowerCase());
+						});
+	
+						if(existing.length == 0)
+						{
+							create_game(game_name, pass_phrase);
+						}
+						else
+						{
+							results = "Cannot Use This Game Name!<br/> Name Already Exists!";
+							set_loading_results(results);
+						}					
+					});
 				}
 			});
 		}
@@ -1114,6 +1202,12 @@ var USE_DEFAULT_RULES = true;
 			results = "Please enter a game name and a pass phrase!";
 			set_loading_results(results);
 		}	
+	}
+
+	// Check if field value is different from saved value;
+	function compareFieldValue(savedValue, fieldValue)
+	{
+		return (fieldValue.toLowerCase() != savedValue.toLowerCase());
 	}
 
 	// Check if something should be saved/updated
@@ -1136,30 +1230,25 @@ var USE_DEFAULT_RULES = true;
 	// Validate the password
 	function validate_password(game_id, password, callback)
 	{
-		MyTrello.get_card_custom_fields(game_id, function(data){
-			response = JSON.parse(data.responseText);
 
-			failure = true;			
-			response.forEach(function(obj){
-				let valueObject = obj["value"];
-				let is_phrase_field = obj["idCustomField"] == MyTrello.custom_field_phrase;
-				let is_edit_field = obj["idCustomField"] == MyTrello.custom_field_edit_url;
-				let customFieldValue = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				if( (is_phrase_field || is_edit_field) && customFieldValue != "")
-				{
-					if(customFieldValue.toUpperCase() == password.toUpperCase())
-					{
-						failure = false;
-						callback();
-					}
-				}
-			});
-			if(failure)
+		// Check which thing to validate
+		let isEditURL = password.includes("https://docs.google.com/spreadsheets");
+		let fieldToCheck = (isEditURL) ? "Edit URL" : "Pass Phrase";
+
+		// Check the field vs the given password or edit URL;
+		MyTrello.get_card_custom_field_by_name(game_id, fieldToCheck, (data) => {
+			
+			let response = JSON.parse(data.responseText);
+			let customFieldValue = response[0]?.value?.text ?? ""
+
+			if(customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase())
+			{
+				callback();
+			}
+			else
 			{
 				result = "Invalid credentials for this game";
 				set_loading_results(result);
 			}
 		});
 	}
-

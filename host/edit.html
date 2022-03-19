@@ -218,7 +218,7 @@
 				<p class="section_description">
 					Use these buttons to test or play this game. 
 				</p>
-				<div class="center_section_60">
+				<div class="center_section_70">
 					<table class="edit_game_section_table" style="width:100%;text-align:left;">
 						<colgroup>
 							<col style="width:40%;"/>
@@ -227,8 +227,10 @@
 						<tbody>
 							<tr>
 								<td>
-									<button class="button_mash test_button" onclick="onNavigateToGameURL('play',true)">
-										TEST GAME
+									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onNavigateToGameURL('play',true)">
+										<h3>
+											TEST GAME
+										</h3>
 									</button>
 								</td>
 								<td>
@@ -237,8 +239,10 @@
 							</tr>
 							<tr>
 								<td>
-									<button class="button_mash play_button" onclick="onNavigateToGameURL('host')">
-										HOST VIEW
+									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_blue" onclick="onNavigateToGameURL('host')">
+										<h3>
+											HOST VIEW
+										</h3>
 									</button>
 								</td>
 								<td>
@@ -246,9 +250,31 @@
 								</td>
 							</tr>
 							<tr>
+								<td colspan="2" style="border-top:2px solid white; padding-left:5%; padding-top:7%;">
+									<h2 style="text-align:center;">Ready to Play?</h2>
+									<p>Please confirm the following: </p>
+									<input id="confirm_settings" type="checkbox" onchange="onConfirmForPlay()">
+									<label for="confirm_settings" class="pointer">I have configured my Settings/Rules for the game.</label>
+									<br/>
+									<input id="confirm_testing" type="checkbox" onchange="onConfirmForPlay()">
+									<label for="confirm_testing" class="pointer">I have done a TEST GAME (above) and everything works as expected.</label>
+									<br/>
+									<input id="confirm_real_game" type="checkbox" onchange="onConfirmForPlay()">
+									<label for="confirm_real_game" class="pointer">I am ready to play a real game - with real teams.</label>
+									
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<p id="play_game_confirmation_error" style="color:red;" class="hidden">Please confirm the things above before you can play a real game.</p>
+								</td>
+							</tr>
+							<tr>
 								<td>
-									<button class="button_mash save_button" onclick="onNavigateToGameURL('play')">
-										PLAY GAME
+									<button id="play_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onNavigateToGameURL('play')">
+										<h3>
+											PLAY GAME
+										</h3>
 									</button>
 								</td>
 								<td>
@@ -266,11 +292,11 @@
 
 </body>
 	<!-- Common Code -->
-	<script src="../src/common.js"></script>
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<script src="../src/rules.js"></script>
 	<script src="../src/settings.js"></script>
 	<!-- My Trello code -->
-	<script src="../src/trello.js"></script>
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<!-- My Google Drive code -->
 	<script src="../src/googledrive.js"></script>
 	<!-- My Source JS -->

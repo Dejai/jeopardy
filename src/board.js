@@ -20,6 +20,9 @@ var CURR_GAME_ID = undefined;
 
 	// var CURRENT_QUESTION_KEY = undefined;
 	var ASKED_QUESTIONS = [];
+	var TOTAL_CATEGORIES = 0;
+	var VISIBLE_CATEGORIES = 0;
+
 
 	// Storing the current players
 	var TEAMS_ADDED = [];
@@ -40,11 +43,11 @@ var CURR_GAME_ID = undefined;
 
 	mydoc.ready(function(){
 
+		// Set the board name;
+		MyTrello.SetBoardName("jeopardy");
+
 		// Load the game params to determine what should happen next
 		validParams = loadGameParams();
-
-		// Make sure the page doesn't close once the game starts
-		window.addEventListener("beforeunload", onClosePage);
 
 		// Set the game board listeners
 		onKeyboardKeyup();
@@ -58,6 +61,13 @@ var CURR_GAME_ID = undefined;
 
 		// Load the Trello card
 		loadGameCardFromTrello();
+
+		// Only add beforeunload stopper if NOT test run;
+		if(!IS_TEST_RUN)
+		{
+			// Make sure the page doesn't close once the game starts
+			window.addEventListener("beforeunload", onClosePage);
+		}
 	});
 
 	// Loads the parameters from the Game URL; returns if valid or not
@@ -107,7 +117,7 @@ var CURR_GAME_ID = undefined;
 			if(CURR_GAME_ID == undefined){ throw "Game ID is not valid! Cannot load game."; }
 
 			MyTrello.get_single_card(CURR_GAME_ID, (data) => {
-
+								
 				response = JSON.parse(data.responseText);
 
 				GAME_NAME = response["name"]
@@ -120,26 +130,16 @@ var CURR_GAME_ID = undefined;
 				loadSettingsMapping(response["desc"]);
 
 				// Get the published URL from the card custom field
-				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
-					
-					custom_fields = JSON.parse(data2.responseText);
+				MyTrello.get_card_custom_field_by_name(CURR_GAME_ID, "Published URL", (data) => {
 
-					// Loop through custom fields;
-					for (var idx = 0; idx < custom_fields.length; idx++)
+					let customField = JSON.parse(data.responseText);
+					custom_value = customField[0]?.value?.text ?? "";
+					if(custom_value != "")
 					{
-						field = custom_fields[idx];
-						field_id = field["idCustomField"] ?? "";
-						if(field_id != MyTrello.custom_field_pub_url) continue;
-
-						// Get the custom value;
-						custom_value = field?.value?.text ?? "";
-						if(custom_value != "")
-						{
-							MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
-								spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
-								initializeGame(spreadSheetData);
-							});
-						}
+						MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
+							spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
+							initializeGame(spreadSheetData);
+						});
 					}
 				});
 			}, 
@@ -207,16 +207,6 @@ var CURR_GAME_ID = undefined;
 
 			// Set the rules
 			document.getElementById("rules_list").innerHTML = rulesListItems;
-
-			// // Set the default timer
-			// time_setting = SETTINGS_MAPPING["Time to Answer Questions"];
-			// if(time_setting.hasOwnProperty("customValue") && time_setting["customValue"] != "")
-			// {
-			// 	let time = Number(time_setting["customValue"]);
-			// 	time = isNaN(time) ? Timer.getTimerDefault() : time;
-			// 	Timer.setTimerDefault(time);
-			// }
-
 		}
 		catch(error)
 		{
@@ -261,6 +251,7 @@ var CURR_GAME_ID = undefined;
 	function initializeGame(spreadSheetData)
 	{
 
+		// Logging the spreadsheet so I can see it when troubleshooting.
 		console.log(spreadSheetData);
 
 		// First, check for valid spreadsheet columns
@@ -276,12 +267,14 @@ var CURR_GAME_ID = undefined;
 
 		// Check if any errors and handle accordingly;
 		errors = validateJeopardyGame();
-		console.log(errors);
 		if(errors.length > 0)
 		{
+			console.error("ERRORS:")
+			console.error(errors);
 			printErrors(errors);
 			return;
 		}
+
 
 		// Load the game rules if valid sheet
 		loadGameRules();
@@ -314,6 +307,12 @@ var CURR_GAME_ID = undefined;
 	{
 		Logger.log("Creating the Game Board.");
 		game_board = getJeopardyGameBoard();
+
+		
+		categories = JEOPARDY_GAME.getCategories();
+		console.log("Total Categories being set: ");
+		console.log(categories);
+		TOTAL_CATEGORIES = categories?.length-1 ?? 0;
 		mydoc.loadContent(game_board, "game_board_body");
 	}
 
@@ -570,6 +569,13 @@ var CURR_GAME_ID = undefined;
 		if (!current_value.includes(title))
 		{
 			element.innerHTML += title;
+			VISIBLE_CATEGORIES += 1;
+		}
+
+		// If all headers visible, show the current turn section
+		if(VISIBLE_CATEGORIES == TOTAL_CATEGORIES)
+		{
+			mydoc.showContent("#current_turn_section");
 		}
 	}
 
@@ -917,12 +923,15 @@ var CURR_GAME_ID = undefined;
 	function onAddTeam(teamCode, teamName)
 	{
 
+		let teamShortCode = CURR_GAME_CODE + "-" + teamCode.substring(teamCode.length-4).toUpperCase();
 		let content = `
 			<tr class="team_row">
 				<td class="team_name_cell">
 					<h2>
-						<span contenteditable="true" data-jpd-team-code="${teamCode}" class=\"team_name\">${teamName}</span>
+						<span id="teamChevron_${teamCode}" data-jpd-team-code="${teamCode}" class="fa fa-code pointer" style="color:orange;font-size:60%;" onclick="onToggleTeamShortCode(event)"></span>
+						<span data-jpd-team-code="${teamCode}" class="team_name pointer">${teamName}</span>
 					</h2>
+					<p id="hiddenShortCode_${teamCode}" class="hiddenShortCode hidden">${teamShortCode}</p>
 				</td>
 				<td>
 					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_score\">000</span></h2>
@@ -940,6 +949,31 @@ var CURR_GAME_ID = undefined;
 		if(CURRENT_TEAM_IDX > 0)
 		{
 			hideSetTeamButton()
+		}
+	}
+
+	// Toggle the team short code
+	function onToggleTeamShortCode(event)
+	{
+		let ele = event.target;
+		let teamCode = ele.getAttribute("data-jpd-team-code");
+		let selector = `#hiddenShortCode_${teamCode}`
+		let hiddenP = document.querySelector(selector);
+		
+		if(hiddenP != undefined)
+		{
+			if(hiddenP.classList.contains("hidden"))
+			{
+				mydoc.showContent(selector);
+				mydoc.removeClass(`#${ele.id}`, "fa-code");
+				mydoc.addClass(`#${ele.id}`, "fa-close");
+			}
+			else
+			{
+				mydoc.hideContent(selector);
+				mydoc.removeClass(`#${ele.id}`, "fa-close");
+				mydoc.addClass(`#${ele.id}`, "fa-code");
+			}
 		}
 	}
 
@@ -1376,7 +1410,7 @@ var CURR_GAME_ID = undefined;
 			teams.forEach(function(obj){
 
 				card_id = obj.getAttribute("data-jpd-team-code");
-				MyTrello.update_card(card_id, "");
+				MyTrello.update_card_description(card_id, "");
 			});
 		}, 5000)
 		
@@ -1434,9 +1468,7 @@ var CURR_GAME_ID = undefined;
 		let new_index = (idx >= numTeams) ? 0 : idx;
 		
 		if(new_index != -1)
-		{
-			mydoc.showContent("#current_turn_section");
-			
+		{			
 			nextTeam = TEAMS_ADDED[new_index];
 			
 			Logger.log(`Setting Next Team = ${nextTeam}`);
@@ -1486,12 +1518,17 @@ var CURR_GAME_ID = undefined;
 	// Set the current LIST ID to use for the game
 	function setListID()
 	{
+
 		// Set the appropriate list based on DEMO, TEST, or real game
 		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
 		{
-			let list_id = (IS_DEMO_RUN) ? MyTrello.demo_list_id :  MyTrello.test_list_id ;
-			CURR_LIST_ID = list_id;
-			Logger.log("Current Game List ID: " + list_id);
+			MyTrello.get_list_by_name( "TEST", (data)=>{
+				let listsResp = JSON.parse(data.responseText);
+				let listID = listsResp[0]?.id;
+				CURR_LIST_ID = listID;
+				Logger.log("Current Game List ID: " + CURR_LIST_ID);
+				onSyncTeams(); // Sync teams once List ID is set;
+			});
 		} 
 		else
 		{
@@ -1499,6 +1536,7 @@ var CURR_GAME_ID = undefined;
 				response = JSON.parse(data.responseText);
 				CURR_LIST_ID = response["id"];
 				Logger.log("Current Game List ID: " + CURR_LIST_ID);
+				onSyncTeams(); // Sync teams once List ID is set;
 			});
 		}
 	}
@@ -1549,13 +1587,11 @@ var CURR_GAME_ID = undefined;
 			}	
 			// Set the value; Show the section
 			document.getElementById("current_turn").innerText = nextQuestion;
-			mydoc.showContent("#current_turn_section");
 		}
 		else
 		{
 			// Set the value; Show the section
 			document.getElementById("current_turn").innerText = "N/A";
-			mydoc.showContent("#current_turn_section");
 		}
 	}
 
@@ -1571,22 +1607,14 @@ var CURR_GAME_ID = undefined;
 	// Validate the headers are shown
 	function isHeadersVisible()
 	{
-		let categories = document.querySelectorAll(".category_title");
-		let totalMissing = 0;
 
-		categories.forEach((obj) => {
-			if( obj.innerText == "" )
-			{
-				totalMissing += 1;
-			}
-		});
-
-		if( totalMissing > 0 && !IS_TEST_RUN )
+		let allVisible = VISIBLE_CATEGORIES >= TOTAL_CATEGORIES;
+		if( !allVisible && !IS_TEST_RUN )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (totalMissing == 0 || IS_TEST_RUN);
+		let headersVisible = (!allVisible || IS_TEST_RUN);
 		return headersVisible;
 	}
 
