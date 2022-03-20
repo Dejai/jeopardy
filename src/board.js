@@ -34,10 +34,7 @@ var CURR_GAME_ID = undefined;
 
 	var SETTINGS_MAPPING = {};
 
-	var IS_LIVE_HOST_VIEW = false;
-
 	var IS_TEST_RUN = false;
-	var IS_DEMO_RUN = false;
 
 /************************ GETTING STARTED ************************/
 
@@ -51,10 +48,6 @@ var CURR_GAME_ID = undefined;
 
 		// Set the game board listeners
 		onKeyboardKeyup();
-
-		// Check if this is the live host view
-		let path = location.pathname;
-		IS_LIVE_HOST_VIEW = path.includes("host.html");
 
 		// Load the additional views
 		loadGameViews();
@@ -74,8 +67,6 @@ var CURR_GAME_ID = undefined;
 	function loadGameParams()
 	{
 		let query_map = mydoc.get_query_map();
-
-		IS_DEMO_RUN = (query_map["demo"] ?? 0) == 1;
 		IS_TEST_RUN = (query_map["test"] ?? 0) == 1;
 		CURR_GAME_ID = query_map["gameid"] ?? undefined;
 		
@@ -92,9 +83,7 @@ var CURR_GAME_ID = undefined;
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
-
-		let showQuestionView = (IS_LIVE_HOST_VIEW) ? "showQuestionHost": "showQuestion";
-		$("#show_question_section").load(`../views/${showQuestionView}.html`, function(data){
+		$("#show_question_section").load(`../views/showQuestion.html`, function(data){
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
 			close_button.addEventListener("click", onCloseQuestion);
@@ -330,8 +319,7 @@ var CURR_GAME_ID = undefined;
 	function addGameName()
 	{
 		// Set Game Name on the board
-		let gameNameLiveHostView = (IS_LIVE_HOST_VIEW) ? " (Host View) " : ""
-		document.getElementById("game_name").innerHTML = GAME_NAME + gameNameLiveHostView;
+		document.getElementById("game_name").innerHTML = GAME_NAME 
 	}
 
 	// Show the appropriate game section
@@ -349,15 +337,9 @@ var CURR_GAME_ID = undefined;
 	function addGameCode()
 	{
 		// Set the game code
-		let game_code = (IS_TEST_RUN || IS_LIVE_HOST_VIEW) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
+		let game_code = (IS_TEST_RUN) ? "TEST" : Helper.getCode();
 		CURR_GAME_CODE = game_code;
 		document.getElementById("game_code").innerHTML = game_code;
-
-		// Hide the game code section if not being used
-		if(IS_LIVE_HOST_VIEW)
-		{
-			document.getElementById("game_code_header")?.classList.add("hidden")
-		}
 	}
 
 	// Manage the notifications on the page
@@ -380,7 +362,7 @@ var CURR_GAME_ID = undefined;
 	function showHowToPlayButton()
 	{
 		// Show the option for the help text if it is a demo game;
-		if(IS_DEMO_RUN || IS_TEST_RUN)
+		if(IS_TEST_RUN)
 		{ 
 			mydoc.showContent("#toggleHelpText");
 		}
@@ -452,9 +434,6 @@ var CURR_GAME_ID = undefined;
 	// Loads the list of teams in the "Correct answer" section to pick who got it right
 	function loadTeamNamesInCorrectAnswerBlock()
 	{
-		// Don't try to sync teams if live host view
-		if(IS_LIVE_HOST_VIEW){ return; }
-
 		formattedTeams = getWhotGotItRight_Section();
 		let whoGotItRight = document.getElementById("who_got_it_right_table");
 		whoGotItRight.innerHTML = formattedTeams;
@@ -644,17 +623,9 @@ var CURR_GAME_ID = undefined;
 		loadQuestionViewSection("value_block", questionValue, mode, false);
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
 
-		if (IS_LIVE_HOST_VIEW)
-		{
-			// Auto-show the answer block in this view
-			document.getElementById("answer_block")?.classList.remove("hidden");
-		}
-		else  // do these things if NOT live host view
-		{
-			loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
-			loadQuestionViewSection("correct_block", undefined, mode, false, "1");
-			document.getElementById("assignScoresButton").disabled = true; 
-		}
+		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
+		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
+		document.getElementById("assignScoresButton").disabled = true; 
 		
 		// Show the question section
 		document.getElementById("question_view").classList.remove("hidden");
@@ -676,19 +647,16 @@ var CURR_GAME_ID = undefined;
 			// Make sure this button is enabled
 			document.querySelector("#nobodyGotItRightButton").disabled = false;
 
-			//Don't worry about hiding/showing things for host view
-			if(!IS_LIVE_HOST_VIEW)
-			{
-				mydoc.hideContent("#answer_block");
-				mydoc.hideContent("#correct_block");
-				mydoc.showContent("#reveal_answer_block");
+			//hiding/showing things 
+			mydoc.hideContent("#answer_block");
+			mydoc.hideContent("#correct_block");
+			mydoc.showContent("#reveal_answer_block");
 
-				mydoc.addClass("#question_block", "visibleBlock");
-				mydoc.removeClass("#question_block", "hiddenBlock");
+			mydoc.addClass("#question_block", "visibleBlock");
+			mydoc.removeClass("#question_block", "hiddenBlock");
 
-				mydoc.addClass("#answer_block", "hiddenBlock");
-				mydoc.removeClass("#answer_block", "visibleBlock");
-			}
+			mydoc.addClass("#answer_block", "hiddenBlock");
+			mydoc.removeClass("#answer_block", "visibleBlock");
 			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
@@ -697,7 +665,8 @@ var CURR_GAME_ID = undefined;
 	// End the game and archive the list
 	function onEndGame()
 	{
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
+		// Only archive if it is NOT a test run;
+		if(!IS_TEST_RUN)
 		{
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
@@ -790,16 +759,6 @@ var CURR_GAME_ID = undefined;
 		mydoc.showContent("#round_1_row");
 		mydoc.showContent("#finalJeopardyButton");
 
-		// Do these things if LIVE HOST
-		if(IS_LIVE_HOST_VIEW)
-		{
-			mydoc.hideContent("#teams_table");
-			mydoc.hideContent("#teams_sync_section");
-
-			// Auto-show the headers
-			onCategoryClickAuto();
-		}
-
 		// Set a comment indicating the game is being played
 		if(!IS_TEST_RUN && CURR_GAME_CODE != "TEST")
 		{
@@ -830,10 +789,6 @@ var CURR_GAME_ID = undefined;
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
 		mydoc.showContent(".wager_row");
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
-		{
-			mydoc.showContent("#endGameButton")
-		}
 
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
@@ -849,11 +804,7 @@ var CURR_GAME_ID = undefined;
 	// Sync the teams
 	function onSyncTeams()
 	{
-		// Don't try to sync teams if live host view
-		if(IS_LIVE_HOST_VIEW){ return; }
-
 		setSyncingDetails("Syncing", "red");
-
 
 		MyTrello.get_cards(CURR_LIST_ID, function(data){
 
@@ -1333,7 +1284,7 @@ var CURR_GAME_ID = undefined;
 		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
 
 			let customField = JSON.parse(data.responseText);
-			let custom_value = customField[0]?.value?.text ?? "";
+			let custom_value = customField[0]?.value?.text ?? undefined;
 			let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
 			if(wagerValue != undefined)
 			{
@@ -1389,10 +1340,8 @@ var CURR_GAME_ID = undefined;
 		// Update Trello if the score is different;
 		if( (team_score != newScore) || (team_score == 0) )
 		{
-			console.log("Updating team score");
-			MyTrello.update_card_custom_field_by_name(teamCode,"Score",newScore.toString(), (data)=>{
-				console.log(JSON.parse(data.responseText));
-			}, (data)=>{console.log(JSON.parse(data.responseText)); } );
+			Logger.log("Updating team score");
+			MyTrello.update_card_custom_field_by_name(teamCode,"Score",newScore.toString());
 		}
 
 	}
@@ -1519,7 +1468,7 @@ var CURR_GAME_ID = undefined;
 	{
 
 		// Set the appropriate list based on DEMO, TEST, or real game
-		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
+		if(IS_TEST_RUN)
 		{
 			MyTrello.get_list_by_name( "TEST", (data)=>{
 				let listsResp = JSON.parse(data.responseText);
@@ -1644,11 +1593,7 @@ var CURR_GAME_ID = undefined;
 	// Check if the question can be opened;
 	function canOpenQuestion(key)
 	{
-		// Don't try to do any validation if live host view
-		if(IS_LIVE_HOST_VIEW){ return true; }
-
 		let canOpen = true;
-
 		let allHeadersVisible = isHeadersVisible();
 		let isSafeToOpen = isReopenQuestion(key);
 		let firstTeamSet = isFirstTeamSet();
@@ -1660,9 +1605,6 @@ var CURR_GAME_ID = undefined;
 
 	function hasAssignablePoints()
 	{
-		// Don't try to do any validation if live host view
-		if(IS_LIVE_HOST_VIEW){ return false; }
-
 		let assignScoresButton = document.querySelector("#assignScoresButton");
 		return (assignScoresButton.disabled == false)
 	}
