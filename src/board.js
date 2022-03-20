@@ -1614,7 +1614,7 @@ var CURR_GAME_ID = undefined;
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (!allVisible || IS_TEST_RUN);
+		let headersVisible = (allVisible || IS_TEST_RUN);
 		return headersVisible;
 	}
 
