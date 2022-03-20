@@ -333,31 +333,24 @@
 
 		if( !isNaN(Number(wager)))
 		{
-			MyTrello.get_custom_field_by_name("Wager",(customFieldData)=>{
 
-				let fieldResp = JSON.parse(customFieldData.responseText);
-				let customFieldID = fieldResp[0]?.id;
+			MyTrello.update_card_custom_field_by_name(card_id, "Wager", wager.toString(), (data)=> {
 
-				MyTrello.update_card_custom_field(card_id, customFieldID, wager.toString(), (data)=> {
+				if(data.status >= 200 && data.status < 300)
+				{
+					console.log("Updated custom field == Wager");
 
-					if(data.status >= 200 && data.status < 300)
-					{
-						console.log("Updated custom field == Wager");
+					// Set the wager value;
+					document.getElementById("submitted_wager_section").classList.remove("hidden");
+					document.getElementById("submitted_wager_value").innerText = wager;
 
-						// Set the wager value;
-						document.getElementById("submitted_wager_section").classList.remove("hidden");
-						document.getElementById("submitted_wager_value").innerText = wager;
+					// Hide the wager input
+					mydoc.hideContent("#wager_input_section");
 
-						// Hide the wager input
-						mydoc.hideContent("#wager_input_section");
-
-						// Show back the question input things
-						mydoc.showContent("#answer_input_section");
-					}
-				});
-			});
-			// MyTrello.update_card_custom_field(card_id,MyTrello.custom_field_wager,  )
-			
+					// Show back the question input things
+					mydoc.showContent("#answer_input_section");
+				}
+			});			
 		}
 		else
 		{

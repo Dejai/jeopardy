@@ -463,14 +463,13 @@ var CURR_GAME_ID = undefined;
 	// Hide button to set team by name
 	function hideSetTeamButton()
 	{
-		// hide any direct buttons if visible
-		var buttons = document.querySelectorAll(".setTeamDirectly");
-		if(buttons.length > 0)
-		{
-			buttons.forEach(function(button){
-				button.classList.add("hidden");
-			});
-		}
+		mydoc.addClass(".setTeamDirectly", "hidden");
+	}
+
+	// Show the buttons for setting the team
+	function showSetTeamButton()
+	{
+		mydoc.removeClass(".setTeamDirectly", "hidden");
 	}
 
 	// Sort the list of teams to determine the leader
@@ -937,7 +936,7 @@ var CURR_GAME_ID = undefined;
 					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_score\">000</span></h2>
 				</td>
 				<td class=\"wager_row\">
-					<button class="setTeamDirectly" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
+					<button class="setTeamDirectly hidden" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
 					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\"></span></h2>
 				</td>
 			</tr>
@@ -945,10 +944,10 @@ var CURR_GAME_ID = undefined;
 
 		document.getElementById("teams_block").innerHTML += content;
 
-		// If game was already under way, hide the set team button
-		if(CURRENT_TEAM_IDX > 0)
+		let whoGoesFirstOption = SETTINGS_MAPPING["Who Goes First?"]?.option ?? "0"
+		if(whoGoesFirstOption == "2" && CURRENT_TEAM_IDX > 0)
 		{
-			hideSetTeamButton()
+			showSetTeamButton();
 		}
 	}
 
@@ -1331,29 +1330,23 @@ var CURR_GAME_ID = undefined;
 		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
 
 		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			response = JSON.parse(data.responseText);
+		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
 
-			for(var idx = 0; idx < response.length; idx++)
+			let customField = JSON.parse(data.responseText);
+			let custom_value = customField[0]?.value?.text ?? "";
+			let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
+			if(wagerValue != undefined)
 			{
-				let obj = response[idx];
-
-				// skip any field that is not the wager field
-				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
-
-				let valueObject = obj["value"] ?? {};
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				// Set the wager value
-				value = value.trim();
-				let wagerValue = (!isNaN(Number(value))) ? Number(value) : undefined;
-				if(wagerValue != undefined)
-				{
-					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
-					teamDetails["wager_ele"].innerText = wagerValue;
-					teamDetails["wager_ele"].classList.add("wager_hidden");
-				}				
+				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+				teamDetails["wager_ele"].innerText = wagerValue;
+				teamDetails["wager_ele"].classList.add("wager_hidden");
 			}
+
+			// Make the card reflect the true wager if they tried to go over;
+			if(wagerValue > maxWager)
+			{
+				MyTrello.update_card_custom_field_by_name(teamCode, "Wager", maxWager.toString());
+			}	
 		});
 	}
 
@@ -1396,7 +1389,7 @@ var CURR_GAME_ID = undefined;
 		// Update Trello if the score is different;
 		if( (team_score != newScore) || (team_score == 0) )
 		{
-			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
+			MyTrello.update_card_custom_field_by_name(teamCode,"Score", newScore,newScore.toString());
 		}
 
 	}
@@ -1421,17 +1414,20 @@ var CURR_GAME_ID = undefined;
 	{
 		var setting = SETTINGS_MAPPING["Who Goes First?"];
 		
-		if(setting.option == "1")
+		switch(setting.option)
 		{
-			setCurrentPlayerRandomly();
-		}
-		else if (setting.option == "3")
-		{
-			// Account for things typically associated with selecting a team
-			hideSetTeamButton();
-			CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
-
-			setRandomQuestion();
+			case "1":
+				setCurrentPlayerRandomly();
+				break;
+			case "2":
+				showSetTeamButton();
+				break;
+			case "3":
+				CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
+				setRandomQuestion();
+				break;
+			default:
+				setCurrentPlayerRandomly();				
 		}
 	}
 
@@ -1672,31 +1668,18 @@ var CURR_GAME_ID = undefined;
 	// Get the teams current wager (and makes it visible)
 	function isWagerSet(teamCode)
 	{
-		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			
-			response = JSON.parse(data.responseText);
-			for(var idx = 0; idx < response.length; idx++)
+		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
+
+			let customField = JSON.parse(data.responseText);
+			let custom_value = customField[0]?.value?.text ?? "";
+			HAS_WAGER = (!isNaN(Number(custom_value)));
+			if (HAS_WAGER)
 			{
-				let obj = response[idx];
-
-				// skip any field that is not the wager field
-				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
-				let valueObject = obj["value"] ?? {};
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-
-				// Set the wager value
-				value = value.trim();
-				HAS_WAGER = (!isNaN(Number(value)));
-				if (HAS_WAGER)
-				{
-					document.getElementById("submitted_wager_value").innerText = value;
-					mydoc.showContent("#submitted_wager_section");
-					mydoc.hideContent("#wager_input_section");
-					mydoc.hideContent("#show_wager_link");
-				}
-				
-			}
+				document.getElementById("submitted_wager_value").innerText = custom_value;
+				mydoc.showContent("#submitted_wager_section");
+				mydoc.hideContent("#wager_input_section");
+				mydoc.hideContent("#show_wager_link");
+			}		
 		});
 	}
 

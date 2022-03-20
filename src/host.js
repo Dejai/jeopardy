@@ -246,12 +246,12 @@ var USE_DEFAULT_RULES = true;
 				MyTrello.update_card_description(game_id, defaultRules);
 
 				// Add the pass to the custom field
-				MyTrello.get_custom_field_by_name("Pass Phrase", (customFieldData)=>{
+				MyTrello.update_card_custom_field_by_name(game_id, "Pass Phrase", pass_phrase, (updateData)=>{
 
-					let fieldResp = JSON.parse(customFieldData.responseText);
-					let customFieldID = fieldResp[0]?.id;
-		
-					MyTrello.update_card_custom_field(game_id,customFieldID,pass_phrase)
+					if(updateData.status == 200)
+					{
+						console.log("Updated custom field == Pass Phrase");
+					}
 				});
 
 				// Also add a new checklist
