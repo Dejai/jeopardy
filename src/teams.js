@@ -11,66 +11,112 @@
 /*********** PLAYER: GETTING STARTED *****************************************/ 
 
 	mydoc.ready(function(){
+		// Set board name
+		MyTrello.SetBoardName("jeopardy");
 		// Check for existing player if on player screen
-		let path = location.pathname;
-
-		if (path.includes("/team"))
+		// let path = location.pathname;
+		// if (path.includes("/team"))
+		// {
+		let query_map = mydoc.get_query_map();
+		if(query_map.hasOwnProperty("teamid"))
 		{
-			let query_map = mydoc.get_query_map();
-			if(query_map.hasOwnProperty("teamid"))
-			{
-				let card_id = query_map["teamid"]
-				TEAM_ID = card_id;
+			let card_id = query_map["teamid"]
+			TEAM_ID = card_id;
 
-				// Pull up the existing team
-				get_existing_team(card_id);
+			// Pull up the existing team
+			get_existing_team(card_id);
 
-				document.getElementById("refresh_scores").addEventListener(touchEvent, onGetLatestScores);
-				pollScores(); // poll for scores;
-			} 
-			else 
-			{
-				mydoc.showContent("#enter_game_code_section");
-			}
+			document.getElementById("refresh_scores").addEventListener(touchEvent, onGetLatestScores);
+			pollScores(); // poll for scores;
+		} 
+		else if(query_map.hasOwnProperty("rejoin") && query_map["rejoin"] == "1")
+		{
+			
+			mydoc.showContent("#enter_team_code_section");
+			
 		}
+		else
+		{
+			mydoc.showContent("#enter_game_code_section");
+			
+		}
+		// }
 	});
 	
+	// Lookup a single team/card
+	function lookupCard()
+	{
+		let code_input = document.getElementById("player_game_and_team_code");
+		let code = code_input.value;
+		let splits = code.split("-");
+		console.log(splits);
+		let listName = splits[0]?.trim() ?? "";
+		let teamSuffix = splits[1]?.trim() ?? "";
+
+		let loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+		MyNotification.notify("#notification_section", loading_html);
+
+		// Parse the code to re-login
+		MyTrello.get_lists("open", (listData)=>{
+
+			let listsResp = JSON.parse(listData.responseText);
+			let singleList = listsResp.filter( (val)=>{
+				return (val.name == listName);
+			});
+			let listID = singleList[0]?.id ?? undefined;
+
+			if(listID != undefined)
+			{
+				MyTrello.get_cards(listID, (cardData)=>{
+
+					let cardsResp = JSON.parse(cardData.responseText);
+					console.log(cardsResp);
+					let singleCard = cardsResp.filter( (val)=>{
+						return (val.id.toString().toUpperCase().endsWith(teamSuffix));
+					});
+					
+					let cardID = singleCard[0]?.id ?? undefined;
+					if(cardID != undefined)
+					{
+						loadTeamUrl(cardID);
+					}
+					else
+					{
+						MyNotification.notify("#notification_section", "<p>Could not find a team with that code</p>");					}
+				});
+			}
+		});
+
+
+
+	}
 	// Looks up the lists from the board and tries to find the one matching the given game code
 	function lookup_game()
 	{
 		let code_input = document.getElementById("player_game_code");
 		let code = code_input.value;
 
-		MyTrello.get_open_lists(function(data)
-		{
+		MyTrello.get_lists("open", (data)=>{
+
 			Logger.log(data);
 
-			let game_code = "";
-			let matching_list = undefined;
+			let response = JSON.parse(data.responseText);
+			let singleList = response.filter( (val)=>{
+				return (val.name.toUpperCase() == code.toUpperCase());
+			});
 
-			response = JSON.parse(data.responseText);
-			for(var idx = 0; idx < response.length; idx++)
+			if(singleList.length == 1)
 			{
-				obj = response[idx];
-
-				if(obj["name"].toUpperCase() != code.toUpperCase() )
-				{
-					continue;
-				}
-				// if we get here, then must be matching;
-				game_code = obj["name"];
-				matching_list = obj["id"];
-			}
-
-			if (matching_list != undefined)
-			{
-				GAME_LIST_ID = matching_list;
+				GAME_LIST_ID = singleList[0].id;
 				disable_step_one();
+				MyNotification.clear("#notification_section");
 				mydoc.showContent("#enter_team_name_section");
 			}
-			else 
+			else
 			{
-				alert("Could NOT find a game with code: " + code);
+				let errMessage = `<p class="notify_red">Could NOT find a game with the given code.</p>`;
+				console.log(data);
+				MyNotification.notify("#notification_section", errMessage);
 			}
 		});
 	}
@@ -145,27 +191,21 @@
 		
 		// Disable the button and show loading gif;
 		document.getElementById("create_team_button").disabled = true;
-		mydoc.showContent("#loading_gif");
+
+		let loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+		MyNotification.notify("#notification_section", loading_html)
+
+		// mydoc.showContent("#loading_gif");
 
 		// Check for existing cards before creating a new card; Match on name
-		MyTrello.get_cards(GAME_LIST_ID, function(data){
+		MyTrello.get_cards(GAME_LIST_ID, (cardData)=>{
 
-			response = JSON.parse(data.responseText);
-			response.forEach(function(obj)
-			{
-				let card_name = obj["name"];
-				if (card_name.toUpperCase() == team_name.toUpperCase())
-				{
-					existing_team_id = obj["id"];
-				}
+			let cardResp = JSON.parse(cardData.responseText);
+			let existingCard = cardResp.filter( (val)=>{
+				return (val.name.toUpperCase() == team_name.toUpperCase())
 			});
-
-			if(existing_team_id != undefined)
-			{
-				Logger.log("Loading Existing Card");
-				loadTeamUrl(existing_team_id);
-			}
-			else
+			
+			if(existingCard.length  == 0)
 			{
 				Logger.log("Creating new card");
 				MyTrello.create_card(GAME_LIST_ID, team_name, function(data)
@@ -175,7 +215,16 @@
 					loadTeamUrl(team_id);
 				});
 			}
-
+			else
+			{
+				let errMessage = `<p class="notify_red">
+									A team with this name arleady exists. <br/>
+									If this is your team, <a href="./load.html?rejoin=1">Rejoin the game</a>.<br/>
+									Otherwise, enter a new team name and try again.
+								  </p>
+								`;
+				MyNotification.notify("#notification_section", errMessage);
+			}
 		}, Logger.errorMessage);
 	}
 
@@ -193,30 +242,12 @@
 		console.log("Getting team wager");
 
 		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
+		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data)=>{
 			
-			response = JSON.parse(data.responseText);
-			wager_value = "";
-			for(var idx = 0; idx < response.length; idx++)
-			{
-				let obj = response[idx];
+			let response = JSON.parse(data.responseText);
+			let wager_value = response[0]?.value?.text ?? undefined;
+			let HAS_WAGER = (!isNaN(Number(wager_value)));
 
-				// skip any field that is not the wager field
-				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
-				let valueObject = obj["value"] ?? {};
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-
-				// Set the wager value
-				value = value.trim();
-				HAS_WAGER = (!isNaN(Number(value)));
-				if (HAS_WAGER)
-				{
-					wager_value = value;
-				}
-				console.log("Wager?" + HAS_WAGER)
-				
-				
-			}
 			if (HAS_WAGER)
 			{
 				document.getElementById("submitted_wager_value").innerText = wager_value;
@@ -250,7 +281,7 @@
 		mydoc.loadContent(time, "submitted_answer_time");
 
 		// Submit answer to Trell card
-		MyTrello.update_card(card_id, answer);	
+		MyTrello.update_card_description(card_id, answer);	
 
 		// Clear answers
 		document.getElementById("submitted_answer_section").classList.remove("hidden");
@@ -306,15 +337,24 @@
 
 		if( !isNaN(Number(wager)))
 		{
-			MyTrello.update_card_custom_field(card_id,MyTrello.custom_field_wager, wager.toString() )
-			document.getElementById("submitted_wager_section").classList.remove("hidden");
-			document.getElementById("submitted_wager_value").innerText = wager;
 
-			// Hide the wager input
-			mydoc.hideContent("#wager_input_section");
+			MyTrello.update_card_custom_field_by_name(card_id, "Wager", wager.toString(), (data)=> {
 
-			// Show back the question input things
-			mydoc.showContent("#answer_input_section");
+				if(data.status >= 200 && data.status < 300)
+				{
+					console.log("Updated custom field == Wager");
+
+					// Set the wager value;
+					document.getElementById("submitted_wager_section").classList.remove("hidden");
+					document.getElementById("submitted_wager_value").innerText = wager;
+
+					// Hide the wager input
+					mydoc.hideContent("#wager_input_section");
+
+					// Show back the question input things
+					mydoc.showContent("#answer_input_section");
+				}
+			});			
 		}
 		else
 		{
@@ -329,16 +369,6 @@
 		event.returnValue='';
 	}
 
-
-	// Show details about refresh
-	function onRefreshInfoClick()
-	{
-		mydoc.showContent("#refresh_info_message")
-		setTimeout(()=>{
-			mydoc.hideContent("#refresh_info_message");
-		}, 2000)
-	}
-
 /*************** POLLING FOR SCORES *******************************************/ 
 
 	// Polls for the latest score every 30 seconds;
@@ -348,13 +378,13 @@
 			Logger.log("Polling for score");
 			onGetLatestScores();
 
-		}, 60000); 
+		}, 30000); 
 	}
 
 	// Polls the list of cards in the list and gets their scores
 	function onGetLatestScores()
 	{
-		setSyncingDetails("Refreshing", "red");
+		MyNotification.notify("#refresh_scores", "&nbsp; Refreshing", "notify_orange");
 
 		// Get the cards in the list
 		MyTrello.get_cards(GAME_LIST_ID, function(data){
@@ -369,25 +399,15 @@
 				// Set the default team score to 0;
 				TEAM_SCORES[teamCode] = 0;
 				
-				// Get the wager value from the wager field; Set in field
-				MyTrello.get_card_custom_fields(teamCode, function(data){
+				// Get the score value for the team
+				MyTrello.get_card_custom_field_by_name(teamCode, "Score", (data)=>{
 					
 					response = JSON.parse(data.responseText);
-					for(var idx = 0; idx < response.length; idx++)
-					{
-						let obj = response[idx];
-
-						// skip any field that is not the wager field
-						if(obj["idCustomField"] != MyTrello.custom_field_score) continue;
-
-						let valueObject = obj["value"] ?? {};
-						let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-						
-						// Set the wager value
-						value = Number(value.trim());
-						value = isNaN(value) ? 0 : value;
-						TEAM_SCORES[teamCode] = value; 
-					}
+					let value = response[0]?.value?.text ?? "n/a";
+					// Set the wager value
+					value = Number(value.trim());
+					value = isNaN(value) ? 0 : value;
+					TEAM_SCORES[teamCode] = value; 
 				});
 			});
 		}, Logger.errorMessage);
@@ -411,19 +431,9 @@
 		document.getElementById("team_score").innerText = your_score;
 		document.getElementById("highest_score").innerText = high_score;
 
-		// document.getElementById("score-sync").style.display = "inline";
-		setSyncingDetails("Synced!", "limegreen");
+		MyNotification.notify("#refresh_scores", "&nbsp; Synced", "notify_white");
 
 		setTimeout(function(){
-			setSyncingDetails("Refresh Scores", "white");
-			// document.getElementById("score-sync").style.display = "none";
+			MyNotification.notify("#refresh_scores", "&nbsp; Refresh Scores", "notify_white");
 		}, 2000);
-	}
-
-	// Set syncing details
-	function setSyncingDetails(message, iconColor)
-	{
-		refreshScores = document.getElementById("refresh_scores");
-		refreshScores.innerHTML = `&nbsp; ${message}`;
-		refreshScores.style.color = iconColor;
 	}

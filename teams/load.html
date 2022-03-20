@@ -20,7 +20,17 @@
 	</div>
 	<div id="main_section">
 
-		<div id="enter_game_code_section">
+		<div id="enter_team_code_section" class="hidden">
+			<h2>Enter Rejoin Code</h2>
+			<p>Ask the Host to give you this code.</p>
+			<input id="player_game_and_team_code" type="text" name="player_game_and_team_code">
+			<br/><br/>
+			<button type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="lookupCard()">
+				Enter
+			</button>
+		</div>
+
+		<div id="enter_game_code_section" class="hidden">
 			<h2>Step 1: Enter Game Code</h2>
 			<input id="player_game_code" type="text" name="player_game_code">
 			<br/><br/>
@@ -38,12 +48,15 @@
 			</button><br/>
 			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden">
 		</div>
+
+		<div id="notification_section"></div>
+
 	</div>
 </body>
 	<!-- Common Code -->
-	<script src="../src/common.js"></script>
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
-	<script src="../src/trello.js"></script>
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<script src="../src/teams.js"></script>
 
 </html>

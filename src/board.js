@@ -20,6 +20,9 @@ var CURR_GAME_ID = undefined;
 
 	// var CURRENT_QUESTION_KEY = undefined;
 	var ASKED_QUESTIONS = [];
+	var TOTAL_CATEGORIES = 0;
+	var VISIBLE_CATEGORIES = 0;
+
 
 	// Storing the current players
 	var TEAMS_ADDED = [];
@@ -31,41 +34,39 @@ var CURR_GAME_ID = undefined;
 
 	var SETTINGS_MAPPING = {};
 
-	var IS_LIVE_HOST_VIEW = false;
-
 	var IS_TEST_RUN = false;
-	var IS_DEMO_RUN = false;
 
 /************************ GETTING STARTED ************************/
 
 	mydoc.ready(function(){
 
+		// Set the board name;
+		MyTrello.SetBoardName("jeopardy");
+
 		// Load the game params to determine what should happen next
 		validParams = loadGameParams();
 
-		// Make sure the page doesn't close once the game starts
-		window.addEventListener("beforeunload", onClosePage);
-
 		// Set the game board listeners
 		onKeyboardKeyup();
-
-		// Check if this is the live host view
-		let path = location.pathname;
-		IS_LIVE_HOST_VIEW = path.includes("host.html");
 
 		// Load the additional views
 		loadGameViews();
 
 		// Load the Trello card
 		loadGameCardFromTrello();
+
+		// Only add beforeunload stopper if NOT test run;
+		if(!IS_TEST_RUN)
+		{
+			// Make sure the page doesn't close once the game starts
+			window.addEventListener("beforeunload", onClosePage);
+		}
 	});
 
 	// Loads the parameters from the Game URL; returns if valid or not
 	function loadGameParams()
 	{
 		let query_map = mydoc.get_query_map();
-
-		IS_DEMO_RUN = (query_map["demo"] ?? 0) == 1;
 		IS_TEST_RUN = (query_map["test"] ?? 0) == 1;
 		CURR_GAME_ID = query_map["gameid"] ?? undefined;
 		
@@ -82,9 +83,7 @@ var CURR_GAME_ID = undefined;
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
-
-		let showQuestionView = (IS_LIVE_HOST_VIEW) ? "showQuestionHost": "showQuestion";
-		$("#show_question_section").load(`../views/${showQuestionView}.html`, function(data){
+		$("#show_question_section").load(`../views/showQuestion.html`, function(data){
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
 			close_button.addEventListener("click", onCloseQuestion);
@@ -107,7 +106,7 @@ var CURR_GAME_ID = undefined;
 			if(CURR_GAME_ID == undefined){ throw "Game ID is not valid! Cannot load game."; }
 
 			MyTrello.get_single_card(CURR_GAME_ID, (data) => {
-
+								
 				response = JSON.parse(data.responseText);
 
 				GAME_NAME = response["name"]
@@ -120,26 +119,16 @@ var CURR_GAME_ID = undefined;
 				loadSettingsMapping(response["desc"]);
 
 				// Get the published URL from the card custom field
-				MyTrello.get_card_custom_fields(CURR_GAME_ID, function(data2) {
-					
-					custom_fields = JSON.parse(data2.responseText);
+				MyTrello.get_card_custom_field_by_name(CURR_GAME_ID, "Published URL", (data) => {
 
-					// Loop through custom fields;
-					for (var idx = 0; idx < custom_fields.length; idx++)
+					let customField = JSON.parse(data.responseText);
+					custom_value = customField[0]?.value?.text ?? "";
+					if(custom_value != "")
 					{
-						field = custom_fields[idx];
-						field_id = field["idCustomField"] ?? "";
-						if(field_id != MyTrello.custom_field_pub_url) continue;
-
-						// Get the custom value;
-						custom_value = field?.value?.text ?? "";
-						if(custom_value != "")
-						{
-							MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
-								spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
-								initializeGame(spreadSheetData);
-							});
-						}
+						MyGoogleDrive.getSpreadsheetData(custom_value, (data) =>{
+							spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
+							initializeGame(spreadSheetData);
+						});
 					}
 				});
 			}, 
@@ -207,16 +196,6 @@ var CURR_GAME_ID = undefined;
 
 			// Set the rules
 			document.getElementById("rules_list").innerHTML = rulesListItems;
-
-			// // Set the default timer
-			// time_setting = SETTINGS_MAPPING["Time to Answer Questions"];
-			// if(time_setting.hasOwnProperty("customValue") && time_setting["customValue"] != "")
-			// {
-			// 	let time = Number(time_setting["customValue"]);
-			// 	time = isNaN(time) ? Timer.getTimerDefault() : time;
-			// 	Timer.setTimerDefault(time);
-			// }
-
 		}
 		catch(error)
 		{
@@ -261,6 +240,7 @@ var CURR_GAME_ID = undefined;
 	function initializeGame(spreadSheetData)
 	{
 
+		// Logging the spreadsheet so I can see it when troubleshooting.
 		console.log(spreadSheetData);
 
 		// First, check for valid spreadsheet columns
@@ -276,12 +256,14 @@ var CURR_GAME_ID = undefined;
 
 		// Check if any errors and handle accordingly;
 		errors = validateJeopardyGame();
-		console.log(errors);
 		if(errors.length > 0)
 		{
+			console.error("ERRORS:")
+			console.error(errors);
 			printErrors(errors);
 			return;
 		}
+
 
 		// Load the game rules if valid sheet
 		loadGameRules();
@@ -314,6 +296,8 @@ var CURR_GAME_ID = undefined;
 	{
 		Logger.log("Creating the Game Board.");
 		game_board = getJeopardyGameBoard();
+		categories = JEOPARDY_GAME.getCategories();
+		TOTAL_CATEGORIES = categories?.length-1 ?? 0;
 		mydoc.loadContent(game_board, "game_board_body");
 	}
 
@@ -331,8 +315,7 @@ var CURR_GAME_ID = undefined;
 	function addGameName()
 	{
 		// Set Game Name on the board
-		let gameNameLiveHostView = (IS_LIVE_HOST_VIEW) ? " (Host View) " : ""
-		document.getElementById("game_name").innerHTML = GAME_NAME + gameNameLiveHostView;
+		document.getElementById("game_name").innerHTML = GAME_NAME 
 	}
 
 	// Show the appropriate game section
@@ -350,15 +333,9 @@ var CURR_GAME_ID = undefined;
 	function addGameCode()
 	{
 		// Set the game code
-		let game_code = (IS_TEST_RUN || IS_LIVE_HOST_VIEW) ? "TEST" : (IS_DEMO_RUN) ? "DEMO" : Helper.getCode();
+		let game_code = (IS_TEST_RUN) ? "TEST" : Helper.getCode();
 		CURR_GAME_CODE = game_code;
 		document.getElementById("game_code").innerHTML = game_code;
-
-		// Hide the game code section if not being used
-		if(IS_LIVE_HOST_VIEW)
-		{
-			document.getElementById("game_code_header")?.classList.add("hidden")
-		}
 	}
 
 	// Manage the notifications on the page
@@ -381,7 +358,7 @@ var CURR_GAME_ID = undefined;
 	function showHowToPlayButton()
 	{
 		// Show the option for the help text if it is a demo game;
-		if(IS_DEMO_RUN || IS_TEST_RUN)
+		if(IS_TEST_RUN)
 		{ 
 			mydoc.showContent("#toggleHelpText");
 		}
@@ -453,9 +430,6 @@ var CURR_GAME_ID = undefined;
 	// Loads the list of teams in the "Correct answer" section to pick who got it right
 	function loadTeamNamesInCorrectAnswerBlock()
 	{
-		// Don't try to sync teams if live host view
-		if(IS_LIVE_HOST_VIEW){ return; }
-
 		formattedTeams = getWhotGotItRight_Section();
 		let whoGotItRight = document.getElementById("who_got_it_right_table");
 		whoGotItRight.innerHTML = formattedTeams;
@@ -464,14 +438,13 @@ var CURR_GAME_ID = undefined;
 	// Hide button to set team by name
 	function hideSetTeamButton()
 	{
-		// hide any direct buttons if visible
-		var buttons = document.querySelectorAll(".setTeamDirectly");
-		if(buttons.length > 0)
-		{
-			buttons.forEach(function(button){
-				button.classList.add("hidden");
-			});
-		}
+		mydoc.addClass(".setTeamDirectly", "hidden");
+	}
+
+	// Show the buttons for setting the team
+	function showSetTeamButton()
+	{
+		mydoc.removeClass(".setTeamDirectly", "hidden");
 	}
 
 	// Sort the list of teams to determine the leader
@@ -570,6 +543,13 @@ var CURR_GAME_ID = undefined;
 		if (!current_value.includes(title))
 		{
 			element.innerHTML += title;
+			VISIBLE_CATEGORIES += 1;
+		}
+
+		// If all headers visible, show the current turn section
+		if(VISIBLE_CATEGORIES == TOTAL_CATEGORIES)
+		{
+			mydoc.showContent("#current_turn_section");
 		}
 	}
 
@@ -639,17 +619,9 @@ var CURR_GAME_ID = undefined;
 		loadQuestionViewSection("value_block", questionValue, mode, false);
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
 
-		if (IS_LIVE_HOST_VIEW)
-		{
-			// Auto-show the answer block in this view
-			document.getElementById("answer_block")?.classList.remove("hidden");
-		}
-		else  // do these things if NOT live host view
-		{
-			loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
-			loadQuestionViewSection("correct_block", undefined, mode, false, "1");
-			document.getElementById("assignScoresButton").disabled = true; 
-		}
+		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
+		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
+		document.getElementById("assignScoresButton").disabled = true; 
 		
 		// Show the question section
 		document.getElementById("question_view").classList.remove("hidden");
@@ -671,19 +643,16 @@ var CURR_GAME_ID = undefined;
 			// Make sure this button is enabled
 			document.querySelector("#nobodyGotItRightButton").disabled = false;
 
-			//Don't worry about hiding/showing things for host view
-			if(!IS_LIVE_HOST_VIEW)
-			{
-				mydoc.hideContent("#answer_block");
-				mydoc.hideContent("#correct_block");
-				mydoc.showContent("#reveal_answer_block");
+			//hiding/showing things 
+			mydoc.hideContent("#answer_block");
+			mydoc.hideContent("#correct_block");
+			mydoc.showContent("#reveal_answer_block");
 
-				mydoc.addClass("#question_block", "visibleBlock");
-				mydoc.removeClass("#question_block", "hiddenBlock");
+			mydoc.addClass("#question_block", "visibleBlock");
+			mydoc.removeClass("#question_block", "hiddenBlock");
 
-				mydoc.addClass("#answer_block", "hiddenBlock");
-				mydoc.removeClass("#answer_block", "visibleBlock");
-			}
+			mydoc.addClass("#answer_block", "hiddenBlock");
+			mydoc.removeClass("#answer_block", "visibleBlock");
 			document.getElementById("question_view")?.classList.add("hidden");
 			Timer.resetTimer(); // make sure the timer is reset to default.
 		}
@@ -692,7 +661,8 @@ var CURR_GAME_ID = undefined;
 	// End the game and archive the list
 	function onEndGame()
 	{
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
+		// Only archive if it is NOT a test run;
+		if(!IS_TEST_RUN)
 		{
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
@@ -785,16 +755,6 @@ var CURR_GAME_ID = undefined;
 		mydoc.showContent("#round_1_row");
 		mydoc.showContent("#finalJeopardyButton");
 
-		// Do these things if LIVE HOST
-		if(IS_LIVE_HOST_VIEW)
-		{
-			mydoc.hideContent("#teams_table");
-			mydoc.hideContent("#teams_sync_section");
-
-			// Auto-show the headers
-			onCategoryClickAuto();
-		}
-
 		// Set a comment indicating the game is being played
 		if(!IS_TEST_RUN && CURR_GAME_CODE != "TEST")
 		{
@@ -825,10 +785,6 @@ var CURR_GAME_ID = undefined;
 		mydoc.showContent("#final_jeopardy_row");
 		mydoc.showContent("#finalJeopardyAssign");
 		mydoc.showContent(".wager_row");
-		if(!IS_TEST_RUN && !IS_DEMO_RUN)
-		{
-			mydoc.showContent("#endGameButton")
-		}
 
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
@@ -844,11 +800,7 @@ var CURR_GAME_ID = undefined;
 	// Sync the teams
 	function onSyncTeams()
 	{
-		// Don't try to sync teams if live host view
-		if(IS_LIVE_HOST_VIEW){ return; }
-
 		setSyncingDetails("Syncing", "red");
-
 
 		MyTrello.get_cards(CURR_LIST_ID, function(data){
 
@@ -917,18 +869,21 @@ var CURR_GAME_ID = undefined;
 	function onAddTeam(teamCode, teamName)
 	{
 
+		let teamShortCode = CURR_GAME_CODE + "-" + teamCode.substring(teamCode.length-4).toUpperCase();
 		let content = `
 			<tr class="team_row">
 				<td class="team_name_cell">
 					<h2>
-						<span contenteditable="true" data-jpd-team-code="${teamCode}" class=\"team_name\">${teamName}</span>
+						<span id="teamChevron_${teamCode}" data-jpd-team-code="${teamCode}" class="fa fa-code pointer" style="color:orange;font-size:60%;" onclick="onToggleTeamShortCode(event)"></span>
+						<span data-jpd-team-code="${teamCode}" class="team_name pointer">${teamName}</span>
 					</h2>
+					<p id="hiddenShortCode_${teamCode}" class="hiddenShortCode hidden">${teamShortCode}</p>
 				</td>
 				<td>
 					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_score\">000</span></h2>
 				</td>
 				<td class=\"wager_row\">
-					<button class="setTeamDirectly" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
+					<button class="setTeamDirectly hidden" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
 					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\"></span></h2>
 				</td>
 			</tr>
@@ -936,10 +891,35 @@ var CURR_GAME_ID = undefined;
 
 		document.getElementById("teams_block").innerHTML += content;
 
-		// If game was already under way, hide the set team button
-		if(CURRENT_TEAM_IDX > 0)
+		let whoGoesFirstOption = SETTINGS_MAPPING["Who Goes First?"]?.option ?? "0"
+		if(whoGoesFirstOption == "2" && CURRENT_TEAM_IDX > 0)
 		{
-			hideSetTeamButton()
+			showSetTeamButton();
+		}
+	}
+
+	// Toggle the team short code
+	function onToggleTeamShortCode(event)
+	{
+		let ele = event.target;
+		let teamCode = ele.getAttribute("data-jpd-team-code");
+		let selector = `#hiddenShortCode_${teamCode}`
+		let hiddenP = document.querySelector(selector);
+		
+		if(hiddenP != undefined)
+		{
+			if(hiddenP.classList.contains("hidden"))
+			{
+				mydoc.showContent(selector);
+				mydoc.removeClass(`#${ele.id}`, "fa-code");
+				mydoc.addClass(`#${ele.id}`, "fa-close");
+			}
+			else
+			{
+				mydoc.hideContent(selector);
+				mydoc.removeClass(`#${ele.id}`, "fa-close");
+				mydoc.addClass(`#${ele.id}`, "fa-code");
+			}
 		}
 	}
 
@@ -1297,29 +1277,25 @@ var CURR_GAME_ID = undefined;
 		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
 
 		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			response = JSON.parse(data.responseText);
+		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
 
-			for(var idx = 0; idx < response.length; idx++)
+			let customField = JSON.parse(data.responseText);
+			let custom_value = customField[0]?.value?.text ?? undefined;
+			let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
+
+			console.log("Wager value for team: " + wagerValue);
+			if(wagerValue != undefined)
 			{
-				let obj = response[idx];
-
-				// skip any field that is not the wager field
-				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
-
-				let valueObject = obj["value"] ?? {};
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-				
-				// Set the wager value
-				value = value.trim();
-				let wagerValue = (!isNaN(Number(value))) ? Number(value) : undefined;
-				if(wagerValue != undefined)
-				{
-					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
-					teamDetails["wager_ele"].innerText = wagerValue;
-					teamDetails["wager_ele"].classList.add("wager_hidden");
-				}				
+				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+				teamDetails["wager_ele"].innerText = wagerValue;
+				teamDetails["wager_ele"].classList.add("wager_hidden");
 			}
+
+			// Make the card reflect the true wager if they tried to go over;
+			if(wagerValue > maxWager)
+			{
+				MyTrello.update_card_custom_field_by_name(teamCode, "Wager", maxWager.toString());
+			}	
 		});
 	}
 
@@ -1362,7 +1338,8 @@ var CURR_GAME_ID = undefined;
 		// Update Trello if the score is different;
 		if( (team_score != newScore) || (team_score == 0) )
 		{
-			MyTrello.update_card_custom_field(teamCode,MyTrello.custom_field_score,newScore.toString());
+			Logger.log("Updating team score");
+			MyTrello.update_card_custom_field_by_name(teamCode,"Score",newScore.toString());
 		}
 
 	}
@@ -1376,7 +1353,7 @@ var CURR_GAME_ID = undefined;
 			teams.forEach(function(obj){
 
 				card_id = obj.getAttribute("data-jpd-team-code");
-				MyTrello.update_card(card_id, "");
+				MyTrello.update_card_description(card_id, "");
 			});
 		}, 5000)
 		
@@ -1387,17 +1364,20 @@ var CURR_GAME_ID = undefined;
 	{
 		var setting = SETTINGS_MAPPING["Who Goes First?"];
 		
-		if(setting.option == "1")
+		switch(setting.option)
 		{
-			setCurrentPlayerRandomly();
-		}
-		else if (setting.option == "3")
-		{
-			// Account for things typically associated with selecting a team
-			hideSetTeamButton();
-			CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
-
-			setRandomQuestion();
+			case "1":
+				setCurrentPlayerRandomly();
+				break;
+			case "2":
+				showSetTeamButton();
+				break;
+			case "3":
+				CURRENT_TEAM_IDX = 0 //setting this so the checker can allow me to open a question;
+				setRandomQuestion();
+				break;
+			default:
+				setCurrentPlayerRandomly();				
 		}
 	}
 
@@ -1434,9 +1414,7 @@ var CURR_GAME_ID = undefined;
 		let new_index = (idx >= numTeams) ? 0 : idx;
 		
 		if(new_index != -1)
-		{
-			mydoc.showContent("#current_turn_section");
-			
+		{			
 			nextTeam = TEAMS_ADDED[new_index];
 			
 			Logger.log(`Setting Next Team = ${nextTeam}`);
@@ -1486,12 +1464,17 @@ var CURR_GAME_ID = undefined;
 	// Set the current LIST ID to use for the game
 	function setListID()
 	{
+
 		// Set the appropriate list based on DEMO, TEST, or real game
-		if(IS_DEMO_RUN || IS_TEST_RUN || IS_LIVE_HOST_VIEW)
+		if(IS_TEST_RUN)
 		{
-			let list_id = (IS_DEMO_RUN) ? MyTrello.demo_list_id :  MyTrello.test_list_id ;
-			CURR_LIST_ID = list_id;
-			Logger.log("Current Game List ID: " + list_id);
+			MyTrello.get_list_by_name( "TEST", (data)=>{
+				let listsResp = JSON.parse(data.responseText);
+				let listID = listsResp[0]?.id;
+				CURR_LIST_ID = listID;
+				Logger.log("Current Game List ID: " + CURR_LIST_ID);
+				onSyncTeams(); // Sync teams once List ID is set;
+			});
 		} 
 		else
 		{
@@ -1499,6 +1482,7 @@ var CURR_GAME_ID = undefined;
 				response = JSON.parse(data.responseText);
 				CURR_LIST_ID = response["id"];
 				Logger.log("Current Game List ID: " + CURR_LIST_ID);
+				onSyncTeams(); // Sync teams once List ID is set;
 			});
 		}
 	}
@@ -1549,13 +1533,11 @@ var CURR_GAME_ID = undefined;
 			}	
 			// Set the value; Show the section
 			document.getElementById("current_turn").innerText = nextQuestion;
-			mydoc.showContent("#current_turn_section");
 		}
 		else
 		{
 			// Set the value; Show the section
 			document.getElementById("current_turn").innerText = "N/A";
-			mydoc.showContent("#current_turn_section");
 		}
 	}
 
@@ -1571,22 +1553,14 @@ var CURR_GAME_ID = undefined;
 	// Validate the headers are shown
 	function isHeadersVisible()
 	{
-		let categories = document.querySelectorAll(".category_title");
-		let totalMissing = 0;
 
-		categories.forEach((obj) => {
-			if( obj.innerText == "" )
-			{
-				totalMissing += 1;
-			}
-		});
-
-		if( totalMissing > 0 && !IS_TEST_RUN )
+		let allVisible = VISIBLE_CATEGORIES >= TOTAL_CATEGORIES;
+		let headersVisible = (allVisible || IS_TEST_RUN);
+		if( !headersVisible )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (totalMissing == 0 || IS_TEST_RUN);
 		return headersVisible;
 	}
 
@@ -1617,11 +1591,7 @@ var CURR_GAME_ID = undefined;
 	// Check if the question can be opened;
 	function canOpenQuestion(key)
 	{
-		// Don't try to do any validation if live host view
-		if(IS_LIVE_HOST_VIEW){ return true; }
-
 		let canOpen = true;
-
 		let allHeadersVisible = isHeadersVisible();
 		let isSafeToOpen = isReopenQuestion(key);
 		let firstTeamSet = isFirstTeamSet();
@@ -1633,9 +1603,6 @@ var CURR_GAME_ID = undefined;
 
 	function hasAssignablePoints()
 	{
-		// Don't try to do any validation if live host view
-		if(IS_LIVE_HOST_VIEW){ return false; }
-
 		let assignScoresButton = document.querySelector("#assignScoresButton");
 		return (assignScoresButton.disabled == false)
 	}
@@ -1644,31 +1611,18 @@ var CURR_GAME_ID = undefined;
 	// Get the teams current wager (and makes it visible)
 	function isWagerSet(teamCode)
 	{
-		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_fields(teamCode, function(data){
-			
-			response = JSON.parse(data.responseText);
-			for(var idx = 0; idx < response.length; idx++)
+		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
+
+			let customField = JSON.parse(data.responseText);
+			let custom_value = customField[0]?.value?.text ?? "";
+			HAS_WAGER = (!isNaN(Number(custom_value)));
+			if (HAS_WAGER)
 			{
-				let obj = response[idx];
-
-				// skip any field that is not the wager field
-				if(obj["idCustomField"] != MyTrello.custom_field_wager) continue;
-				let valueObject = obj["value"] ?? {};
-				let value = (valueObject.hasOwnProperty("text")) ? valueObject["text"] : "";
-
-				// Set the wager value
-				value = value.trim();
-				HAS_WAGER = (!isNaN(Number(value)));
-				if (HAS_WAGER)
-				{
-					document.getElementById("submitted_wager_value").innerText = value;
-					mydoc.showContent("#submitted_wager_section");
-					mydoc.hideContent("#wager_input_section");
-					mydoc.hideContent("#show_wager_link");
-				}
-				
-			}
+				document.getElementById("submitted_wager_value").innerText = custom_value;
+				mydoc.showContent("#submitted_wager_section");
+				mydoc.hideContent("#wager_input_section");
+				mydoc.hideContent("#show_wager_link");
+			}		
 		});
 	}
 
