@@ -121,8 +121,13 @@ const Timer = {
 
 	setTimerDefault: function(value)
 	{
-		this.timer_default = value;
-		this.setTimerSeconds(this.timer_default);
+		let timeValue = Number(value) 
+		if (!(isNaN(timeValue)))
+		{
+			let value = (timeValue < 10) ? "0" + timeValue : timeValue;
+			this.timer_default = value;
+			this.setTimerSeconds(this.timer_default);
+		}
 	},
 
 	getTimerDefault: function()
@@ -137,6 +142,8 @@ const Timer = {
 	setTimeUpCallback: function(callback){
 		Timer.timeUpCallback = callback;
 	},
+
+
 
 	stopInterval: function()
 	{

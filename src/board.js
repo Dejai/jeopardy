@@ -296,11 +296,7 @@ var CURR_GAME_ID = undefined;
 	{
 		Logger.log("Creating the Game Board.");
 		game_board = getJeopardyGameBoard();
-
-		
 		categories = JEOPARDY_GAME.getCategories();
-		console.log("Total Categories being set: ");
-		console.log(categories);
 		TOTAL_CATEGORIES = categories?.length-1 ?? 0;
 		mydoc.loadContent(game_board, "game_board_body");
 	}
@@ -1286,6 +1282,8 @@ var CURR_GAME_ID = undefined;
 			let customField = JSON.parse(data.responseText);
 			let custom_value = customField[0]?.value?.text ?? undefined;
 			let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
+
+			console.log("Wager value for team: " + wagerValue);
 			if(wagerValue != undefined)
 			{
 				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
