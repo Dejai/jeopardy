@@ -49,6 +49,7 @@
 		let code_input = document.getElementById("player_game_and_team_code");
 		let code = code_input.value;
 		let splits = code.split("-");
+		console.log(splits);
 		let listName = splits[0]?.trim() ?? "";
 		let teamSuffix = splits[1]?.trim() ?? "";
 
@@ -62,7 +63,6 @@
 			let singleList = listsResp.filter( (val)=>{
 				return (val.name == listName);
 			});
-
 			let listID = singleList[0]?.id ?? undefined;
 
 			if(listID != undefined)
@@ -70,15 +70,19 @@
 				MyTrello.get_cards(listID, (cardData)=>{
 
 					let cardsResp = JSON.parse(cardData.responseText);
+					console.log(cardsResp);
 					let singleCard = cardsResp.filter( (val)=>{
-						return (val.id.toString().endsWith(teamSuffix));
+						return (val.id.toString().toUpperCase().endsWith(teamSuffix));
 					});
-
+					
 					let cardID = singleCard[0]?.id ?? undefined;
 					if(cardID != undefined)
 					{
 						loadTeamUrl(cardID);
 					}
+					else
+					{
+						MyNotification.notify("#notification_section", "<p>Could not find a team with that code</p>");					}
 				});
 			}
 		});

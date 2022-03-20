@@ -1389,7 +1389,10 @@ var CURR_GAME_ID = undefined;
 		// Update Trello if the score is different;
 		if( (team_score != newScore) || (team_score == 0) )
 		{
-			MyTrello.update_card_custom_field_by_name(teamCode,"Score", newScore,newScore.toString());
+			console.log("Updating team score");
+			MyTrello.update_card_custom_field_by_name(teamCode,"Score",newScore.toString(), (data)=>{
+				console.log(JSON.parse(data.responseText));
+			}, (data)=>{console.log(JSON.parse(data.responseText)); } );
 		}
 
 	}
@@ -1605,12 +1608,12 @@ var CURR_GAME_ID = undefined;
 	{
 
 		let allVisible = VISIBLE_CATEGORIES >= TOTAL_CATEGORIES;
-		if( !allVisible && !IS_TEST_RUN )
+		let headersVisible = (allVisible || IS_TEST_RUN);
+		if( !headersVisible )
 		{
 			alert("Please show all the headers before beginning")
 		}
 
-		let headersVisible = (allVisible || IS_TEST_RUN);
 		return headersVisible;
 	}
 
