@@ -667,7 +667,7 @@ var CURR_GAME_ID = undefined;
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
-			MyTrello.update_list_to_archive(CURR_LIST_ID, archive_name , function(){
+			MyTrello.update_list_state(CURR_LIST_ID, "closed", archive_name , (data)=>{
 				alert("Game has been archived");
 			});
 		}

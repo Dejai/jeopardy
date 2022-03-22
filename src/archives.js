@@ -18,10 +18,6 @@
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 
-		MyTrello.get_custom_fields( (data)=>{ 
-			console.log(JSON.parse(data.responseText));
-		})
-
 		if (path.includes("/game"))
 		{
 			let query_map = mydoc.get_query_map();
@@ -116,9 +112,7 @@
 			{
 				let value = response[0]?.value?.text ?? "n/a";
 				value = (value != "n/a") ? Number(value) : value;
-				// let value = (valueObject.hasOwnProperty("text")) ? Number(valueObject["text"]) : "n/a";
 				THE_TEAMS[teamCode][fieldName.toLowerCase()] = value;
-				// THE_TEAMS["set"] += 1;
 
 				// Add the score before wager
 				let score = THE_TEAMS[teamCode]["score"];
@@ -132,19 +126,20 @@
 				{
 					THE_TEAMS[teamCode]["preWagerScore"] = THE_TEAMS[teamCode]["score"]
 				}
-				checkIfScoresSet(teamCode)
 			}
 			else
 			{
 				THE_TEAMS[teamCode][fieldName.toLowerCase()] = "n/a";
-				checkIfScoresSet(teamCode)
 			}
+
+			// Check if all the scores have been set now;
+			checkIfScoresSet(teamCode);
+
 		});
 	}
 
 	function checkIfScoresSet(teamCode)
 	{
-		console.log(THE_TEAMS);
 		let hasScore = THE_TEAMS[teamCode]["score"] != undefined
 		let hasWager = THE_TEAMS[teamCode]["wager"] != undefined
 
