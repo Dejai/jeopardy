@@ -51,9 +51,6 @@
 		// Load the additional views
 		loadGameViews();
 
-		// Load the game code (based on list id);
-		loadGameCode();
-
 		// Load the Trello card
 		loadGameCardFromTrello();
 
@@ -84,12 +81,15 @@
 	// Load the individual Views used for the game
 	function loadGameViews()
 	{
-		$("#menu_section").load("../views/menu.html");
+		$("#menu_section").load("../views/menu.html", ()=>{
+			// Load the game code (based on list id);
+			loadGameCode();
+		});
 		$("#rules_section").load("../views/rules.html");
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
-		$("#show_question_section").load(`../views/showQuestion.html`, function(data){
+		$("#show_question_section").load(`../views/showQuestion.html`, (data)=>{
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
 			close_button.addEventListener("click", onCloseQuestion);
