@@ -226,27 +226,16 @@
 						</colgroup>
 						<tbody>
 							<tr>
-								<td>
-									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onNavigateToGameURL('play',true)">
+								<td style="text-align:center;">
+									<button id="test_game_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
 										<h3>
 											TEST GAME
 										</h3>
 									</button>
+									<span id="test_game_loading"></span>
 								</td>
 								<td>
 									<p>Use this to do a TEST run of your game.</p>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_blue" onclick="onNavigateToGameURL('host')">
-										<h3>
-											HOST VIEW
-										</h3>
-									</button>
-								</td>
-								<td>
-									<p>Use this to open the "Host" view - where you can see questions & answers at the same time.</p>
 								</td>
 							</tr>
 							<tr>
@@ -270,15 +259,42 @@
 								</td>
 							</tr>
 							<tr>
-								<td>
-									<button id="play_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onNavigateToGameURL('play')">
+								<td style="text-align:center;">
+									<button id="play_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onPlayGame()">
 										<h3>
 											PLAY GAME
 										</h3>
 									</button>
+									<span id="play_game_loading"></span>
 								</td>
 								<td>
 									<p>Use this to play a <strong>real game</strong>.</p>
+								</td>
+							</tr>
+							<tr class="host_view_section">
+								<td colspan="2">
+									<hr>
+								</td>
+							</tr>
+							<tr class="host_view_section">
+								<td>
+									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onOpenHostView()">
+										<h3>
+											HOST VIEW
+										</h3>
+									</button>
+								</td>
+								<td>
+									<p>Use this to open the "Host" view. </p>
+									<p>This is how you can see the questions & answers at the same time.</p>
+									<p>This is only visible when the setting for "Answering Questions" is set to "First to Buzz!"</p>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div id="play_notification_section">
+
+									</div>
 								</td>
 							</tr>
 

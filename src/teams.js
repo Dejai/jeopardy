@@ -5,6 +5,7 @@
 	var TEAM_ID = undefined;
 	var TEAM_SCORES = {};
 	var HAS_WAGER = false;
+	var SETTINGS_MAPPING = {};
 
 	var touchEvent = "ontouchstart" in window ? "touchstart" : "click";
 
@@ -13,10 +14,7 @@
 	mydoc.ready(function(){
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
-		// Check for existing player if on player screen
-		// let path = location.pathname;
-		// if (path.includes("/team"))
-		// {
+
 		let query_map = mydoc.get_query_map();
 		if(query_map.hasOwnProperty("teamid"))
 		{
@@ -24,23 +22,19 @@
 			TEAM_ID = card_id;
 
 			// Pull up the existing team
-			get_existing_team(card_id);
+			getExistingTeam(card_id);
 
 			document.getElementById("refresh_scores").addEventListener(touchEvent, onGetLatestScores);
 			pollScores(); // poll for scores;
 		} 
 		else if(query_map.hasOwnProperty("rejoin") && query_map["rejoin"] == "1")
 		{
-			
 			mydoc.showContent("#enter_team_code_section");
-			
 		}
 		else
 		{
 			mydoc.showContent("#enter_game_code_section");
-			
 		}
-		// }
 	});
 	
 	// Lookup a single team/card
@@ -86,12 +80,11 @@
 				});
 			}
 		});
-
-
-
 	}
+
+
 	// Looks up the lists from the board and tries to find the one matching the given game code
-	function lookup_game()
+	function lookupGame()
 	{
 		let code_input = document.getElementById("player_game_code");
 		let code = code_input.value;
@@ -108,7 +101,7 @@
 			if(singleList.length == 1)
 			{
 				GAME_LIST_ID = singleList[0].id;
-				disable_step_one();
+				disableStepOne();
 				MyNotification.clear("#notification_section");
 				mydoc.showContent("#enter_team_name_section");
 			}
@@ -122,7 +115,7 @@
 	}
 
 	// Loads existing team if card ID was already included or found
-	function get_existing_team(card_id)
+	function getExistingTeam(card_id)
 	{
 		MyTrello.get_single_card(card_id, function(data){
 			response = JSON.parse(data.responseText);
@@ -130,23 +123,57 @@
 			team_name = response["name"];
 			GAME_LIST_ID = response["idList"];
 
-			show_team_page(team_name, team_id);
+			showTeamPage(team_name, team_id);
+
+			loadGameRules(GAME_LIST_ID);
+
+			loadGameRules(GAME_LIST_ID);
 
 			// Get wager if exists
 			getWager(team_id);
 		});
 	}
 
+	// Load the game state card to get the rules
+	function loadGameRules(listID)
+	{
+		MyTrello.get_cards(listID, (data)=>{
+			let resp = JSON.parse(data.responseText);
+			let singleCard = resp.filter( (val)=>{
+				return (val.name.startsWith("GAME_CARD_"));
+			});
+
+			let gameCard = singleCard[0] ?? undefined;
+
+			if(gameCard != undefined)
+			{
+				let jsonString = gameCard["desc"];
+				jsonObj = myajax.GetJSON(jsonString);
+				settings = Settings.GetSettings(jsonObj) ?? [];
+
+				settings.forEach( (setting) => {
+					ruleObj = setting["rule"];
+					ruleName = setting["name"];
+					optionID = setting["option"];
+					customValue = setting["value"] ?? "";
+
+					// Create the Setting mapping:
+					SETTINGS_MAPPING[ruleName] = {"option": optionID, "customValue": customValue, "rule": ruleObj };
+				});
+			}
+		});
+	}
+
 /************* SECTION VISIBILITY ***************************************/ 
 
 	// Disables the button and input once a game is found;
-	function disable_step_one(){
+	function disableStepOne(){
 		document.querySelector("#enter_game_code_section button").style.display = "none";
 		document.querySelector("#enter_game_code_section input").disabled = true;
 	}
 
 	// Shows the section for submitting answers
-	function show_team_page(team_name, team_id)
+	function showTeamPage(team_name, team_id)
 	{
 		// Set Team Identifiers
 		document.getElementById("team_code").innerText = team_name;
@@ -174,6 +201,7 @@
 		// Show the section to enter wager input
 		mydoc.showContent("#wager_input_section");
 	}
+	
 
 /*************** TEAM ACTIONS *******************************************/ 
 
@@ -261,17 +289,17 @@
 		});
 	}
 
-	function submit_answer()
+	function submitAnswer()
 	{
 		let card_id = document.getElementById("team_card_id").value;
 		let answer = document.getElementById("answer").value;
 
 		// Temporarily disable button;
-		submitButton = document.getElementById("submit_answer");
+		submitButton = document.getElementById("submitAnswer");
 		submitButton.disabled = true;
 		submitButton.classList.add("dlf_button_gray");
 		setTimeout(()=>{
-			document.getElementById("submit_answer").disabled = false;
+			document.getElementById("submitAnswer").disabled = false;
 			submitButton.disabled = false;
 			submitButton.classList.remove("dlf_button_gray");
 		},2000);
@@ -303,20 +331,37 @@
 	{
 		let wager = document.getElementById("wager").value;
 		wagerValue = (wager == "") ? "empty" : wager;
+
 		if( !isNaN(Number(wagerValue)))
 		{
-			// Hide the wager input part 1
-			mydoc.hideContent("#wager_input_pt1");
+			// Get the max they can wager
+			let wagerLimit = getWagerLimit() ?? wagerValue;
 
-			// Show the wager input part 2: confirmation
-			mydoc.showContent("#wager_input_pt2");
+			if(wagerValue <= wagerLimit)
+			{
+				MyNotification.clear("#wager_instruction");
 
-			// Add the score to the preview
-			mydoc.loadContent(wagerValue,"wager_input_preview");
+				// Hide the wager input part 1
+				mydoc.hideContent("#wager_input_pt1");
+
+				// Show the wager input part 2: confirmation
+				mydoc.showContent("#wager_input_pt2");
+
+				// Add the score to the preview
+				mydoc.loadContent(wagerValue,"wager_input_preview");
+			}
+			else
+			{
+				errMessage = `WAGER TOO HIGH! It cannot be more than ${wagerLimit}`;
+				MyNotification.notify("#wager_instruction",errMessage);
+			}
+			
 		}
 		else
 		{
-			alert("Invalid wager value! Please enter a number");
+			errMessage = `INCORRECT WAGER! Your wager must be a number between 0 & ${wagerLimit}`;
+			MyNotification.notify("#wager_instruction",errMessage, "notify_red");
+			// alert("Invalid wager value! Please enter a number");
 		}
 	}
 
@@ -367,6 +412,31 @@
 	{
 		event.preventDefault();
 		event.returnValue='';
+	}
+
+	// Get the wager limit -- based on rules/settings
+	function getWagerLimit()
+	{
+		let highestScoreValue = document.getElementById("highest_score")?.innerText ?? undefined;
+		let teamScoreValue = document.getElementById("team_score")?.innerText ?? undefined;
+
+		let setting = SETTINGS_MAPPING["Final Jeopardy Wager"]?.option ?? undefined;
+
+		console.log(setting);
+		console.log(highestScoreValue);
+		console.log(teamScoreValue);
+
+		let wagerLimit = undefined;
+
+		if(setting != undefined && !isNaN(Number(highestScoreValue)) && !isNaN(Number(teamScoreValue)) )
+		{
+			wagerLimit = (setting == "2") ? Number(highestScoreValue) : Number(teamScoreValue);
+		}
+		console.log("Wager Limit:");
+		console.log(wagerLimit);
+
+		return wagerLimit;
+		
 	}
 
 /*************** POLLING FOR SCORES *******************************************/ 

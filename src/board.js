@@ -1,11 +1,13 @@
 
 /************************ GLOBAL VARIABLES ************************/
 
-var CURR_GAME_ID = undefined;
+	var CURR_GAME_ID = undefined;
 	var CURR_LIST_ID = undefined;
 	var CURR_MEDIA_CHECKLIST_ID = undefined;
 
-	var CURR_GAME_CODE = "";
+	var CURR_GAME_STATE_CARD_ID = undefined;
+
+	var CURR_GAME_CODE = undefined;
 	var GAME_NAME  = "Home-made Jeopardy";
 	var HOW_TO_IS_HIDDEN = true;
 
@@ -44,16 +46,16 @@ var CURR_GAME_ID = undefined;
 		MyTrello.SetBoardName("jeopardy");
 
 		// Load the game params to determine what should happen next
-		validParams = loadGameParams();
-
-		// Set the game board listeners
-		onKeyboardKeyup();
+		loadGameParams();
 
 		// Load the additional views
 		loadGameViews();
 
 		// Load the Trello card
 		loadGameCardFromTrello();
+
+		// Set the game board listeners
+		onKeyboardKeyup();
 
 		// Only add beforeunload stopper if NOT test run;
 		if(!IS_TEST_RUN)
@@ -69,6 +71,7 @@ var CURR_GAME_ID = undefined;
 		let query_map = mydoc.get_query_map();
 		IS_TEST_RUN = (query_map["test"] ?? 0) == 1;
 		CURR_GAME_ID = query_map["gameid"] ?? undefined;
+		CURR_LIST_ID = query_map["listid"] ?? undefined;
 		
 		if(IS_TEST_RUN){ 
 			mydoc.addTestBanner(); 
@@ -78,15 +81,58 @@ var CURR_GAME_ID = undefined;
 	// Load the individual Views used for the game
 	function loadGameViews()
 	{
-		$("#menu_section").load("../views/menu.html");
+		$("#menu_section").load("../views/menu.html", ()=>{
+			// Load the game code (based on list id);
+			loadGameCode();
+		});
 		$("#rules_section").load("../views/rules.html");
 		$("#game_board_section").load("../views/board.html");
 		$("#teams_section").load("../views/teams.html");
 		$("#timer_section").load("../views/timer.html");
-		$("#show_question_section").load(`../views/showQuestion.html`, function(data){
+		$("#show_question_section").load(`../views/showQuestion.html`, (data)=>{
 			// Set listeners for closing question
 			var close_button = document.getElementById("close_question_view");
 			close_button.addEventListener("click", onCloseQuestion);
+		});
+	}
+
+	// Get the game code (based on list);
+	function loadGameCode()
+	{
+		MyTrello.get_lists("open", (data)=>{
+			let resp = JSON.parse(data.responseText);
+			let list = resp.filter( (val)=>{
+				return (val.id == CURR_LIST_ID);
+			});
+			CURR_GAME_CODE = list[0]?.name ?? undefined;	
+			document.getElementById("game_code").innerHTML = CURR_GAME_CODE;
+		});
+	}
+
+	// Load the card to track Game state -- and load any saved state
+	function loadGameState()
+	{
+		MyTrello.get_cards(CURR_LIST_ID,(data)=>{
+
+			let cards = JSON.parse(data.responseText);
+			let singleCard = cards.filter( (val) =>{
+				let isGameCard = (val.name.startsWith("GAME_CARD_")) && (val.name.includes(GAME_NAME));
+				return isGameCard;
+			});
+			CURR_GAME_STATE_CARD_ID = singleCard[0]?.id ?? undefined;
+
+			MyTrello.get_comments(CURR_GAME_STATE_CARD_ID, (commentData)=>{
+
+				let comments = JSON.parse(commentData.responseText);
+				comments.forEach( (obj)=>{
+
+					let val = obj.data?.text ?? "";
+					if(val != "")
+					{
+						ASKED_QUESTIONS.push(val);
+					}
+				});
+			});
 		});
 	}
 
@@ -102,8 +148,9 @@ var CURR_GAME_ID = undefined;
 
 		try
 		{
-			// Throw error if game ID is not set;
+			// Throw error if game ID or game code is not set;
 			if(CURR_GAME_ID == undefined){ throw "Game ID is not valid! Cannot load game."; }
+			if(CURR_LIST_ID == undefined){ throw "Game Code is not valid! Cannot load game."; }
 
 			MyTrello.get_single_card(CURR_GAME_ID, (data) => {
 								
@@ -117,6 +164,9 @@ var CURR_GAME_ID = undefined;
 
 				// Load the game settings
 				loadSettingsMapping(response["desc"]);
+
+				// Load the state of the game (if any)
+				loadGameState();
 
 				// Get the published URL from the card custom field
 				MyTrello.get_card_custom_field_by_name(CURR_GAME_ID, "Published URL", (data) => {
@@ -277,14 +327,16 @@ var CURR_GAME_ID = undefined;
 		// Toggle visibility of sections
 		showGameSections();
 		addGameName();
-		addGameCode();
 
 		// Add listeners
 		addListenerCategoryClick();
 		addListenerQuestionClick();
 
-		// Handle the LIST ID
-		setListID();
+		// If there are already asked questions, then just load the game again;
+		if(ASKED_QUESTIONS.length > 0)
+		{
+			onStartGame();
+		}
 	}
 
 	
@@ -327,15 +379,6 @@ var CURR_GAME_ID = undefined;
 
 		// Show Content
 		mydoc.showContent("#game_section");
-	}
-
-	// Add the game code to the page
-	function addGameCode()
-	{
-		// Set the game code
-		let game_code = (IS_TEST_RUN) ? "TEST" : Helper.getCode();
-		CURR_GAME_CODE = game_code;
-		document.getElementById("game_code").innerHTML = game_code;
 	}
 
 	// Manage the notifications on the page
@@ -399,6 +442,7 @@ var CURR_GAME_ID = undefined;
 	{
 		let element = document.getElementById(sectionID);
 		let modesToHideFor = (hideIfMode) ?? "-1";
+
 		if(element != undefined)
 		{
 			// Only set the content if it is defined;
@@ -469,6 +513,42 @@ var CURR_GAME_ID = undefined;
 		});
 
 		updateLeaderColors()
+	}
+
+	// Update the colors associated with the leaders
+	function updateLeaderColors()
+	{
+		var team_scores = document.querySelectorAll("span.team_score");
+		var scores = [];
+		for (var i = 0; i < team_scores.length; i++)
+		{
+			let sect = team_scores[i];
+			let score = Number(sect.innerHTML);
+			if (!scores.includes(score))
+			{
+				scores.push(score);
+			}
+		}
+		// Sort the scores
+		scores = scores.sort(function(a,b){return b-a; });
+		let length = scores.length;
+
+		// Set the first, second, and third values; 
+		let first = scores[0];
+		let second = (scores.length > 1) ? scores[1] : -1;
+		let third = (scores.length > 2 ) ? scores[2] : -1;
+
+		for (var i = 0; i < team_scores.length; i++)
+		{
+			let sect = team_scores[i];
+			sect.classList.remove("first_place");
+			sect.classList.remove("second_place");
+			sect.classList.remove("third_place");
+			let val = Number(sect.innerHTML);
+			if (val == first){ sect.classList.add("first_place"); }
+			else if (val == second){ sect.classList.add("second_place"); }
+			else if (val == third){ sect.classList.add("third_place"); }
+		}
 	}
 
 
@@ -582,12 +662,18 @@ var CURR_GAME_ID = undefined;
 		let proceed = canOpenQuestion(key);
 		if(!proceed){ return; }
 
-		// Set the current question key to the key of the opened question
-		ASKED_QUESTIONS.push(key);
-
 		Logger.log("Loading Question");
 		Logger.log(cell);
 
+
+		// Log that a question was asked; Including setting in Trello
+		ASKED_QUESTIONS.push(key);
+		if(!IS_TEST_RUN)
+		{
+			MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
+		}
+
+		// Get the setting for Answering questions
 		let setting = SETTINGS_MAPPING["Answering Questions"];
 		let mode = setting.option;
 
@@ -600,6 +686,9 @@ var CURR_GAME_ID = undefined;
 
 		// Get the mapped object from the Question/Answer Map
 		let map = JEOPARDY_QA_MAP[key];
+
+		// Force a sync of teams to ensure wagers are received.
+		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
 
 		// Format the questions and answers
 		let isDailyDouble = map["question"]["dailydouble"];
@@ -618,7 +707,6 @@ var CURR_GAME_ID = undefined;
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
-
 		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
 		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
 		document.getElementById("assignScoresButton").disabled = true; 
@@ -667,7 +755,7 @@ var CURR_GAME_ID = undefined;
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
-			MyTrello.update_list_to_archive(CURR_LIST_ID, archive_name , function(){
+			MyTrello.update_list_state(CURR_LIST_ID, "closed", archive_name , (data)=>{
 				alert("Game has been archived");
 			});
 		}
@@ -742,8 +830,11 @@ var CURR_GAME_ID = undefined;
 		// Determine if the How To button should display
 		showHowToPlayButton();
 
-		// Sync teams before starting game; True to select random player as well
-		onSyncTeams(true);
+		// Account for any existing game state
+		onSetGameState();
+
+		// Sync teams before starting game; 
+		onSyncTeams();
 
 		// Hide Content
 		mydoc.hideContent("#rules_section");
@@ -788,13 +879,29 @@ var CURR_GAME_ID = undefined;
 
 		// Add Classes
 		mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
+	}
 
-		// var team_scores = document.querySelectorAll("span.team_score");
-		// let highest_score  = (team_scores.length > 0) ? team_scores[0].innerText : "0";
-		// document.getElementById("highest_score_value").innerText = highest_score;
+	// Set the game state based on existing history on the card
+	function onSetGameState()
+	{
+		if(ASKED_QUESTIONS.length > 0)
+		{
 
-		// Logger.log("Highest score: " + highest_score);
+			// Automatically show the column headers
+			onCategoryClickAuto();
+			
+			// Show any asked questions as already asked;
+			ASKED_QUESTIONS.forEach( (val)=>{
 
+				let cell = document.querySelector(`[data-jpd-quest-key='${val}']`);
+				if(cell != undefined)
+				{	
+					cell.classList.add("category_option_selected");
+					cell.disabled = true;
+				}	
+			});
+		}
+		
 	}
 
 	// Sync the teams
@@ -807,28 +914,26 @@ var CURR_GAME_ID = undefined;
 			response = JSON.parse(data.responseText);
 			response.forEach(function(obj){
 
-				teamName = obj["name"].trim().replaceAll("\n", "");
-				code = obj["id"];
+				let teamName = obj["name"].trim().replaceAll("\n", "");
+				let isTeamCard = !(teamName.includes("GAME_CARD_"));
 
-				// Add to teams array
-				if(!TEAMS_ADDED.includes(teamName))
+				if(isTeamCard)
 				{
-					TEAMS_ADDED.push(teamName);
-					onAddTeam(code, teamName);
-				}
+					code = obj["id"];
 
-				// If FINAL_JEOPARDY -- set the wager (initially hidden);
-				if(IS_FINAL_JEOPARDY && !IS_GAME_OVER)
-				{
-					let highestScore = getHighestScore();
-					getWagersPerTeam(code, highestScore);		
-				}
+					// Add to teams array
+					if(!TEAMS_ADDED.includes(teamName))
+					{
+						TEAMS_ADDED.push(teamName);
+						onAddTeam(code, teamName);
+					}
 
-				// Only default the score if NOT final jeopardy
-				if(!IS_FINAL_JEOPARDY)
-				{
-					// Add 0 to current score; Ensures a value is in the score field; Adds nothing if something exists
-					calculateTeamNewScore(code,0,true);
+					// If FINAL_JEOPARDY -- set the wager (initially hidden);
+					if(IS_FINAL_JEOPARDY && !IS_GAME_OVER)
+					{
+						let highestScore = getHighestScore();
+						getWagersPerTeam(code, highestScore);		
+					}
 				}
 			});
 
@@ -839,8 +944,12 @@ var CURR_GAME_ID = undefined;
 
 			// Update the sync teams message
 			setTimeout(() => {
+
 				setSyncingDetails("Synced!", "limegreen");
+				updateLeader();
+				
 				setTimeout(() => {
+
 					setSyncingDetails("Sync Teams", "white");
 				},2000);
 			}, 1500);
@@ -870,32 +979,37 @@ var CURR_GAME_ID = undefined;
 	{
 
 		let teamShortCode = CURR_GAME_CODE + "-" + teamCode.substring(teamCode.length-4).toUpperCase();
-		let content = `
-			<tr class="team_row">
-				<td class="team_name_cell">
-					<h2>
-						<span id="teamChevron_${teamCode}" data-jpd-team-code="${teamCode}" class="fa fa-code pointer" style="color:orange;font-size:60%;" onclick="onToggleTeamShortCode(event)"></span>
-						<span data-jpd-team-code="${teamCode}" class="team_name pointer">${teamName}</span>
-					</h2>
-					<p id="hiddenShortCode_${teamCode}" class="hiddenShortCode hidden">${teamShortCode}</p>
-				</td>
-				<td>
-					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_score\">000</span></h2>
-				</td>
-				<td class=\"wager_row\">
-					<button class="setTeamDirectly hidden" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
-					<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\"></span></h2>
-				</td>
-			</tr>
-		`;
-
-		document.getElementById("teams_block").innerHTML += content;
-
 		let whoGoesFirstOption = SETTINGS_MAPPING["Who Goes First?"]?.option ?? "0"
-		if(whoGoesFirstOption == "2" && CURRENT_TEAM_IDX > 0)
-		{
-			showSetTeamButton();
-		}
+
+		// Get the team's score as stored in trello
+		MyTrello.get_card_custom_field_by_name(teamCode, "Score", (scoreDate)=>{
+
+			let resp = JSON.parse(scoreDate.responseText);
+			let teamScore = resp[0]?.value?.text ?? 0;
+
+			let isSetTeamDirectly = (whoGoesFirstOption == "2" && CURRENT_TEAM_IDX > 0) ? "" : "hidden";
+			
+			let content = `
+				<tr class="team_row">
+					<td class="team_name_cell">
+						<h2>
+							<span id="teamChevron_${teamCode}" data-jpd-team-code="${teamCode}" class="fa fa-code pointer" style="color:orange;font-size:60%;" onclick="onToggleTeamShortCode(event)"></span>
+							<span data-jpd-team-code="${teamCode}" class="team_name pointer">${teamName}</span>
+						</h2>
+						<p id="hiddenShortCode_${teamCode}" class="hiddenShortCode hidden">${teamShortCode}</p>
+					</td>
+					<td>
+						<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_score\">${teamScore}</span></h2>
+					</td>
+					<td class=\"wager_row\">
+						<button class="setTeamDirectly ${isSetTeamDirectly}" onclick="setCurrentPlayerByName('${teamName}')">Set as First Team</button>
+						<h2><span data-jpd-team-code=\"${teamCode}\" class=\"team_wager hidden\"></span></h2>
+					</td>
+				</tr>
+			`;
+
+			document.getElementById("teams_block").innerHTML += content;
+		});
 	}
 
 	// Toggle the team short code
@@ -1425,67 +1539,6 @@ var CURR_GAME_ID = undefined;
 		}
 	}
 
-	// Update the colors associated with the leaders
-	function updateLeaderColors()
-	{
-		var team_scores = document.querySelectorAll("span.team_score");
-		var scores = [];
-		for (var i = 0; i < team_scores.length; i++)
-		{
-			let sect = team_scores[i];
-			let score = Number(sect.innerHTML);
-			if (!scores.includes(score))
-			{
-				scores.push(score);
-			}
-		}
-		// Sort the scores
-		scores = scores.sort(function(a,b){return b-a; });
-		let length = scores.length;
-
-		// Set the first, second, and third values; 
-		let first = scores[0];
-		let second = (scores.length > 1) ? scores[1] : -1;
-		let third = (scores.length > 2 ) ? scores[2] : -1;
-
-		for (var i = 0; i < team_scores.length; i++)
-		{
-			let sect = team_scores[i];
-			sect.classList.remove("first_place");
-			sect.classList.remove("second_place");
-			sect.classList.remove("third_place");
-			let val = Number(sect.innerHTML);
-			if (val == first){ sect.classList.add("first_place"); }
-			else if (val == second){ sect.classList.add("second_place"); }
-			else if (val == third){ sect.classList.add("third_place"); }
-		}
-	}
-
-	// Set the current LIST ID to use for the game
-	function setListID()
-	{
-
-		// Set the appropriate list based on DEMO, TEST, or real game
-		if(IS_TEST_RUN)
-		{
-			MyTrello.get_list_by_name( "TEST", (data)=>{
-				let listsResp = JSON.parse(data.responseText);
-				let listID = listsResp[0]?.id;
-				CURR_LIST_ID = listID;
-				Logger.log("Current Game List ID: " + CURR_LIST_ID);
-				onSyncTeams(); // Sync teams once List ID is set;
-			});
-		} 
-		else
-		{
-			MyTrello.create_list(CURR_GAME_CODE,function(data){
-				response = JSON.parse(data.responseText);
-				CURR_LIST_ID = response["id"];
-				Logger.log("Current Game List ID: " + CURR_LIST_ID);
-				onSyncTeams(); // Sync teams once List ID is set;
-			});
-		}
-	}
 
 	// Set Timer values
 	function setTimerDetails()

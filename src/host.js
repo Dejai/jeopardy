@@ -1,12 +1,19 @@
 
 
 
+// Used for the card that has all the game details
 var CURR_GAME_ID =  "";
 var CURR_GAME_NAME = "";
+
+// Used for the instance of a game
+var CURR_GAME_LIST_ID = "";
+
 var CURR_EDIT_SHEET_URL = "";
 var CURR_PUB_SHEET_URL = "";
 var CURR_GAME_PASSWORD = "";
 var CURR_MEDIA_CHECKLIST_ID = "";
+
+var CURR_GAME_CODE = "";
 
 var TRELLO_IDS = {};
 
@@ -33,7 +40,7 @@ var USE_DEFAULT_RULES = true;
 			if(query_map.hasOwnProperty("gameid"))
 			{
 				let game_id = query_map["gameid"];
-				get_existing_game(game_id);
+				getExistingGame(game_id);
 			} 
 			else 
 			{
@@ -126,7 +133,7 @@ var USE_DEFAULT_RULES = true;
 					inputEle = document.getElementById("given_game_password");
 					if(inputEle == document.activeElement)
 					{
-						loadGame('edit', false, true)
+						loadGame('edit', true)
 
 					}
 					break;
@@ -150,9 +157,8 @@ var USE_DEFAULT_RULES = true;
 		return obj;
 	}
 
-
 	// Looks up the lists from the board and tries to find the one matching the given game code
-	function loadGame(action, isTestRun=false, samePageLoad=false)
+	function loadGame(action, samePageLoad=false)
 	{
 		// Start Clear results if any & load GIF
 		set_loading_results("");
@@ -166,7 +172,7 @@ var USE_DEFAULT_RULES = true;
 		{
 			CURR_GAME_ID = current_game_id;
 			validate_password(current_game_id, given_password, ()=>{
-				onNavigateToGameURL(action, isTestRun, samePageLoad);
+				onNavigateToGameURL(action, samePageLoad);
 			});
 		}
 		else 
@@ -195,14 +201,11 @@ var USE_DEFAULT_RULES = true;
 		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
 		loadGameSettings(CURR_GAME_RULES);
 
-		// Determine if this should be a DEMO link
-		let demoParam = (CURR_GAME_NAME.toUpperCase() == "DEMO") ? "&demo=1" : "";
-
 		// Get password, and then callback to show game page
 		getPassPhraseFromTrello(CURR_GAME_ID);
 		getMediaFromTrello(CURR_MEDIA_CHECKLIST_ID);
 		getEditSheetUrlFromTrello(CURR_GAME_ID);
-		getPublishedUrlFromTrello(CURR_GAME_ID, demoParam);
+		getPublishedUrlFromTrello(CURR_GAME_ID);
 
 		// See what sections can be shown after getting the diff components
 		setTimeout( ()=>{
@@ -219,13 +222,13 @@ var USE_DEFAULT_RULES = true;
 	{
 		let table_body = document.getElementById("settings_table_body")
 
-		table_body.innerHTML += get_formatted_rules(settingsJSON);
+		table_body.innerHTML += getFormattedRules(settingsJSON);
 
 		onShowRuleDetails(); // Ensure values are displayed;
 	}
 
 	// Create the new game;
-	function create_game(game_name, pass_phrase)
+	function createNewGameCard(game_name, pass_phrase)
 	{
 
 		MyTrello.get_list_by_name("ADMIN_LIST", (listData)=>{
@@ -239,7 +242,7 @@ var USE_DEFAULT_RULES = true;
 				game_id = response["id"];
 
 				// Get the URL to use once created;
-				load_url = get_game_url(game_id, "edit");
+				load_url = getGameUrl(game_id, "edit");
 
 				// Update the description with the default settings
 				let defaultRules = Settings.GetDefaultSettings();
@@ -263,6 +266,100 @@ var USE_DEFAULT_RULES = true;
 					}, 2000);
 				});				
 			});
+		});
+	}
+
+	// Create a new instance of a game
+	function createNewGameInstance(successCallback)
+	{
+		CURR_GAME_CODE = Helper.getCode();
+		MyTrello.create_list(CURR_GAME_CODE, (data)=>{
+			
+			// Get the list ID;
+			let response = JSON.parse(data.responseText);
+			CURR_GAME_LIST_ID = response["id"] ?? undefined;
+
+			if(CURR_GAME_LIST_ID != undefined)
+			{
+				// Create the game card
+				let newGameInstanceName = `GAME_CARD_${CURR_GAME_CODE} | ${CURR_GAME_NAME}`;
+				MyTrello.create_card(CURR_GAME_LIST_ID, newGameInstanceName,(newCardData)=>{
+
+					let newGameResp = JSON.parse(newCardData.responseText);
+					let gameCardID = newGameResp["id"];
+
+					if(gameCardID != undefined)
+					{
+						let gameSettings = getSavedSettings();
+						// Update the description with the game's settings
+						MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
+
+							// Do whatever callback is sent in next;
+							successCallback();
+						});
+					}
+				});
+			}
+		});
+	}
+
+	// Use the test game instance for a test run
+	function createTestGameInstance(successCallback)
+	{
+		MyTrello.get_list_by_name( "TEST", (data)=>{
+
+			let listsResp = JSON.parse(data.responseText);
+			let listID = listsResp[0]?.id;
+
+			CURR_GAME_LIST_ID = listID;
+
+			// Get the TEST game card and update
+			if(CURR_GAME_LIST_ID != null)
+			{
+
+				// The name of the card's game instance;
+				let newGameInstanceName = `GAME_CARD_TEST | ${CURR_GAME_NAME}`;
+				let gameSettings = getSavedSettings();
+
+				// Check if card exists
+				MyTrello.get_cards(CURR_GAME_LIST_ID, (existingCards)=>{
+
+					let cards = JSON.parse(existingCards.responseText);
+					let singleCard = cards.filter( (val)=>{
+						return (val.name == newGameInstanceName)
+					});
+
+					// If card exiss, just update desc;
+					if(singleCard.length == 1)
+					{
+						MyTrello.update_card_description(singleCard[0].id, gameSettings, (data)=>{
+							// Do whatever callback is sent in next;
+							successCallback();
+						});
+					}
+					
+					// Otherwise, just create new
+					else
+					{
+						MyTrello.create_card(CURR_GAME_LIST_ID, newGameInstanceName,(newCardData)=>{
+
+							let newGameResp = JSON.parse(newCardData.responseText);
+							let gameCardID = newGameResp["id"];
+		
+							if(gameCardID != undefined)
+							{
+								// Update the description with the game's settings
+								MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
+		
+									// Do whatever callback is sent in next;
+									successCallback();
+								});
+							}
+						});
+
+					}
+				});				
+			}
 		});
 	}
 
@@ -299,26 +396,15 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Open a game URL
-	function onNavigateToGameURL(type, isTest=false, samePageLoad=false)
+	function onNavigateToGameURL(action, samePageLoad=false)
 	{
 
-		if(type == "play" && !isTest)
-		{
-			let canPlay = onConfirmForPlay();
-			console.log("Can I Play?" + canPlay)
-			if(!canPlay)
-			{
-				mydoc.showContent("#play_game_confirmation_error");
-				return;
-			}
-			else
-			{
-				mydoc.hideContent("#play_game_confirmation_error");
-			}
-		}
+		let isTest = (action == "test");
+		let type = (isTest) ? "play" : action;
 
-		// Load the page URl;
-		let newURL = get_game_url(CURR_GAME_ID, type, isTest);
+		// Get the right URL;
+		let newURL = getGameUrl(CURR_GAME_ID, type, isTest);
+		console.log(newURL);
 
 		if(samePageLoad)
 		{
@@ -328,6 +414,70 @@ var USE_DEFAULT_RULES = true;
 		{
 			window.open(newURL, "_blank");
 		}
+	}
+
+	// Test a game
+	function onTestGame()
+	{
+		loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+
+		MyNotification.notify("#test_game_loading", loading_html);
+		mydoc.hideContent("#test_game_button");
+
+		createTestGameInstance( ()=>{
+			onNavigateToGameURL('test');
+		});
+
+		setTimeout(()=>{
+			MyNotification.clear("#test_game_loading");
+			mydoc.showContent("#test_game_button");
+
+		},3000);
+	}
+
+	// Play a real game;
+	function onPlayGame()
+	{
+		let canPlay = onConfirmForPlay();
+		if(canPlay)
+		{
+			mydoc.hideContent("#play_game_confirmation_error");
+
+
+			loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+			MyNotification.notify("#play_game_loading", loading_html);
+			mydoc.hideContent("#play_button");
+
+			
+			// Create the game instance and then 
+			createNewGameInstance( ()=>{
+				onNavigateToGameURL("play");
+			});
+
+			setTimeout(()=>{
+				MyNotification.clear("#play_game_loading");
+				mydoc.showContent("#play_button");
+			},2000);
+
+		}
+		else
+		{
+			mydoc.showContent("#play_game_confirmation_error");
+			return;
+		}
+
+	}
+
+	// Open the board
+	function onOpenBoard()
+	{
+		onNavigateToGameURL("play");
+	}
+
+	// Open the host view
+	function onOpenHostView()
+	{
+		onNavigateToGameURL("host");
 	}
 
 	// Confirming that things are ready to play
@@ -357,21 +507,6 @@ var USE_DEFAULT_RULES = true;
 		return allChecked;
 	}
 
-	// When the list of games changes
-	function onSelectLoadGame(event)
-	{
-		let sourceEle = event.target;
-		selectedGame = sourceEle.value;
-		
-		// Set the host view link/button
-		document.querySelector("#open_host_view_button").href =  get_game_url(selectedGame, "host");
-
-		playURL = get_game_url(selectedGame, "play");
-		testURL = get_game_url(selectedGame, "play", true);
-		hostURL = get_game_url(selectedGame, "host");
-
-	}
-
 	// Listener for when the user changes an option on the settings section
 	function onRuleOptionChange(event)
 	{
@@ -392,14 +527,28 @@ var USE_DEFAULT_RULES = true;
 		let attr_CustomValue = selectedOption.getAttribute("data-jpd-custom-value");
 
 		// Show the rule description
-		let ruleDescParagraph = get_sibling(sourceEle, "rule_description");
+		let ruleDescParagraph = getSibling(sourceEle, "rule_description");
 		if(ruleDescParagraph != undefined)
 		{
 			ruleDescParagraph.innerText = attr_Description;
 		}
 
+		// Decide whether to show the Host View button or not
+		if(sourceEle.id == "AnsweringQuestions")
+		{
+			if(sourceEle.value == "2")
+			{
+				mydoc.removeClass(".host_view_section", "hidden")
+				console.log("Show Buzz!");
+			}
+			else
+			{
+				mydoc.addClass(".host_view_section", "hidden")
+			}
+		}
+
 		// Check if suggestion is included;
-		let suggestionParagraph = get_sibling(sourceEle, "rule_suggestion");
+		let suggestionParagraph = getSibling(sourceEle, "rule_suggestion");
 		let hasSuggestion = attr_Suggestion?.length > 0 ?? false;
 		if(hasSuggestion)
 		{
@@ -413,7 +562,7 @@ var USE_DEFAULT_RULES = true;
 		}
 
 		// Next, check if custom value can be input
-		let customInput = get_sibling(sourceEle, "rule_custom");
+		let customInput = getSibling(sourceEle, "rule_custom");
 		let allowsCustom = attr_Type?.includes("custom") ?? false;
 		if(allowsCustom)
 		{
@@ -485,10 +634,6 @@ var USE_DEFAULT_RULES = true;
 	// function New way to save game component
 	function onSaveGameComponent(componentName)
 	{
-
-
-
-
 		let identifier = undefined;
 		let savedValue = undefined;
 		let fieldValue = undefined;
@@ -558,29 +703,23 @@ var USE_DEFAULT_RULES = true;
 		{
 			if(customFieldName != undefined)
 			{
-				MyTrello.get_custom_field_by_name(customFieldName,(customFieldData)=>{
 
-					let fieldResp = JSON.parse(customFieldData.responseText);
-					let customFieldID = fieldResp[0]?.id;
+				MyTrello.update_card_custom_field_by_name(CURR_GAME_ID, customFieldName, fieldValue, (data)=> {
 
-					MyTrello.update_card_custom_field(CURR_GAME_ID,customFieldID, fieldValue, (data)=> {
-
-						if(data.status >= 200 && data.status < 300)
-						{
-							console.log("Updated custom field == " + customFieldName);
-						}
-					});
+					if(data.status >= 200 && data.status < 300)
+					{
+						console.log("Updated custom field == " + customFieldName);
+					}
 				});
 			}
 			else if (identifier == "settings_identifier")
 			{
-				savedRules = get_saved_rules();
-				savedRulesJSON = JSON.stringify(savedRules);
+				let savedRulesJSON = getSavedSettings();
 				MyTrello.update_card_description(CURR_GAME_ID,savedRulesJSON,(data)=>{
 					if(data.status >= 200 && data.status < 300)
 					{
 						console.log("Updated game settings: ");
-						console.log(savedRules);
+						console.log(savedRulesJSON);
 					}
 				});
 			}
@@ -750,7 +889,7 @@ var USE_DEFAULT_RULES = true;
 /************* HOST: GETTERS ************************************/ 
 
 	// Loads existing team if card ID was already included or found
-	function get_existing_game(card_id)
+	function getExistingGame(card_id)
 	{
 		try
 		{
@@ -811,7 +950,7 @@ var USE_DEFAULT_RULES = true;
 						// file_url = MyGoogleDrive.formatURL(file_type,checklist_details[2]);
 						file_url = checklist_details[2];
 
-						mediaContent += get_formatted_media_list_item(file_id, file_name, file_url);
+						mediaContent += getFormattedMediaListItem(file_id, file_name, file_url);
 					}
 					
 				});
@@ -842,7 +981,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the published sheet URL stored in the game
-	function getPublishedUrlFromTrello(card_id, demoParam="")
+	function getPublishedUrlFromTrello(card_id)
 	{
 		MyTrello.get_card_custom_field_by_name(card_id, "Published URL", (data) => {
 			
@@ -877,7 +1016,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the full URLs for playing/testing the game
-	function get_game_url(gameID, type="", isTest=false)
+	function getGameUrl(gameID, type="", isTest=false)
 	{
 		let path = "";
 
@@ -886,11 +1025,8 @@ var USE_DEFAULT_RULES = true;
 			case "edit":
 				path = `/host/edit.html?gameid=${gameID}`;
 				break;
-			case "demo":
-				path = `/board/?gameid=${gameID}&demo=1`;
-				break;
 			case "play":
-				path = `/board/?gameid=${gameID}`;
+				path = `/board/?gameid=${gameID}&listid=${CURR_GAME_LIST_ID}`;
 				break;
 			case "host":
 				path = `/board/host.html?gameid=${gameID}`;
@@ -899,6 +1035,7 @@ var USE_DEFAULT_RULES = true;
 				path = "/";
 		}
 
+		// Add TEST flag if applicable;
 		path += (isTest) ? "&test=1" : "";
 
 		let fullURL = location.origin + path;
@@ -907,7 +1044,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the rules formatted to display on the page
-	function get_formatted_rules(savedSettings)
+	function getFormattedRules(savedSettings)
 	{
 		// The HTML that will be returned 
 		let rulesFormatted = "";
@@ -972,7 +1109,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the formatted list of media 
-	function get_formatted_media_list_item(fileID, fileName, fileURL)
+	function getFormattedMediaListItem(fileID, fileName, fileURL)
 	{
 		link = `<a href='${fileURL}' target="_blank">${fileName}</a>`;
 		del  = `<i onclick="onDeleteMedia('${fileID}')" class="delete_media fa fa-trash"></i>`;
@@ -981,7 +1118,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get a related child section 
-	function get_sibling(sourceEle, siblingClassName)
+	function getSibling(sourceEle, siblingClassName)
 	{
 		let parent = sourceEle.parentElement;
 		let sibling = parent.querySelector(`.${siblingClassName}`);
@@ -989,7 +1126,7 @@ var USE_DEFAULT_RULES = true;
 	}
 
 	// Get the saved rules as set on the page
-	function get_saved_rules()
+	function getSavedSettings()
 	{
 		// Get all rule elements
 		let ruleOptions = document.querySelectorAll(".ruleOption");
@@ -1009,13 +1146,14 @@ var USE_DEFAULT_RULES = true;
 
 			if(isCustom)
 			{
-				let customInput = get_sibling(input, "rule_custom");
+				let customInput = getSibling(input, "rule_custom");
 				ruleObj["value"] = customInput.value;
 			}
 			savedRules.push(ruleObj);
 		});
 
-		return savedRules;
+		// Convert to JSON
+		return JSON.stringify(savedRules);
 	}
 
 /************* HOST: SETTERS / DELETERS ************************************/ 
@@ -1186,7 +1324,7 @@ var USE_DEFAULT_RULES = true;
 	
 						if(existing.length == 0)
 						{
-							create_game(game_name, pass_phrase);
+							createNewGameCard(game_name, pass_phrase);
 						}
 						else
 						{

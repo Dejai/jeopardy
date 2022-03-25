@@ -18,6 +18,9 @@
 
 	mydoc.ready(function(){
 
+		// Set the board name
+		MyTrello.SetBoardName("jeopardy");
+		
 		// Load the game params to determine what should happen next
 		validParams = loadGameParams();
 		// Set the game board listeners

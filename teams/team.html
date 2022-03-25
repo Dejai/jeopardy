@@ -33,7 +33,7 @@
 				</button>							
 			<!-- </div> -->
 			<h4 style="clear:both;margin:0px; border-top:3px solid navy;border-bottom:3px solid navy; padding: 0% 1%">				
-				<p style="font-style:italic;font-size:smaller;">Scores are automatically refreshed <span style="color:orange;">every 30 seconds</span>.</p>
+				<p style="font-style:italic;font-size:smaller;">Scores are automatically refreshed <br/> <span style="color:orange;">every 30 seconds</span>.</p>
 				Highest Score: <span id="highest_score" class="highlight_team_value">0</span>
 				<br/>
 				<br/>
@@ -52,6 +52,7 @@
 					<p id="wager_instruction" style="color:red; margin:20px 0px 0px 0px;" >Submit your wager before the final question is revealed.</p>
 					<h3 style="margin:0px 0px 0px 0px;"><label for="wager">Enter Wager:</label></h3>
 					<input id="wager" style="margin-top:2%"  type="number" placeholder="Enter wager here." name="wager" autocomplete="off"><br/>
+					<p id="wager_warning_section" style="color:red;"></p>
 					<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onConfirmWager()">
 						Submit Wager
 					</button>
@@ -86,7 +87,7 @@
 				<h3 style="margin:20px 0px 0px 0px;"><label for="answer">Enter Answer:</label></h3>
 				<input id="answer" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
 				<br/>
-				<button id="submit_answer" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="submit_answer()">
+				<button id="submitAnswer" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="submitAnswer()">
 					Submit Answer
 				</button>
 			</div>
@@ -98,5 +99,7 @@
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<script src="../src/teams.js"></script>
+	<script src="../src/rules.js"></script>
+	<script src="../src/settings.js"></script>
 
 </html>
