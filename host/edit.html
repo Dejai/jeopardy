@@ -226,12 +226,13 @@
 						</colgroup>
 						<tbody>
 							<tr>
-								<td>
-									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
+								<td style="text-align:center;">
+									<button id="test_game_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
 										<h3>
 											TEST GAME
 										</h3>
 									</button>
+									<span id="test_game_loading"></span>
 								</td>
 								<td>
 									<p>Use this to do a TEST run of your game.</p>
@@ -258,12 +259,13 @@
 								</td>
 							</tr>
 							<tr>
-								<td>
+								<td style="text-align:center;">
 									<button id="play_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onPlayGame()">
 										<h3>
 											PLAY GAME
 										</h3>
 									</button>
+									<span id="play_game_loading"></span>
 								</td>
 								<td>
 									<p>Use this to play a <strong>real game</strong>.</p>

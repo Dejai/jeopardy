@@ -54,8 +54,6 @@
 		// Load the game code (based on list id);
 		loadGameCode();
 
-		
-
 		// Load the Trello card
 		loadGameCardFromTrello();
 
@@ -444,6 +442,7 @@
 	{
 		let element = document.getElementById(sectionID);
 		let modesToHideFor = (hideIfMode) ?? "-1";
+
 		if(element != undefined)
 		{
 			// Only set the content if it is defined;
@@ -663,15 +662,18 @@
 		let proceed = canOpenQuestion(key);
 		if(!proceed){ return; }
 
-		// Set the current question key to the key of the opened question
-		ASKED_QUESTIONS.push(key);
-		
-		// Also save the open in the game state
-		MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
-
 		Logger.log("Loading Question");
 		Logger.log(cell);
 
+
+		// Log that a question was asked; Including setting in Trello
+		ASKED_QUESTIONS.push(key);
+		if(!IS_TEST_RUN)
+		{
+			MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
+		}
+
+		// Get the setting for Answering questions
 		let setting = SETTINGS_MAPPING["Answering Questions"];
 		let mode = setting.option;
 
@@ -684,6 +686,9 @@
 
 		// Get the mapped object from the Question/Answer Map
 		let map = JEOPARDY_QA_MAP[key];
+
+		// Force a sync of teams to ensure wagers are received.
+		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
 
 		// Format the questions and answers
 		let isDailyDouble = map["question"]["dailydouble"];
@@ -702,7 +707,6 @@
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
-
 		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
 		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
 		document.getElementById("assignScoresButton").disabled = true; 

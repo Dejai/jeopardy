@@ -7,7 +7,6 @@ var CURR_GAME_NAME = "";
 
 // Used for the instance of a game
 var CURR_GAME_LIST_ID = "";
-var CURR_GAME_CARD_ID = "";
 
 var CURR_EDIT_SHEET_URL = "";
 var CURR_PUB_SHEET_URL = "";
@@ -287,13 +286,13 @@ var USE_DEFAULT_RULES = true;
 				MyTrello.create_card(CURR_GAME_LIST_ID, newGameInstanceName,(newCardData)=>{
 
 					let newGameResp = JSON.parse(newCardData.responseText);
-					CURR_GAME_CARD_ID = newGameResp["id"];
+					let gameCardID = newGameResp["id"];
 
-					if(CURR_GAME_CARD_ID != undefined)
+					if(gameCardID != undefined)
 					{
 						let gameSettings = getSavedSettings();
 						// Update the description with the game's settings
-						MyTrello.update_card_description(CURR_GAME_CARD_ID, gameSettings, (cardData)=>{
+						MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
 
 							// Do whatever callback is sent in next;
 							successCallback();
@@ -317,44 +316,49 @@ var USE_DEFAULT_RULES = true;
 			// Get the TEST game card and update
 			if(CURR_GAME_LIST_ID != null)
 			{
-				
-				// Create the game card
+
+				// The name of the card's game instance;
 				let newGameInstanceName = `GAME_CARD_TEST | ${CURR_GAME_NAME}`;
-				MyTrello.create_card(CURR_GAME_LIST_ID, newGameInstanceName,(newCardData)=>{
+				let gameSettings = getSavedSettings();
 
-					let newGameResp = JSON.parse(newCardData.responseText);
-					CURR_GAME_CARD_ID = newGameResp["id"];
+				// Check if card exists
+				MyTrello.get_cards(CURR_GAME_LIST_ID, (existingCards)=>{
 
-					if(CURR_GAME_CARD_ID != undefined)
+					let cards = JSON.parse(existingCards.responseText);
+					let singleCard = cards.filter( (val)=>{
+						return (val.name == newGameInstanceName)
+					});
+
+					// If card exiss, just update desc;
+					if(singleCard.length == 1)
 					{
-						let gameSettings = getSavedSettings();
-						// Update the description with the game's settings
-						MyTrello.update_card_description(CURR_GAME_CARD_ID, gameSettings, (cardData)=>{
-
+						MyTrello.update_card_description(singleCard[0].id, gameSettings, (data)=>{
 							// Do whatever callback is sent in next;
 							successCallback();
 						});
 					}
-				});
+					
+					// Otherwise, just create new
+					else
+					{
+						MyTrello.create_card(CURR_GAME_LIST_ID, newGameInstanceName,(newCardData)=>{
 
-				// MyTrello.get_cards(CURR_GAME_LIST_ID, (cards)=>{
-				// 	let cardsResp = JSON.parse(cards.responseText);
-				// 	let singleCard = cardsResp.filter( (val)=>{
-				// 		return (val.name == "GAME_CARD_TEST");
-				// 	});
+							let newGameResp = JSON.parse(newCardData.responseText);
+							let gameCardID = newGameResp["id"];
+		
+							if(gameCardID != undefined)
+							{
+								// Update the description with the game's settings
+								MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
+		
+									// Do whatever callback is sent in next;
+									successCallback();
+								});
+							}
+						});
 
-				// 	CURR_GAME_CARD_ID = singleCard[0]?.id ?? undefined;
-				// 	if(CURR_GAME_CARD_ID != undefined)
-				// 	{
-				// 		let gameSettings = getSavedSettings();
-				// 		// Update the description with the game's settings
-				// 		MyTrello.update_card_description(CURR_GAME_CARD_ID, gameSettings, (cardData)=>{
-
-				// 			// Do whatever callback is sent in next;
-				// 			successCallback();
-				// 		});
-				// 	}
-				// });
+					}
+				});				
 			}
 		});
 	}
@@ -415,9 +419,20 @@ var USE_DEFAULT_RULES = true;
 	// Test a game
 	function onTestGame()
 	{
+		loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+
+		MyNotification.notify("#test_game_loading", loading_html);
+		mydoc.hideContent("#test_game_button");
+
 		createTestGameInstance( ()=>{
 			onNavigateToGameURL('test');
-		})
+		});
+
+		setTimeout(()=>{
+			MyNotification.clear("#test_game_loading");
+			mydoc.showContent("#test_game_button");
+
+		},3000);
 	}
 
 	// Play a real game;
@@ -427,11 +442,22 @@ var USE_DEFAULT_RULES = true;
 		if(canPlay)
 		{
 			mydoc.hideContent("#play_game_confirmation_error");
+
+
+			loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+			MyNotification.notify("#play_game_loading", loading_html);
+			mydoc.hideContent("#play_button");
+
 			
 			// Create the game instance and then 
 			createNewGameInstance( ()=>{
 				onNavigateToGameURL("play");
 			});
+
+			setTimeout(()=>{
+				MyNotification.clear("#play_game_loading");
+				mydoc.showContent("#play_button");
+			},2000);
 
 		}
 		else
