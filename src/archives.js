@@ -130,6 +130,7 @@
 			else
 			{
 				THE_TEAMS[teamCode][fieldName.toLowerCase()] = "n/a";
+				THE_TEAMS[teamCode]["preWagerScore"] = 0;
 			}
 
 			// Check if all the scores have been set now;
