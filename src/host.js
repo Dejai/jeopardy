@@ -703,18 +703,13 @@ var USE_DEFAULT_RULES = true;
 		{
 			if(customFieldName != undefined)
 			{
-				MyTrello.get_custom_field_by_name(customFieldName,(customFieldData)=>{
 
-					let fieldResp = JSON.parse(customFieldData.responseText);
-					let customFieldID = fieldResp[0]?.id;
+				MyTrello.update_card_custom_field_by_name(CURR_GAME_ID, customFieldName, fieldValue, (data)=> {
 
-					MyTrello.update_card_custom_field(CURR_GAME_ID,customFieldID, fieldValue, (data)=> {
-
-						if(data.status >= 200 && data.status < 300)
-						{
-							console.log("Updated custom field == " + customFieldName);
-						}
-					});
+					if(data.status >= 200 && data.status < 300)
+					{
+						console.log("Updated custom field == " + customFieldName);
+					}
 				});
 			}
 			else if (identifier == "settings_identifier")
