@@ -339,7 +339,7 @@
 
 			if(wagerValue <= wagerLimit)
 			{
-				MyNotification.clear("#wager_warning_section");
+				MyNotification.clear("#wager_instruction");
 
 				// Hide the wager input part 1
 				mydoc.hideContent("#wager_input_pt1");
@@ -352,15 +352,15 @@
 			}
 			else
 			{
-				errMessage = `Your wager cannot be more than ${wagerLimit}`;
-				MyNotification.notify("#wager_warning_section",errMessage);
+				errMessage = `WAGER TOO HIGH! It cannot be more than ${wagerLimit}`;
+				MyNotification.notify("#wager_instruction",errMessage);
 			}
 			
 		}
 		else
 		{
-			errMessage = `Your wager cannot be more than ${wagerLimit}`;
-			MyNotification.notify("#wager_warning_section",errMessage, "notify_red");
+			errMessage = `INCORRECT WAGER! Your wager must be a number between 0 & ${wagerLimit}`;
+			MyNotification.notify("#wager_instruction",errMessage, "notify_red");
 			// alert("Invalid wager value! Please enter a number");
 		}
 	}
