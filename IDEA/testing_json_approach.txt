@@ -1,0 +1,49 @@
+
+
+https://trello.the-dancinglion.workers.dev/jeopardy/get_cards?listID=6007bbc9ec73367514314430
+
+
+-- Get card
+https://trello.the-dancinglion.workers.dev/jeopardy/get_single_card/?cardID=625e845b52216d07db264f95&checklist=all&attachments=true
+
+-- Get card attachment
+https://trello.the-dancinglion.workers.dev/jeopardy/get_card_attachments/?cardID=625e845b52216d07db264f95
+
+https://trello.the-dancinglion.workers.dev/jeopardy/get_card_attachment/?cardID=625e845b52216d07db264f95&attachmentID=63604541ceab74007625df80&fileNameID=test.json
+
+
+-- URL For File:
+
+https://trello.com/1/cards/625e845b52216d07db264f95/attachments/63604541ceab74007625df80/download/test.json
+
+
+curl -H "Authorization: OAuth oauth_consumer_key=\"78824f4a41b17e3ab87a2934fd5e9fbb\", oauth_token=\"18616dd5585620de70fae4d1b6a4463a553581ec9aa7e211aaac45ec1d2707a3\"" https://api.trello.com/1/cards/625e845b52216d07db264f95/attachments/63604541ceab74007625df80/download/test.json
+
+https://api.trello.com/1/cards/625e845b52216d07db264f95/attachments/63604541ceab74007625df80/download/test.json?key=78824f4a41b17e3ab87a2934fd5e9fbb&token=18616dd5585620de70fae4d1b6a4463a553581ec9aa7e211aaac45ec1d2707a3
+
+Trello Path: 
+https://api.trello.com/1/cards/625e845b52216d07db264f95/attachments/63604541ceab74007625df80/download/test.json?key=78824f4a41b17e3ab87a2934fd5e9fbb&token=18616dd5585620de70fae4d1b6a4463a553581ec9aa7e211aaac45ec1d2707a3
+
+
+## WORKING: GET ATTACHMENT
+https://trello.the-dancinglion.workers.dev/jeopardy/get_card_attachment/?cardID=625e845b52216d07db264f95&attachmentID=6360567440dd790164209277&fileNameID=config.json
+
+
+
+
+key: "78824f4a41b17e3ab87a2934fd5e9fbb",
+    token: "18616dd5585620de70fae4d1b6a4463a553581ec9aa7e211aaac45ec1d2707a3",
+
+
+
+
+https://trello.the-dancinglion.workers.dev/jeopardy/get_single_card/?cardD=5fdfd98086c6bc9cc56d4db3
+
+
+
+
+
+https://trello.the-dancinglion.workers.dev/jeopardy/create_card_attachment/?cardID=625e845b52216d07db264f95&mimeType=application/json&name=posttest.json
+
+
+"file":%27[{%22name%22:%22Answering%20Questions%22,%22option%22:%221%22},{%22name%22:%22Selecting%20Questions%22,%22option%22:%221%22},{%22name%22:%22Who%20Goes%20First?%22,%22option%22:%221%22},{%22name%22:%22Time%20to%20Answer%20Questions%22,%22option%22:%221%22},{%22name%22:%22Final%20Jeopardy%20Wager%22,%22option%22:%221%22}]%27

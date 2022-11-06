@@ -1,0 +1,25 @@
+<div class="categorySection" data-jpd-category-section="{{categoryName}}">
+    <h2 style="text-align:left;" class="categoryTitle">Category: <span class="categoryName">{{categoryName}}</span></h2>
+    <div class="listOfCategoryQuestions">
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Value</th>
+                    <th>Daily Double?</th>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody class="categorySectionBody">{{categorySectionBody}}</tbody>
+            <tbody>
+                <tr>
+                    <td colspan="5" style="text-align:right;">
+                        <span class="pointer" onclick="onAddQuestion(event)">Add Question</span>
+                    </td>
+                </tr>
+            </tbody>            
+        </table>
+        <!-- <button onclick="onAddQuestion(event)">Add Question</button> -->
+    </div>
+</div>

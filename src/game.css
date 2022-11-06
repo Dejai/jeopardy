@@ -1,3 +1,4 @@
+
 /**************************************************** 
 	GENERAL: Applies to all pages;
 *****************************************************/
@@ -181,13 +182,16 @@
 	.edit_section { width: 85%; margin:auto; text-align:center;  }
 	.edit_section .description { cursor:pointer; color:goldenrod; padding-left:2%; }
 	.edit_section .section_description { font-size:120%; margin-bottom:5% }
-	#host_edit_tab_section { border-bottom:3px solid white; margin-bottom:5%; }
+	/* #host_edit_tab_section { border-bottom:3px solid white; margin-bottom:5%; } */
 
-	.host_edit_tab { text-align:center; display:inline-block; width:24%; cursor:pointer;  }
+	.host_edit_tab { text-align:center; display:inline-block; width:15%; cursor:pointer;  }
 	.host_edit_tab.selected_tab { background-color:blue; }
 	.host_edit_tab_disabled { color: gray;}
 	
 	#edit_section_game_details table tbody tr td { padding-bottom:3%; }
+
+	.edit_section_question_category { border: 2px solid white; }
+
 
 	.edit_game_value { padding:1%; width:80%; }
 
@@ -226,7 +230,8 @@
 	#game_media_details_table tr td { padding:3%; }
 
 
-
+	.mediaItem{ border: 2px dashed lightgray; padding:2%; float:left; text-align:center; margin-right:5%; margin-bottom:5%; }
+	.mediaItem .deleteMediaIcon { text-align:right; float:right; }
 /* HOST Views*/
 	#host_instructions { text-align:left; }
 	#host_instructions li { margin-bottom:3%; }

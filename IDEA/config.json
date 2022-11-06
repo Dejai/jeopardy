@@ -1,0 +1,18 @@
+{
+    "AnsweringQuestions": {
+        "option": "1"
+    },
+    "SelectingQuestions": {
+        "option": "3"
+    },
+    "WhoGoesFirst": {
+        "option": "3"
+    },
+    "TimeToAnswerQuestions": {
+        "option": "2",
+        "value": "7"
+    },
+    "FinalJeopardyWager": {
+        "option": "2"
+    }
+}

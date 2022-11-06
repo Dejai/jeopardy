@@ -32,6 +32,11 @@ const MyGoogleDrive = {
         );
     },
 
+    getFormURL: (gameID)=>{
+        let formURL = `https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?entry.1508904525=${gameID}`;
+        return formURL;
+    },
+
     // Format the spreadsheet data into a easily readable object
     formatSpreadsheetData: function(data){
 
@@ -71,6 +76,12 @@ const MyGoogleDrive = {
         return spreadsheetData;
     },
 
+    getFileID: (initialURL)=>{
+        urlObject = new URL(initialURL);
+        queryMap = mydoc.get_query_map_from_url(urlObject);
+        fileID = queryMap["id"] ?? "";
+        return fileID;
+    },
 
     // Format a Google URL to easily view the "host" version;
     formatURL: function(type, initialURL){

@@ -20,6 +20,10 @@ var TRELLO_IDS = {};
 var CURR_GAME_RULES =  undefined;
 var USE_DEFAULT_RULES = true;
 
+// The instance of this jeopardy game
+var JeopardyGame;
+var CurrentSection = "edit_section_game_details"; //default first tab of edit page
+
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
 	mydoc.ready(function()
@@ -27,155 +31,36 @@ var USE_DEFAULT_RULES = true;
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 
-
-		// Check for existing player if on player screen
+		// Loading up this page based on pathname;
 		let path = location.pathname;
-
 		onKeyboardKeyup();
 
 		if (path.includes("/host/edit"))
 		{
-
 			let query_map = mydoc.get_query_map();
-			if(query_map.hasOwnProperty("gameid"))
+			let gameID = query_map["gameid"];
+			if(gameID != undefined)
 			{
-				let game_id = query_map["gameid"];
-				getExistingGame(game_id);
-			} 
-			else 
+
+				// Get the game
+				onGetGame(gameID);
+
+				// Prevent accidental closing
+				// window.addEventListener("beforeunload", onClosePage);
+			}
+			else
 			{
-				mydoc.showContent("#enter_game_name_section");
-				loadListOfGames();
+				// Navigate to load page if no game ID
+				location.href = "/host/load";
 			}
 		}
 
 		// If loading the game, 
 		if (path.includes("/host/load"))
 		{
-			loadListOfGames();
-		}
-
-		// If gameid is set, avoid accidentally exiting
-		if(path.includes("?gameid"))
-		{
-			// Prevent accidental closing
-			window.addEventListener("beforeunload", onClosePage);
+			onGetListOfGames();
 		}
 	});
-
-	function onTestCreate()
-	{
-
-		// https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
-
-		// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#submitting_forms_and_uploading_files
-
-		var x = {"one":"1"};
-		var xx = {
-			"Categories": {
-				"Bands/Rock": [
-					{
-						"Value": 100,
-						"DailyDouble": "No",
-						"Question": {
-							"Text": "",
-							"Image": "",
-							"Audio": "",
-							"URL": ""
-						},
-						"Answer": {
-							"Text": "",
-							"Image": "",
-							"Audio": "",
-							"URL": ""
-						}
-					},
-					{
-						"Value": 200,
-						"DailyDouble": "No",
-						"Question": {
-							"Text": "",
-							"Image": "",
-							"Audio": "",
-							"URL": ""
-						},
-						"Answer": {
-							"Text": "",
-							"Image": "",
-							"Audio": "",
-							"URL": ""
-						}
-					}
-				]
-			}
-		}
-		var y = JSON.stringify(xx);
-
-		var fileName = "Test3.json"
-		const jsonFile = new File([y], fileName, {
-			type: "application/json",
-		  });
-		// const jsonFile = new Blob([y],{
-		// 	type:"application/json"
-		// });
-
-		var postURL = `https://trello.the-dancinglion.workers.dev/jeopardy/create_card_attachment/?cardID=625e845b52216d07db264f95&mimeType=application/json&name=${fileName}`
-
-		const formData = new FormData();
-		formData.append("file", jsonFile);
-
-		testPassingData(fileName,xx);
-		// const request = new XMLHttpRequest();
-		// request.open("POST", postURL);
-
-		// request.onreadystatechange = function() {
-		// 	if(this.readyState == 4)
-		// 	{
-		// 		console.log(this);
-		// 	}
-		// };
-
-		// request.send(formData);
-
-
-		// myajax.POST(postURL, formData, (resp)=>{
-		// 	console.log(resp);
-		// }, (err)=>{
-		// 	console.error("ERROR!");
-		// 	console.log(err);
-		// })
-	}
-
-	function testPassingData(fileName,jsonObject)
-	{
-		var jsonData = JSON.stringify(jsonObject);
-		const jsonFile = new File([jsonData], fileName, {
-			type: "application/json",
-		  });
-
-		var postURL = MyTrello.GetFullTrelloPath("create_card_attachment",`cardID=625e845b52216d07db264f95&mimeType=application/json&name=${fileName}`);
-
-		console.log(jsonData);
-		console.log(jsonFile);
-		console.log(postURL);
-
-		const formData = new FormData();
-		formData.append("file", jsonFile);
-
-		var print = function(data){ console.log(data); };
-
-		myajax.POST(postURL, formData, undefined,print, print)
-
-		// myajax.AJAX({
-		// 	method: "POST",
-		// 	path : postURL,
-		// 	data: formData,
-		// 	success: (resp)=>{
-		// 		console.log(resp);
-		// 	},
-		// 	failure : (err)=>{ console.log("ERR"); console.log(err)}
-		// });
-	}
 
 	// Prevent the page accidentally closing
 	function onClosePage(event)
@@ -184,118 +69,12 @@ var USE_DEFAULT_RULES = true;
 		event.returnValue='';
 	}
 
-	// Get the list of games for the load page
-	function loadListOfGames()
+	// Create or return an instance of the Jeopardy game
+	function onCreateJeopardyGame(gameID, gameName)
 	{
-		try
-		{
-			let games_select_list = document.getElementById("list_of_games");
-
-			// Get the ADMIN_LIST id and then get cards
-			MyTrello.get_list_by_name( "ADMIN_LIST", (listData)=>{
-				
-				let listResp = JSON.parse(listData.responseText);
-				let listID = listResp[0]?.id;
-
-				MyTrello.get_cards(listID, (data2) => {
-
-					let response = JSON.parse(data2.responseText);
-
-					let cardMap = {};
-					response.forEach((card) => {
-						cardName = card["name"];
-						cardID = card["id"];
-						cardMap[cardName] = cardID;
-					});
-
-					// Get the names and sort;
-					let cardNames = Object.keys(cardMap);
-					cardNames.sort();
-
-					let options = "";
-
-					// Loop through the games
-					for(var idx = 0; idx < cardNames.length; idx++)
-					{
-						singleCardName = cardNames[idx];
-						singleCardID = cardMap[singleCardName];
-
-						options += `<option value=${singleCardID}>${singleCardName}</option>`;
-					}
-					
-					games_select_list.innerHTML += options;
-				});
-			});			
-		}
-		catch(error)
-		{
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
+		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName) : JeopardyGame;
+		return JeopardyGame
 	}
-
-
-/****** NEW HOST: Simplifing approach for hosting ****************************/ 
-
-	// Get the mapping of attachments to the key components within
-	function getAttachmentMapping(attachmentsList)
-	{
-		var attachmentMap = {}
-		attachmentsList.forEach( (att)=> {
-			// Expected pattern: 1/cards/<CARD-ID>/attachments/<ATTACHMENT-ID>/download/<FILENAME>
-			var url = att.url;
-			var values = url.substring(url.indexOf("1")+2).split("/")
-			
-			// Get the key parts of the json file to load
-			let cardID = values[1];
-			let attachmentID = values[3];
-			let fileName = values[5];
-
-			let obj = {"cardID": cardID, "attachmentID": attachmentID, "fileName":fileName}
-			attachmentMap[att.fileName] = obj;
-		});
-
-		return attachmentMap;
-	}
-
-
-	function getAttachment(attachmentsList, name)
-	{
-
-		var JG = new Jeopardy();
-
-		var attachmentMapping = getAttachmentMapping(attachmentsList);
-
-		var map = attachmentMapping["config.json"];
-
-		MyTrello.get_card_attachment(map.cardID, map.attachmentID, map.fileName, (data)=>{
-			// console.log(data);
-			let response = myajax.GetJSON(data.responseText);
-			console.log(response);
-			JG.config.setConfiguration(response);
-			console.log(JG);
-		});
-
-
-		// Get the specific attachment
-		// attachmentsList.forEach( (att)=>{
-		// 	if(att.fileName == `${name}.json`)
-		// 	{
-		// 		// Expected pattern: 1/cards/<CARD-ID>/attachments/<ATTACHMENT-ID>/download/<FILENAME>
-		// 		var url = att.url;
-		// 		var values = url.substring(url.indexOf("1")+2).split("/")
-				
-		// 		// Get the key parts of the json file to load
-		// 		let cardID = values[1];
-		// 		let attachmentID = values[3];
-		// 		let fileName = values[5];
-
-				
-		// 	}
-		// })
-	}
-
-
-/*********** HOST: LOAD GAME (to either PLAY or EDIT) *************************/ 
 
 	// Listener for keyboard event = keyup
 	function onKeyboardKeyup()
@@ -317,6 +96,519 @@ var USE_DEFAULT_RULES = true;
 			}
 		});
 	}
+
+
+
+/****** GET ACTIONS: Get list of content & core setup things ****************************/ 
+
+	// Get the list of games available to select from;
+	function onGetListOfGames()
+	{
+		try
+		{
+			// Get the ADMIN_LIST
+			MyTrello.get_list_by_name( "ADMIN_LIST", (listData)=>{
+				
+				let listResp = JSON.parse(listData.responseText);
+				let listID = listResp[0]?.id;
+
+				// Get the cards from the matching list
+				MyTrello.get_cards(listID, (data2) => {
+					let response = JSON.parse(data2.responseText);
+
+					// Setup a map of all cards
+					let cardMap = {};
+					response.forEach((card) => {
+						cardName = card["name"];
+						cardID = card["id"];
+						cardMap[cardName] = cardID;
+					});
+
+					// Get the names and sort;
+					let cardNames = Object.keys(cardMap);
+					cardNames.sort();
+
+					// Loop through the games & setup <option> tags
+					let options = "<option value=''></option>";
+					for(var idx = 0; idx < cardNames.length; idx++)
+					{
+						singleCardName = cardNames[idx];
+						singleCardID = cardMap[singleCardName];
+						options += `<option value=${singleCardID}>${singleCardName}</option>`;
+					}
+
+					// Set the options content
+					mydoc.setContent("#list_of_games", {"innerHTML":options});
+				});
+			});			
+		}
+		catch(error)
+		{
+			set_loading_results("Sorry, something went wrong!\n\n"+error);
+		}
+	}
+
+	// Get the game
+	function onGetGame(gameID)
+	{
+		console.log("Getting the game!");
+		try
+		{
+			// Query Trello for this card
+			MyTrello.get_single_card(gameID,(data) => {
+
+				// If we got the game (i.e. card) .. get the details
+				response = JSON.parse(data.responseText);
+				console.log(response);
+				onGetGameDetails(response);
+		
+			}, (data) => {
+				result = "Sorry, could not load game. Invalid ID!";
+				set_loading_results(result);
+			});
+		}
+		catch(error)
+		{
+			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+		}
+	}
+
+	// Get the key details of an existing game
+	function onGetGameDetails(cardResponse)
+	{
+		try
+		{
+			// Confirm Game ID
+			var gameID = cardResponse["id"];
+			var gameName = cardResponse["name"];
+
+			// Setup the Jeopardy Game object
+			onCreateJeopardyGame(gameID, gameName);
+
+			// Get the game's Passphrase
+			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
+			
+				let response = JSON.parse(data.responseText);
+				let value = response[0]?.value?.text ?? "";
+				mydoc.setContent("#game_pass_phrase", {"value":value});
+				JeopardyGame.setGamePass(value);
+			});
+
+			// Get the attachments details;
+			var attachments = cardResponse["attachments"];
+			var attachmentMapping = HostUtility.getAttachmentMapping(attachments);
+			
+			// Loop through the list of attachments and load them up
+			var theFiles = ["config.json", "media.json", "categories.json"];
+			theFiles.forEach( (fileName) =>{
+				// Get the individual map for a config file; 
+				let map = attachmentMapping[fileName] ?? undefined;
+				if(map != undefined){ onGetGameFile(map.cardID, map.attachmentID, map.fileName); }
+			});
+
+			console.log(JeopardyGame);
+
+			// Set things:
+			onSetGameName();
+			onSetGameID();
+
+			// See what sections can be shown after getting the diff components
+			setTimeout( ()=>{
+				// showEditPageSections();
+				// Adjust visibility of sections
+				mydoc.showContent("#enter_game_name_section");
+				mydoc.showContent("#edit_game_section");
+				mydoc.showContent("#edit_game_details_table");
+				set_loading_results("");
+			},1500);
+		}
+		catch(error)
+		{
+			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+		}
+	}
+
+	// Get the attachment & do the corresponding callback
+	function onGetGameFile(cardID, attachmentID, fileName)
+	{
+		try 
+		{
+			// Get the corresponding attachment
+			MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+						
+				let response = myajax.GetJSON(data.responseText);
+
+				// The file with the game rules
+				if(fileName == "config.json")
+				{
+					JeopardyGame.config.createConfiguration(response);
+					JeopardyGame.config.setAttachmentID(attachmentID);
+					
+					// Set the game rules after the config is setup
+					onSetGameRules();
+				}
+
+				// The file with images/audio
+				else if(fileName == "media.json")
+				{
+					JeopardyGame.media.setMedia(response);
+
+					// Set the media after loading
+					onSetGameMedia();
+				}
+
+				// The file with the categries/questions/answers
+				else if(fileName = "categories.json")
+				{
+					JeopardyGame.createCategories(response);
+				}
+
+
+			}, (err) => {
+				console.error("Could not find config file");
+			});	
+		} catch (error) {
+			
+		}
+	}
+
+
+/*** SET ACTIONS: Setting the key game details after page load ********/
+
+	// Set the game name
+	function onSetGameName()
+	{
+		// Using name from JeopardyGame;
+		var gameName = JeopardyGame.getGameName();
+		mydoc.setContent("#game_name_value", {"value":gameName});
+		mydoc.setContent("#edit_game_name", {"innerText":gameName});
+	}
+
+	// Set the game ID
+	function onSetGameID()
+	{
+		var gameID = JeopardyGame.getGameID();
+		mydoc.setContent("#read_only_game_id", {"innerText":gameID});
+	}
+
+	// Set the game Config/Rules
+	function onSetGameRules()
+	{
+		let formattedRules = HostUtility.getFormattedRules();
+		let existingRow = mydoc.getContent("#settings_table_body")?.innerHTML ?? "";
+		mydoc.setContent("#settings_table_body", {"innerHTML": (existingRow + formattedRules)});
+
+
+		// Show the details upon initial load
+		let selects = document.querySelectorAll(".ruleOption");
+		// Loops through all options and shows details
+		selects.forEach((obj) =>{
+			onToggleRuleOptionDetails(obj);
+		});
+		// onShowRuleDetails();
+	}
+
+	// Set the game media
+	function onSetGameMedia()
+	{
+
+		var mediaContent = "";
+		
+		// Get any existing media content
+		var existingContent = mydoc.getContent("#game_media")?.innerHTML ?? "";
+
+		// Get the list of media files
+		var mediaFiles = JeopardyGame.media.getListOfMedia();
+
+		// Sort the media
+		mediaFiles.sort( (a,b)=>{
+			if(a["name"] < b["name"]){ return -1; }
+			if(a["name"] > b["name"]){ return 1; }
+			return 0;
+		});
+
+		// Loop through the files and build a row
+		mediaFiles.forEach( (file)=>{
+
+			let fileSrc = file.src;
+			let fileName = file.name;
+			let fileType = file.type;
+
+			let link = `<a href='${fileSrc}' target="_blank">${fileName}</a>`;
+			let del  = `<i onclick="onDeleteMedia('${fileName}')" class="delete_media fa fa-trash"></i>`;
+			let row = `<li id="${fileName}">${link} &nbsp; ${del}</li>`;
+			mediaContent += row;
+		});
+
+		// Set the content
+		mydoc.setContent("#game_media", {"innerHTML": (existingContent + mediaContent)});
+	}
+
+
+/*** SAVE ACTIONS: Saving the game details ********/
+
+	// The general save -- keeps track of diffs & saves accordingly
+	function onSaveGame2()
+	{
+		// Switch what to save based on the section
+		switch(CurrentSection)
+		{
+			case "edit_section_game_details":
+				// Get the name of the game
+				let savedName = JeopardyGame.getGameName();
+				let newName =  mydoc.getContent("#game_name_value")?.value ?? savedName;
+				if( HostUtility.isDiffValues(newName, savedName)){ onSaveGameName(newName); }
+
+				// Get the passphrase
+				let savedPass = JeopardyGame.getGamePass();
+				let newPass = mydoc.getContent("#game_pass_phrase")?.value ?? savedPass;
+				if( HostUtility.isDiffValues(newPass, savedPass)){ onSavePassphrase(newPass); }
+				
+				break;
+			case "edit_section_game_settings":
+				if( HostUtility.hasDifferentConfigValues() ){ onSaveConfig(); }
+				break;
+			default:
+				console.log("Meh?");
+		}
+
+	}
+
+	// Save the game name
+	function onSaveGameName(newName)
+	{
+		console.log("Updating game Name");
+
+		let gameID = JeopardyGame.getGameID();
+		// Update in Trello
+		MyTrello.update_card_name(gameID,newName, (data)=>{
+			if(data.status >= 200 && data.status < 300)
+			{
+				JeopardyGame.setGameName(newName);
+				onSetGameName();
+			}
+		});
+	}
+
+	// Save a custom field based on given name
+	function onSavePassphrase(newValue)
+	{
+		console.log("Updating Pass Phrase");
+
+		let gameID = JeopardyGame.getGameID();
+
+		MyTrello.update_card_custom_field_by_name(gameID, "Pass Phrase", newValue, (data)=> {
+
+			if(data.status >= 200 && data.status < 300)
+			{
+				console.log("Updated custom field == " + customFieldName);
+			}
+		});
+	}
+
+	// Save the config
+	function onSaveConfig()
+	{
+		var gameID = JeopardyGame.getGameID();
+		var jsonData = JeopardyGame.config.getConfigJSON();
+		var fileName = "config.json";
+		var currAttachmentID = JeopardyGame.config.getAttachmentID();
+
+		console.log("Making updates to config file");
+		console.log("Old attachment id: " + currAttachmentID);
+
+		// Save the config file
+		MyTrello.create_card_attachment(gameID,fileName,jsonData,(data)=>{
+			if(data.status >= 200 && data.status < 300)
+			{
+				console.log("Updated config JSON");
+				let newConfig = myajax.GetJSON(data.responseText);
+				console.log(newConfig);
+				JeopardyGame.config.setAttachmentID(newConfig.id);
+				console.log("New attachment id: " + newConfig.id);
+				MyTrello.delete_card_attachment(JeopardyGame.gameID,currAttachmentID,(data)=>{
+					console.log(data.responseText);
+				});
+
+			}
+		}, (err)=>{ console.error(err);});
+	}
+
+
+/***** The function to switch between tabs */
+	// Toggle the tabs -- KEEP
+	function onSwitchTab(event)
+	{
+		let target = event.target;
+
+		// Make sure we attempt a save before we navigate away
+		onSaveGame2();
+
+		// Where are we trying to go?
+		let targetSection = target.getAttribute("data-section-id");
+
+		// Update the 'selected' class selectors
+		mydoc.removeClass(".selected_tab", "selected_tab");
+		mydoc.addClass(".edit_section.selected_section", "hidden");
+		mydoc.removeClass(".edit_section.selected_section", "selected_section");
+
+		// Show the new section
+		target.classList.add("selected_tab");
+		mydoc.addClass(`#${targetSection}`, "selected_section");
+		mydoc.showContent(`#${targetSection}`);
+
+		// Set the current section
+		CurrentSection = targetSection;
+	}
+
+
+/****** HELPER OBJECT: Simplifing approach for hosting ****************************/ 
+
+	const HostUtility = 
+	{
+		getAttachmentMapping: (attachmentsList)=>{
+			var attachmentMap = {}
+			attachmentsList.forEach( (att)=> {
+				// Expected pattern: 1/cards/<CARD-ID>/attachments/<ATTACHMENT-ID>/download/<FILENAME>
+				var url = att.url;
+				var values = url.substring(url.indexOf("1")+2).split("/")
+				
+				// Get the key parts of the json file to load
+				let cardID = values[1];
+				let attachmentID = values[3];
+				let fileName = values[5];
+
+				let obj = {"cardID": cardID, "attachmentID": attachmentID, "fileName":fileName}
+				attachmentMap[att.fileName] = obj;
+			});
+
+			return attachmentMap;
+		},
+
+		getFormattedRules: ()=>{
+			let rulesFormatted = "";
+
+			// Get the set of rules for the game
+			let ruleKeys = Object.keys(Rules);
+			ruleKeys.forEach( (rule) => {
+
+				let ruleKey = Utility.getKeyName(rule);
+
+				// The ID for the select input of this rule
+				let ruleInputID = ruleKey;
+
+				// Get the corresponding saved config for this rule
+				let savedConfig = JeopardyGame.config.getConfiguration(ruleInputID)
+
+				let optionElements = "";
+
+				// Get the list of options available for this rule;
+				let ruleOptions = Rules[rule];
+				ruleOptions.forEach( (option)=>{
+
+					let optionID = option["id"];
+					let label = option["label"];
+					let rule = option["rule"];
+					let type = option["type"];
+					let suggestion = option["suggestion"];
+					let isSelected = (savedConfig.option == optionID);
+					
+
+					let selectedAttribute = (isSelected) ? "selected" : "";
+					let customValue = savedConfig["value"] ?? "";
+					customValue = (isSelected) ? customValue : "";
+
+					optionElements += `<option value="${optionID}" data-jpd-description="${rule}" data-jpd-type="${type}" data-jpd-custom-value="${customValue}" data-jpd-suggestion="${suggestion}" ${selectedAttribute}>
+											${label}
+										</option>`;
+				});	
+
+				inputElement = `<select id="${ruleInputID}" data-jpd-rule-name="${rule}" class="ruleOption input_mash" onChange="onRuleOptionChange(event)">
+									${optionElements}
+								</select>`
+
+				// Set the row element to be returned;
+				let row = `<tr>
+								<th>
+										<h3>${rule}</h3>
+										<p>&nbsp;</p>
+								</th>
+								<td>
+									${inputElement}
+									<div class="rule_details_div">
+										<p class="rule_detail rule_description"></p>
+										<p class="rule_detail rule_suggestion hidden"></p>
+										<input class="rule_custom hidden" type="text" placeholder="Enter custom \${VALUE} name="customValue" />
+									</div>
+								</td>
+							</tr>`;
+				rulesFormatted += row;
+			});
+
+			return rulesFormatted;
+		},
+
+		getSettingObject: (setting)=>{
+
+		},
+
+		// Quickly compare two value
+		isDiffValues: (a,b)=>{
+			return (a.toString() != b.toString());
+		},
+
+		hasDifferentConfigValues: ()=>{
+
+			var hasDifferences = false;
+
+			let ruleOptions = document.querySelectorAll(".ruleOption");
+			let keys = []
+			ruleOptions.forEach( (obj)=>{
+
+				// Get the rule as seen on the form
+				let optionVal = obj.value; 
+				let ruleObj = {"option": optionVal}
+				let customInput = getSibling(obj,"rule_custom")?.value ?? "";
+				if(customInput != ""){ ruleObj["value"] = customInput; }
+				// console.log(ruleObj);
+
+				// Get the saved value
+				let savedObj = JeopardyGame.config.getConfiguration(obj.id)
+				// console.log(savedObj);
+				// console.log("------");
+
+				if(HostUtility.isDiffValues( JSON.stringify(ruleObj), JSON.stringify(savedObj) ) )
+				{
+					// Indicate there are differences
+					hasDifferences = true;
+
+					// Update the JeapartyGame config
+					JeopardyGame.config.setConfiguration(obj.id, ruleObj);
+				}
+				keys.push(ruleObj);
+			});
+			return hasDifferences;
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*********** HOST: LOAD GAME (to either PLAY or EDIT) *************************/ 
+
+
 
 	// Get the selected game and entered pass phrase
 	function getGameAndPassPhrase()
@@ -360,37 +652,10 @@ var USE_DEFAULT_RULES = true;
 	// // Load the details for editing the game details:
 	function loadEditGamePage(response)
 	{
-		console.log(response);
-		var attachments = response["attachments"];
-
-		getAttachment(attachments, "config");
-
-		// Set the current game ID; Also show it in read-only field
-		CURR_GAME_ID = response["id"];
-		document.getElementById("read_only_game_id").innerText = CURR_GAME_ID;
-
-		// Set the Media Checklist ID
-		CURR_MEDIA_CHECKLIST_ID = response["idChecklists"][0] ?? "";
-
-		// Set the current game name;
-		CURR_GAME_NAME = response["name"];
-		document.getElementById("game_name_value").value = CURR_GAME_NAME;
-		document.getElementById("edit_game_name").innerText = CURR_GAME_NAME;
-
-		// Set the current game rules
-		CURR_GAME_RULES = myajax.GetJSON(response["desc"]);
-		loadGameSettings(CURR_GAME_RULES);
-
 		// Get password, and then callback to show game page
 		getPassPhraseFromTrello(CURR_GAME_ID);
-		getMediaFromTrello(CURR_MEDIA_CHECKLIST_ID);
 		getEditSheetUrlFromTrello(CURR_GAME_ID);
 		getPublishedUrlFromTrello(CURR_GAME_ID);
-
-		// See what sections can be shown after getting the diff components
-		setTimeout( ()=>{
-			showEditPageSections();
-		},2000);
 
 		// Adjust visibility of sections
 		mydoc.hideContent("#enter_game_name_section");
@@ -545,35 +810,6 @@ var USE_DEFAULT_RULES = true;
 
 /************* HOST: EVENT LISTENERS ************************************/ 
 
-	// Toggle the tabs
-	function onSwitchTab(event)
-	{
-		let target = event.target;
-
-		// Check if it is disabled
-		let isDisabled = target.classList.contains("host_edit_tab_disabled");
-
-		if(isDisabled)
-		{
-			alert("Please enter the Game URLs in order to access this tab.");
-			return;
-		}
-
-		// Remove the current selected things
-		let selectedTab = document.querySelector(".selected_tab");
-		selectedTab?.classList.remove("selected_tab");
-
-		let selectedSection = document.querySelector(".edit_section.selected_section");
-		selectedSection?.classList.remove("selected_section");
-		selectedSection?.classList.add("hidden");
-
-		// Add the new tab and section
-		let sectionID = target.getAttribute("data-section-id");
-		target.classList.add("selected_tab");
-		let newSection = document.getElementById(sectionID);
-		newSection.classList.remove("hidden");
-		newSection.classList.add("selected_section");
-	}
 
 	// Open a game URL
 	function onNavigateToGameURL(action, samePageLoad=false)
@@ -1056,10 +1292,6 @@ var USE_DEFAULT_RULES = true;
 					MyNotification.clear("#syncNotifier", "notify_orange");
 					MyNotification.notify("#syncNotifier", "Synced", "notify_limegreen");
 					
-					// Finally load the values on the page
-					setTimeout( ()=>{
-						getMediaFromTrello(CURR_MEDIA_CHECKLIST_ID);
-					}, 1000);
 				});
 
 			});
@@ -1067,114 +1299,6 @@ var USE_DEFAULT_RULES = true;
 	}
 	
 /************* HOST: GETTERS ************************************/ 
-
-	// Loads existing team if card ID was already included or found
-	function getExistingGame(card_id)
-	{
-		try
-		{
-			MyTrello.get_single_card(card_id,(data) => {
-
-				response = JSON.parse(data.responseText);
-				loadEditGamePage(response);
-				
-			}, (data) => {
-				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
-			});
-		}
-		catch(error)
-		{
-			set_loading_results("Something went wrong:<br/>" + error);
-		}		
-	}
-
-	// Get the card's checklsit item based on checklist id
-	function getMediaFromTrello(checklist_id)
-	{
-
-		MyNotification.clear("#syncNotifier", "notify_limegreen");
-
-		if(checklist_id != "")
-		{
-			MyTrello.get_card_checklist_items(checklist_id, (data) => {
-				
-				response = JSON.parse(data.responseText);
-
-				// Sort the items by name
-				response.sort(function(a,b){
-					if(a["name"] < b["name"])
-					{
-						return -1;
-					}
-					if(a["name"] > b["name"])
-					{
-						return 1;
-					}
-					return 0;
-				});
-
-				mediaContent = "";
-
-				response.forEach(function(obj){
-
-					state = obj["state"];
-
-					// Only process items NOT checked off;
-					if(state == "incomplete")
-					{
-						file_id   = obj["id"];
-						checklist_details = obj["name"]?.split(" ~ ") ?? ["", ""];
-						file_name = checklist_details[0];
-						file_type = checklist_details[1];
-						// file_url = MyGoogleDrive.formatURL(file_type,checklist_details[2]);
-						file_url = checklist_details[2];
-
-						mediaContent += getFormattedMediaListItem(file_id, file_name, file_url);
-					}
-					
-				});
-
-				// Populate the media on the page.
-				add_existing_media_to_page(mediaContent);
-			});
-		}
-		
-	}
-
-	// Get the edit sheet URL - if set
-	function getEditSheetUrlFromTrello(card_id)
-	{
-
-		MyTrello.get_card_custom_field_by_name(card_id, "Edit URL", (data) => {
-
-			let response = JSON.parse(data.responseText);
-			let value = response[0]?.value?.text ?? "";
-
-			if(value != "")
-			{
-				CURR_EDIT_SHEET_URL = value;
-				document.getElementById("game_edit_sheet_url_value").value = value;
-				document.getElementById("go_to_edit_sheet").href = value;
-			}
-		});
-	}
-
-	// Get the published sheet URL stored in the game
-	function getPublishedUrlFromTrello(card_id)
-	{
-		MyTrello.get_card_custom_field_by_name(card_id, "Published URL", (data) => {
-			
-			let response = JSON.parse(data.responseText);
-			let value = response[0]?.value?.text ?? "";
-			if(value != "")
-			{
-				CURR_PUB_SHEET_URL = value;
-				document.getElementById("game_published_url_value").value = value;
-				foundPublishedURL = true;
-			}
-		});
-	}
 
 	// Get the existing pass phrase for the game
 	function getPassPhraseFromTrello(game_id, callback=undefined)
@@ -1221,80 +1345,6 @@ var USE_DEFAULT_RULES = true;
 		let fullURL = location.origin + path;
 		return fullURL
 
-	}
-
-	// Get the rules formatted to display on the page
-	function getFormattedRules(savedSettings)
-	{
-		// The HTML that will be returned 
-		let rulesFormatted = "";
-
-		let ruleKeys = Object.keys(Rules);
-		ruleKeys.forEach(function(rule){
-
-			// The ID for the select input of this rule
-			let ruleInputID = rule.replaceAll(" ", "");
-			
-			let optionElements = "";
-			let options = Rules[rule];
-			let setting = {};
-
-			// Get the individual setting that matches this key
-			savedSettings.forEach(function(savedSetting){
-				if(savedSetting["name"] == rule){
-					setting = savedSetting
-				}
-			});
-			// Loop through all the options
-			options.forEach(function(option){
-
-				let ruleID = option["id"];
-				let label = option["label"];
-				let rule = option["rule"];
-				let type = option["type"];
-				let suggestion = option["suggestion"];
-				
-
-				let selectedAttribute = (setting != undefined && (setting["option"] == ruleID) ) ? "selected" : "";
-				let customValue = setting["value"] ?? "";
-
-				optionElements += `<option value="${ruleID}" data-jpd-description="${rule}" data-jpd-type="${type}" data-jpd-custom-value="${customValue}" data-jpd-suggestion="${suggestion}" ${selectedAttribute}>
-										${label}
-									</option>`;
-			});	
-
-			inputElement = `<select id="${ruleInputID}" data-jpd-rule-name="${rule}" class="ruleOption input_mash" onChange="onRuleOptionChange(event)">
-								${optionElements}
-							</select>`
-
-			// Set the row element to be returned;
-			let row = `<tr>
-							<th>
-									<h3>${rule}</h3>
-									<p>&nbsp;</p>
-							</th>
-							<td>
-								${inputElement}
-								<div class="rule_details_div">
-									<p class="rule_detail rule_description"></p>
-									<p class="rule_detail rule_suggestion hidden"></p>
-									<input class="rule_custom hidden" type="text" placeholder="Enter custom \${VALUE} name="customValue" />
-								</div>
-							</td>
-						</tr>`;
-			rulesFormatted += row;
-		});
-
-		return rulesFormatted;
-	}
-
-	// Get the formatted list of media 
-	function getFormattedMediaListItem(fileID, fileName, fileURL)
-	{
-		link = `<a href='${fileURL}' target="_blank">${fileName}</a>`;
-		del  = `<i onclick="onDeleteMedia('${fileID}')" class="delete_media fa fa-trash"></i>`;
-		row = `<li id="${fileID}">${link} &nbsp; ${del}</li>`;
-		return row; 
 	}
 
 	// Get a related child section 
@@ -1569,4 +1619,118 @@ var USE_DEFAULT_RULES = true;
 				set_loading_results(result);
 			}
 		});
+	}
+
+	function onTestCreate()
+	{
+
+		// https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
+
+		// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#submitting_forms_and_uploading_files
+
+		var x = {"one":"1"};
+		var xx = {
+			"Categories": {
+				"Bands/Rock": [
+					{
+						"Value": 100,
+						"DailyDouble": "No",
+						"Question": {
+							"Text": "",
+							"Image": "",
+							"Audio": "",
+							"URL": ""
+						},
+						"Answer": {
+							"Text": "",
+							"Image": "",
+							"Audio": "",
+							"URL": ""
+						}
+					},
+					{
+						"Value": 200,
+						"DailyDouble": "No",
+						"Question": {
+							"Text": "",
+							"Image": "",
+							"Audio": "",
+							"URL": ""
+						},
+						"Answer": {
+							"Text": "",
+							"Image": "",
+							"Audio": "",
+							"URL": ""
+						}
+					}
+				]
+			}
+		}
+		var y = JSON.stringify(xx);
+
+		var fileName = "Test3.json"
+		const jsonFile = new File([y], fileName, {
+			type: "application/json",
+		  });
+		// const jsonFile = new Blob([y],{
+		// 	type:"application/json"
+		// });
+
+		var postURL = `https://trello.the-dancinglion.workers.dev/jeopardy/create_card_attachment/?cardID=625e845b52216d07db264f95&mimeType=application/json&name=${fileName}`
+
+		const formData = new FormData();
+		formData.append("file", jsonFile);
+
+		testPassingData(fileName,xx);
+		// const request = new XMLHttpRequest();
+		// request.open("POST", postURL);
+
+		// request.onreadystatechange = function() {
+		// 	if(this.readyState == 4)
+		// 	{
+		// 		console.log(this);
+		// 	}
+		// };
+
+		// request.send(formData);
+
+
+		// myajax.POST(postURL, formData, (resp)=>{
+		// 	console.log(resp);
+		// }, (err)=>{
+		// 	console.error("ERROR!");
+		// 	console.log(err);
+		// })
+	}
+
+	function testPassingData(fileName,jsonObject)
+	{
+		var jsonData = JSON.stringify(jsonObject);
+		const jsonFile = new File([jsonData], fileName, {
+			type: "application/json",
+		  });
+
+		var postURL = MyTrello.GetFullTrelloPath("create_card_attachment",`cardID=625e845b52216d07db264f95&mimeType=application/json&name=${fileName}`);
+
+		console.log(jsonData);
+		console.log(jsonFile);
+		console.log(postURL);
+
+		const formData = new FormData();
+		formData.append("file", jsonFile);
+
+		var print = function(data){ console.log(data); };
+
+		myajax.POST(postURL, formData, undefined,print, print)
+
+		// myajax.AJAX({
+		// 	method: "POST",
+		// 	path : postURL,
+		// 	data: formData,
+		// 	success: (resp)=>{
+		// 		console.log(resp);
+		// 	},
+		// 	failure : (err)=>{ console.log("ERR"); console.log(err)}
+		// });
 	}

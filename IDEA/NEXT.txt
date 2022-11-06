@@ -1,0 +1,14 @@
+NEXT:
+    Update the row in the able after update (to make it clear it saved)
+
+    Add button for adding a new Category
+        - related functionality of updating Class object
+        - defaulting some values?
+
+    Add a button for adding new questions to existing Category
+        - need to default some values
+
+    Add a way to shuffle both questions & categories
+        - order on page is order in game. 
+
+        

@@ -2,182 +2,182 @@
 	var JEOPARDY_GAME = undefined;
 	var JEOPARDY_QA_MAP = {};
 
-/*************Jeopardy Classes/Models**********************/
+/**** CLASSES: The key classes that support the Jeopardy game ********/ 
 	
-	class Jeopardy
+class Jeopardy
+{
+	constructor(rows)
 	{
-		constructor(rows)
-		{
-			this.categories = {}
-			this.initialize(rows);
-		}
+		this.categories = {}
+		this.initialize(rows);
+	}
 
-		// Initialize the Jeopardy object;
-		initialize(rows)
-		{
-			rows.forEach( (row) => {
+	// Initialize the Jeopardy object;
+	initialize(rows)
+	{
+		rows.forEach( (row) => {
 
-				// General content
-				let category_name = row["Category Name"];
-				if(category_name != "")
-				{
-					// question value
-					let value = row["Score Value"];
-					let daily_double = row["Daily Double?"];
-
-					// question content
-					let question_text = row["Question (Text)"];
-					let question_audio = row["Question (Audio)"];
-					let question_image = row["Question (Image)"];
-					let question_url = row["Question (URL)"];
-
-					// Answer content
-					let answer_text = row["Answer (Text)"];
-					let answer_audio = row["Answer (Audio)"];
-					let answer_image = row["Answer (Image)"];
-					let answer_url = row["Answer (URL)"];
-	
-					// Setup the new question
-					let new_question = new Question(question_text, question_audio, question_image, question_url,
-						answer_text, answer_audio, answer_image, answer_url, value, daily_double);
-	
-
-					// Add the question to the game; 
-					this.addQuestion(category_name, new_question);
-					// this.getCategory(category_name).addQuestion(new_question);
-				}
-			});
-		}
-
-		// Add the question specifically to a category
-		addQuestion(categoryName, question)
-		{
-			let category = this.getCategory(categoryName);
-			category.addQuestion( question );
-		}
-
-		// Get the set of category objects;
-		getCategories() { return Object.values(this.categories); }
-
-		// Get a specific category from this game;
-		getCategory(name)
-		{
-
-			let keys = Object.keys(this.categories);
-
-			// If category not created yet; make sure it is
-			if(!keys.includes(name))
+			// General content
+			let category_name = row["Category Name"];
+			if(category_name != "")
 			{
-				this.categories[name] = new Category(name);
+				// question value
+				let value = row["Score Value"];
+				let daily_double = row["Daily Double?"];
+
+				// question content
+				let question_text = row["Question (Text)"];
+				let question_audio = row["Question (Audio)"];
+				let question_image = row["Question (Image)"];
+				let question_url = row["Question (URL)"];
+
+				// Answer content
+				let answer_text = row["Answer (Text)"];
+				let answer_audio = row["Answer (Audio)"];
+				let answer_image = row["Answer (Image)"];
+				let answer_url = row["Answer (URL)"];
+
+				// Setup the new question
+				let new_question = new Question(question_text, question_audio, question_image, question_url,
+					answer_text, answer_audio, answer_image, answer_url, value, daily_double);
+
+
+				// Add the question to the game; 
+				this.addQuestion(category_name, new_question);
+				// this.getCategory(category_name).addQuestion(new_question);
 			}
-
-			// Return the category;
-			return this.categories[name];
-		}
-	};
-
-	/* The Category object */
-	class Category
-	{
-		constructor(name)
-		{
-			this.name = name;
-			this.questions = [];
-			this.finalJeopardy = false;
-
-			// Check for final jeopardy;
-			this.checkFinalJeopardy();
-		}
-
-		// Check if this category is a final jeopardy category
-		checkFinalJeopardy()
-		{
-			let formatted = this.name.toUpperCase().replaceAll (" ", "").replaceAll("!","");
-			this.finalJeopardy = (formatted == "FINALJEOPARDY");
-		}
-
-		// Return if this category is the final jeopardy
-		isFinalJeopardy() { return this.finalJeopardy; }
-
-		// Add a question to this category
-		addQuestion(question)
-		{
-			this.questions.push(question);
-		}
-
-		// Get the category name;
-		getName(){ return this.name; }
-
-		// Get the questions of this category;
-		getQuestions(){ return this.questions; }
-
-		// Get the question count of this category;
-		getQuestionCount(){ return this.questions.length; }
+		});
 	}
 
-	/* The Question object */
-	class Question
+	// Add the question specifically to a category
+	addQuestion(categoryName, question)
 	{
-		constructor(question, questAudio, questImg, questURL, 
-					answer, answerAudio, answerImg, answerURL,
-					value, dailyDouble)
-		{
-			this.question 		= this.format_content(question);
-			this.questionAudio 	= questAudio;
-			this.questionImage 	= questImg;
-			this.questionURL	= questURL
-
-			this.answer   		= this.format_content(answer);
-			this.answerAudio 	= answerAudio;
-			this.answerImage 	= answerImg;
-			this.answerURL 	= answerURL;
-
-			this.value    		= value;
-
-			this.dailyDouble    = (dailyDouble == "Yes" || dailyDouble == true) ?  true : false;
-		}
-
-		// Format content
-		format_content(value)
-		{
-			let formatted = value.replaceAll(/((^|\s))\"/g, "$1&#8220;").replaceAll(/\"/g, "&#8221;")
-			return formatted
-			// formatted = formatted.
-		}
-
-		// Setters
-		setQuestionAudio(path) { this.questionAudio = path; }
-		setQuestionImage(path) { this.questionAudio = path; }
-		setQuestionURL(path) { this.questionAudio = path; }
-		setAnswerAudio(path) { this.answerAudio = path; }
-		setAnswerImage(path) { this.answerAudio = path; }
-		setAnswerURL(path) { this.answerAudio = path; }
-
-		// Getters
-		getValue(){ return this.value; }
-
-		getQuestion(){
-			let question_obj = {
-				"value": this.value,
-				"text": this.question,
-				"audio": this.questionAudio,
-				"image": this.questionImage,
-				"url": this.questionURL,
-				"dailydouble": this.dailyDouble
-			} 
-			return question_obj;
-		}
-
-		getAnswer(){
-			let answer_obj = {
-				"text": this.answer,
-				"audio": this.answerAudio,
-				"image": this.answerImage,
-				"url": this.answerURL
-			} 
-			return answer_obj;
-		}
+		let category = this.getCategory(categoryName);
+		category.addQuestion( question );
 	}
+
+	// Get the set of category objects;
+	getCategories() { return Object.values(this.categories); }
+
+	// Get a specific category from this game;
+	getCategory(name)
+	{
+
+		let keys = Object.keys(this.categories);
+
+		// If category not created yet; make sure it is
+		if(!keys.includes(name))
+		{
+			this.categories[name] = new Category(name);
+		}
+
+		// Return the category;
+		return this.categories[name];
+	}
+};
+
+/* The Category object */
+class Category
+{
+	constructor(name)
+	{
+		this.name = name;
+		this.questions = [];
+		this.finalJeopardy = false;
+
+		// Check for final jeopardy;
+		this.checkFinalJeopardy();
+	}
+
+	// Check if this category is a final jeopardy category
+	checkFinalJeopardy()
+	{
+		let formatted = this.name.toUpperCase().replaceAll (" ", "").replaceAll("!","");
+		this.finalJeopardy = (formatted == "FINALJEOPARDY");
+	}
+
+	// Return if this category is the final jeopardy
+	isFinalJeopardy() { return this.finalJeopardy; }
+
+	// Add a question to this category
+	addQuestion(question)
+	{
+		this.questions.push(question);
+	}
+
+	// Get the category name;
+	getName(){ return this.name; }
+
+	// Get the questions of this category;
+	getQuestions(){ return this.questions; }
+
+	// Get the question count of this category;
+	getQuestionCount(){ return this.questions.length; }
+}
+
+/* The Question object */
+class Question
+{
+	constructor(question, questAudio, questImg, questURL, 
+				answer, answerAudio, answerImg, answerURL,
+				value, dailyDouble)
+	{
+		this.question 		= this.format_content(question);
+		this.questionAudio 	= questAudio;
+		this.questionImage 	= questImg;
+		this.questionURL	= questURL
+
+		this.answer   		= this.format_content(answer);
+		this.answerAudio 	= answerAudio;
+		this.answerImage 	= answerImg;
+		this.answerURL 	= answerURL;
+
+		this.value    		= value;
+
+		this.dailyDouble    = (dailyDouble == "Yes" || dailyDouble == true) ?  true : false;
+	}
+
+	// Format content
+	format_content(value)
+	{
+		let formatted = value.replaceAll(/((^|\s))\"/g, "$1&#8220;").replaceAll(/\"/g, "&#8221;")
+		return formatted
+		// formatted = formatted.
+	}
+
+	// Setters
+	setQuestionAudio(path) { this.questionAudio = path; }
+	setQuestionImage(path) { this.questionAudio = path; }
+	setQuestionURL(path) { this.questionAudio = path; }
+	setAnswerAudio(path) { this.answerAudio = path; }
+	setAnswerImage(path) { this.answerAudio = path; }
+	setAnswerURL(path) { this.answerAudio = path; }
+
+	// Getters
+	getValue(){ return this.value; }
+
+	getQuestion(){
+		let question_obj = {
+			"value": this.value,
+			"text": this.question,
+			"audio": this.questionAudio,
+			"image": this.questionImage,
+			"url": this.questionURL,
+			"dailydouble": this.dailyDouble
+		} 
+		return question_obj;
+	}
+
+	getAnswer(){
+		let answer_obj = {
+			"text": this.answer,
+			"audio": this.answerAudio,
+			"image": this.answerImage,
+			"url": this.answerURL
+		} 
+		return answer_obj;
+	}
+}
 
 
 /*********** Jeopardy Helper Functions *********************/

@@ -1,0 +1,16 @@
+<tr>
+    <th>
+        <h3>{{Name}}</h3>
+        <p>&nbsp;</p>
+    </th>
+    <td>
+        <select id="{{Key}}" data-jpd-rule-name="{{Name}}" class="ruleOption input_mash" onChange="onRuleOptionChange(event)">
+            {{FormattedOptions}}
+        </select>
+        <div class="rule_details_div">
+            <p class="rule_detail rule_description"></p>
+            <p class="rule_detail rule_suggestion hidden"></p>
+            <input class="rule_custom hidden" type="text" placeholder="Enter custom \${VALUE}" name="customValue" />
+        </div>
+    </td>
+</tr>
