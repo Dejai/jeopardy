@@ -444,7 +444,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				onSaveGameFile(JSON.stringify(JeopardyGame.config), "config.json");
 				break;
 			case "edit_section_game_questions":
-				onSaveGameFile(JSON.stringify(JeopardyGame.categories), "categories.json");
+				onSaveGameFile(JSON.stringify(JeopardyGame.Categories), "categories.json");
 				break;
 			case "edit_section_game_media":
 				
@@ -826,6 +826,35 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		onChangeInSection();
 	}
 
+	// Remove a question
+	function onDeleteQuestion()
+	{
+		let categoryName = mydoc.getContent("#questionFormCategoryName")?.innerText ?? "";
+		let questionValue = mydoc.getContent("#questionFormValue")?.value ?? "";
+
+		// Reload the question row -- so the page shows latest results
+		let category = JeopardyGame.getCategory(categoryName);
+
+		let proceed = confirm("Are you sure you want to delete this question?")
+		if(proceed)
+		{
+			console.log("Deleting question");
+			category.deleteQuestion(questionValue);
+
+			let questions = category.Questions;
+
+			// Reload category section
+			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
+			});
+			
+			onToggleForm("hide", "#questionForm");
+	
+			// Indicate a change is needed
+			onChangeInSection();
+		}
+	}
+
 /***** CATEGORY FORM ACTIONS: Actions that involve the question form */
 
 	// Adding a new question
@@ -861,7 +890,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{
 		// Set the values to be set
 		let categoryName = categoryObject?.Name ?? "";
-		let categoryOrder = categoryObject?.Order ?? JeopardyGame.categories.length+1;
+		let categoryOrder = categoryObject?.Order ?? JeopardyGame.Categories.length+1;
 		// let categoryOrderClass = (categoryObject?.FinalJeopardy == "Yes") ? "hidden" : ""
 		let finalJeopardy = categoryObject?.FinalJeopardy ?? "No";
 		let valueCount = categoryObject?.ValueCount ?? 100;
@@ -917,6 +946,28 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				
 		// Indicate a change is needed
 		onChangeInSection();
+	}
+
+	// Delete a category
+	function onDeleteCategory()
+	{
+		// Get the values to be saved
+		let categoryName = mydoc.getContent("#categoryForm [name='categoryFormName']")?.value ?? "";
+
+		let proceed = confirm("Are you sure you want to delete this category?");
+		if(proceed)
+		{
+			JeopardyGame.deleteCategory(categoryName);
+
+			// Reload all categories
+			onSetGameQuestions();
+
+			// Hide the form
+			onToggleForm("hide", "#categoryForm");
+					
+			// Indicate a change is needed
+			onChangeInSection();
+		}
 	}
 
 /*** Game Media */

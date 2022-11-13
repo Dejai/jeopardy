@@ -82,6 +82,23 @@
 			}
 			return status;
 		}
+		// Deleting a question
+		deleteQuestion(value)
+		{
+			this.Questions.forEach( (question, idx)=>{
+				if(question.Value == value)
+				{
+					 this.Questions.splice(idx,1); 
+					 // Update value of questions after removing
+					this.reValueQuestions();
+					return;
+				}
+			});
+		}
+		// Re-value questions after deleting one
+		reValueQuestions(){ 
+			this.Questions.forEach( (q,i)=>{ q.Value = ( (this.ValueCount) * (i+1)) }); 
+		}
 
 		// Get the next value number
 		getNextValue(){ return (this.Questions.length+1) * this.ValueCount; }
@@ -277,7 +294,7 @@
 			this.setGamePass("");
 
 			// List for larger object
-			this.categories = []
+			this.Categories = []
 
 			// List of smaller objects
 			this.config = new Config();
@@ -291,7 +308,7 @@
 		// Get the list of categories
 		getCategories()
 		{ 
-			let listOfCategories = this.categories;
+			let listOfCategories = this.Categories;
 			listOfCategories.sort( (a,b)=>{
 				if(a["Order"] < b["Order"]){ return -1; }
 				if(a["Order"] > b["Order"]){ return 1; }
@@ -305,7 +322,7 @@
 			// Get the Category object & create accordingly
 			var categoriesObject = JeopardyHelper.getJSON(jsonObj);
 			categoriesObject?.forEach( (category)=>{
-				this.categories.push( new Category(category) );
+				this.Categories.push( new Category(category) );
 			});
 		}
 		// Add a new category (single)
@@ -314,7 +331,7 @@
 		getCategory(name)
 		{
 			let theCategory = undefined;
-			this.categories.forEach((category)=>{
+			this.Categories.forEach((category)=>{
 				if(category.Name == name)
 				{
 					theCategory = category
@@ -346,8 +363,16 @@
 				existingCategory.ValueCount = newCategoryObj?.ValueCount ?? existingCategory.ValueCount;
 			}
 		}
+		// Delete a category
+		deleteCategory(categoryName)
+		{
+			this.Categories.forEach( (category, idx)=>{
+				if(category.Name == categoryName){ this.Categories.splice(idx,1); return; }
+			});
+		}
 
-	/* Subsection: Categories * */
+
+	/* Subsection: Media * */
 		// Get/Set the media files
 		getMedia(name)
 		{ 
@@ -407,6 +432,7 @@
 				}
 			});
 		}
+
 		
 	/* Subsection: Game Name */
 		// Set a new Game Name
@@ -503,7 +529,7 @@
 		setGamePass(pass){ this.gamePass = pass; }
 
 		// Check if category name exists
-		isExistingCategory(name){ return Object.keys(this.categories).includes(name); }
+		isExistingCategory(name){ return Object.keys(this.Categories).includes(name); }
 	};
 
 
