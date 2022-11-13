@@ -1,6 +1,6 @@
 // The instance of this jeopardy game
 var JeopardyGame;
-var CurrentSection = "edit_section_game_questions"; //default first tab of edit page
+var CurrentSection = "edit_section_game_creds"; //default first tab of edit page
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
@@ -13,21 +13,83 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Loading up this page based on pathname;
 		onKeyboardKeyup();
 
-		let query_map = mydoc.get_query_map();
-		let gameID = query_map["gameid"];
+		let gameID = mydoc.get_query_param("gameid");
 		if(gameID != undefined)
 		{
-			// Get the game
-			onGetGame(gameID);
-			// Prevent accidental closing
-			// window.addEventListener("beforeunload", onClosePage);
+			// Validate Access
+			onValidateAccess(gameID);
 		}
 		else
 		{
 			// Navigate to load page if no game ID is present
-			location.href = "/host/load/";
+			location.assign("/host/load/");
 		}
 	});
+
+	// Allowing access to the page
+	function onValidateAccess()
+	{
+
+		// Get the game ID; Do it again so that form submission can use same form;
+		let gameID = mydoc.get_query_param("gameid");
+
+		if(gameID != undefined)
+		{
+			let gamePasswordCookie = mydoc.getCookie(gameID) ?? ""
+			let gamePasswordForm = mydoc.getContent("#editGameCredsForm #gamePassPhrase")?.value ?? "";
+			let password = (gamePasswordCookie != "") ? gamePasswordCookie : gamePasswordForm;
+
+			// Check the field vs the given password or edit URL;
+			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
+				let response = JSON.parse(data.responseText);
+				let customFieldValue = response[0]?.value?.text ?? ""
+				
+				// Only load if valid;
+				if(customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase())
+				{
+					mydoc.hideContent("#edit_section_game_creds");
+					onGetGame(gameID);
+
+					// Hide login tab
+					mydoc.hideContent("#hostEditLoginSection");
+
+					// Set the cookie with 30 minute expiration
+					mydoc.setCookie(gameID,customFieldValue,30);
+				}
+				else
+				{
+					set_loading_results("");
+					mydoc.showContent("#hostEditLoginSection");
+					mydoc.showContent("#edit_game_section");
+					mydoc.showContent("#edit_section_game_creds");
+				}
+			});
+		}
+	}
+
+	// Set a default tab
+	function onSetDefaultSection()
+	{
+		console.log("Clicking default tab");
+		let sectionParam = mydoc.get_query_param("section");
+
+		let section = "";
+		// If provided use the section parameter
+		if(sectionParam != undefined)
+		{
+			section = `edit_section_${sectionParam}`;
+		}
+		else 
+		{
+			let firstSection = document.querySelector("#host_edit_tab_section .host_edit_tab");
+			let firstSectionVal = firstSection?.getAttribute("data-section-id");
+			section = firstSectionVal;
+		}
+
+		// Set the tab selector & click it!
+		let tabSelector = `[data-section-id="${section}"]`;
+		document.querySelector(tabSelector)?.click();
+	}
 
 	// Prevent the page accidentally closing
 	function onClosePage(event)
@@ -71,58 +133,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
 
-	// Get the list of games available to select from;
-	function onGetListOfGames()
-	{
-		try
-		{
-			// Get the ADMIN_LIST
-			MyTrello.get_list_by_name( "ADMIN_LIST", (listData)=>{
-				
-				let listResp = JSON.parse(listData.responseText);
-				let listID = listResp[0]?.id;
-
-				// Get the cards from the matching list
-				MyTrello.get_cards(listID, (data2) => {
-					let response = JSON.parse(data2.responseText);
-
-					// Setup a map of all cards
-					let cardMap = {};
-					response.forEach((card) => {
-						cardName = card["name"];
-						cardID = card["id"];
-						cardMap[cardName] = cardID;
-					});
-
-					// Get the names and sort;
-					let cardNames = Object.keys(cardMap);
-					cardNames.sort();
-
-					// Loop through the games & setup <option> tags
-					let options = "<option value=''></option>";
-					for(var idx = 0; idx < cardNames.length; idx++)
-					{
-						singleCardName = cardNames[idx];
-						singleCardID = cardMap[singleCardName];
-						options += `<option value=${singleCardID}>${singleCardName}</option>`;
-					}
-
-					// Set the options content
-					mydoc.setContent("#list_of_games", {"innerHTML":options});
-				});
-			});			
-		}
-		catch(error)
-		{
-			set_loading_results("Sorry, something went wrong!\n\n"+error);
-		}
-	}
-
 	// Get the game
 	function onGetGame(gameID)
 	{
 		try
 		{
+			console.log("Getting the game");
+
 			// Query Trello for this card
 			MyTrello.get_single_card(gameID,(data) => {
 
@@ -132,6 +149,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
+				console.log(data);
 				set_loading_results(result);
 			});
 		}
@@ -146,6 +164,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{
 		try
 		{
+			console.log("Setting game details");
+
 			// Confirm Game ID
 			var gameID = cardResponse["id"];
 			var gameName = cardResponse["name"];
@@ -155,7 +175,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 			// Get the game's Passphrase
 			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
-			
 				let response = JSON.parse(data.responseText);
 				let value = response[0]?.value?.text ?? "";
 				mydoc.setContent("#game_pass_phrase", {"value":value});
@@ -180,17 +199,19 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			onSetGameName();
 			onSetGameID();
 
+			// Adjust visibility of tabs
+			mydoc.showContent("#host_edit_tab_section");
+
+			// Select the default section
+			onSetDefaultSection();
+
 			// See what sections can be shown after getting the diff components
 			setTimeout( ()=>{
-				// showEditPageSections();
-				// Adjust visibility of sections
+				console.log("Make sections visible");
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
 				set_loading_results("");
-
-				// TEMP: Load the default page
-				document.querySelector(`[data-section-id='${CurrentSection}']`)?.click();
 			},1000);
 		}
 		catch(error)
@@ -518,9 +539,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSwitchTab(event)
 	{
 		let target = event.target;
-
-		// Make sure we attempt a save before we navigate away (but only if I implement way to mark that a section needs saving)
-		// onSaveGame2(); 
 
 		// Where are we trying to go?
 		let targetSection = target.getAttribute("data-section-id");
