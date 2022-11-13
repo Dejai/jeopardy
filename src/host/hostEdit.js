@@ -394,7 +394,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		if(SectionsToBeSaved.length > 0)
 		{
-			let loadingGIF = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">`
+			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">`
 			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
 			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
 			mydoc.addClass("#saveButton", "dlf_button_blue");
@@ -991,11 +991,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Run the sync of the media
 	function onSyncMedia()
 	{
-
-		
 		loading_html = `
 			<span>Syncing</span>
-			<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
+			<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">
 			`;
 		MyNotification.notify("#syncNotifier", loading_html, "notify_orange");
 
