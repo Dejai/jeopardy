@@ -1,0 +1,57 @@
+<h2 style="width:70%;">
+    Category:
+    <span id="questionFormCategoryName"></span>
+</h2>
+<div id="questionFormActions1" style="text-align:center;">
+    <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveQuestion()">SAVE</button>
+    <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="onCancelQuestionForm()">CANCEL</button>
+</div>
+<h4 style="text-align:left;">General:</h4>
+<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+    <label for="questionFormValue">Value (read-only)</label>
+    <input id="questionFormValue" type="text" name="questionFormValue" value="" disabled>
+    <br/><br/>
+    <label for="isDailyDouble">Is this a Daily Double?</label><br/>
+    <select name="isDailyDouble" id="">
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+    </select>
+</div>
+<h4 style="text-align:left;">The Question:</h4>
+<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+    <label for="question">Text </label><br/>
+    <textarea name="questionText" style="width:100%" rows="3"></textarea>
+    <br/>
+    <label for="questionImage">Image</label><br/>
+    <select name="questionImage" id="" style="width:100%">
+        {{ImageOptions}}
+    </select>
+    <br/>
+    <label for="questionAudio">Audio</label><br/>
+    <select name="questionAudio" id="" style="width:100%">
+        {{AudioOptions}}
+    </select>
+    <label for="questionURL">URL</label><br/>
+    <input type="text" name="questionURL" style="width:100%"/>
+</div>
+<h4 style="text-align:left;">The Answer:</h4>
+<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+    <label for="answer">Text </label><br/>
+    <textarea name="answerText" style="width:100%" rows="3"></textarea>
+    <br/>
+    <label for="answerImage">Image</label><br/>
+    <select name="answerImage" id="" style="width:100%">
+        {{ImageOptions}}
+    </select>
+    <br/>
+    <label for="answerAudio">Audio</label><br/>
+    <select name="answerAudio" id="" style="width:100%">
+        {{AudioOptions}}
+    </select>
+    <label for="answerURL">URL</label><br/>
+    <input type="text" name="answerURL" style="width:100%"/>
+</div>
+<div id="questionFormActions2" style="text-align:center;margin-top:5%;">
+    <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveQuestion()">SAVE</button>
+    <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="onCancelQuestionForm()">CANCEL</button>
+</div>

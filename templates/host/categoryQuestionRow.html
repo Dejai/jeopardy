@@ -1,7 +1,9 @@
 <tr class="questionRow">
     <td class="questionValue">{{Value}}</td>
-    <td class="questionDailyDouble">{{DailyDouble}}</td>
     <td class="questionText">{{Question.Text}}</td>
     <td class="answerText">{{Answer.Text}}</td>
-    <td onclick="onEditQuestion(event)" style="cursor:pointer;">EDIT</td>
+    <td class="questionDailyDouble">{{DailyDouble}}</td>
+    <td onclick="onEditQuestion(event)" style="cursor:pointer;">
+        <span class="fa fa-edit pointer" style="font-size:80%;"> Edit</span>
+    </td>
 </tr>

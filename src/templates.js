@@ -22,19 +22,21 @@ const MyTemplates = {
             // Ensure the object is a list (even if just one);
             var objectList = (object != undefined && object.length == undefined) ? [object] : object;
             objectList = (objectList == undefined)? [{}] : objectList;
+            var objectLength = (objectList.length > 0) ? Object.keys(objectList[0]).length : 0;
+
+            // Get the placeholders in this template
+            var placeholders = MyTemplates.getTemplatePlaceholders(template);
 
             // console.log(objectList);
-            if(Object.keys(objectList[0]).length > 0)
+            if(objectLength > 0)
             {
-                var placeholders = MyTemplates.getTemplatePlaceholders(template);
                 // console.log("Placeholders:");
                 // console.log(placeholders);
-
                 objectList.forEach( (obj)=>{
                     objContent = template;
                     placeholders.forEach( (placeholder)=>{
                         let keyVal = placeholder.replaceAll("{","").replaceAll("}","");
-                        let newVal = MyTemplates.getObjectValue(keyVal,obj);
+                        let newVal = MyTemplates.getObjectValue(keyVal,obj) ?? "";
                         objContent = objContent.replaceAll(placeholder, newVal);
                     });
                     content += objContent
@@ -42,7 +44,8 @@ const MyTemplates = {
             }
             else
             {
-                content = template;
+                // Return empty content if the placeholders can't be replaced;
+                content = (placeholders.length == 0) ? template : "";
             }
             // Run the callback function on the content
             callback(content);

@@ -13,19 +13,20 @@
 </head>
 <body>
 	<div style="border-bottom: 2px solid white;">
-		<div class="homeIconSection" style="border-right:2px solid white;width: 20%;display: inline-block;margin:none;">
+		<div class="homeIconSection" style="border-right:2px solid white;width:16%;display: inline-block;margin:none;">
 			<h1 style="font-size:20px;">
-				<span>Homemade <br/>Jeopardy:</span>
+				<span>Homemade Jeopardy:<br/></span>
 				<span id="edit_game_name"></span>
 			</h1>
 		</div>
-		<div style="width: 70%;display: inline-block;">
+		<div style="width: 75%;display: inline-block;">
 			<div id="host_edit_tab_section" class="hidden2" style="font-size:14px;margin:none;">
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_details">General <br/> Details</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_questions">Questions/<br>Answers</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_settings">Settings/<br/>Rules</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_media">Game Media</h2>
 				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_play">Test/Play<br/> Game</h2>
+				<h2 id="saveButton" class="host_edit_tab dlf_button_round_corners dlf_button_gray" onclick="onSaveGame()">SAVE</h2>
 			</div>
 		</div>
 	</div>
@@ -33,116 +34,44 @@
 		<img id="loading_gif" src="../../assets/img/loading1.gif" class="">
 		<div id="loading_results_section"></div>
 	</div>
-	<div id="new_game_section">
-	</div>
 	<div id="edit_game_section" class="hidden">
+		
 		<div class="center_section_70">
+			<div class="dlf_centered_block_medium centered">
+				<span id="generalNotificationBar"></span>
+			</div>
 			<div class="center_section_70 centered hidden">
 				<p id="loading_results_section"></p>
 			</div>
-			<p id="save_game_details" style="text-align:right;margin:0px;">
-				<button id="save_button_game_details" class="save_button pointer" onclick="onSaveGame2(event)">
-					SAVE
-				</button>
-			</p>
 
-			<div id="edit_section_game_details" class="edit_section hidden ">
-				<table id="edit_game_details_table" style="width:100%;" class="edit_game_section_table hidden2">
-					<colgroup>
-						<col style="width:25%;">
-						<col/>
-					</colgroup>
-					<tbody>
-						<tr>
-							<td>
-								<h3>
-									Game Name
-								</h3>
-							</td>
-							<td>
-								<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value">
-								<span title="This is the name of your game." class="description fa fa-question-circle"></span>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<h3>
-									Pass Phrase
-								</h3>
-							</td>
-							<td>
-								<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password">
-								<span title="This pass phrase is used to access this edit page." class="description fa fa-question-circle"></span>
-
-							</td>
-						</tr>
-					</tbody>
-				</table>
+			<div id="edit_section_game_details" class="edit_section hidden" style="text-align:left;">
+				<div>
+					<h3>Game Name</h3>
+					<div style="margin-left:5%;">
+						<p>This is the name of your game.</p>
+						<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value" onchange="onChangeInSection()">
+					</div>
+				</div>
+				<div>
+					<h3>Pass Phrase</h3>
+					<div style="margin-left:5%;">
+						<p>This pass phrase is used to access this edit page.</p>
+						<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password" onchange="onChangeInSection()">
+					</div>
+				</div>
 			</div>
 
 			<div id="edit_section_game_questions" class="edit_section hidden">
 
 				<div id="listOfCategories"></div>
-				<div id="questionForm" class="hidden">
-					<h2 style="float:left;width:40%;">Category: <span id="questionFormCategoryName"></span></h2>
-					<div id="questionFormActions1" style="width:40%; float:right; text-align:right;">
-						<button onclick="onSaveQuestion()">SAVE</button>
-						<button onclick="onCancelQuestionForm()">CANCEL</button>
-					</div>
-					<br style="clear:both;"/>
-					<h4 style="text-align:left;">General:</h4>
-					<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
-						<label for="questionFormValue">Value (read-only)</label>
-						<input id="questionFormValue" type="text" name="questionFormValue" value="" disabled>
-						<br/><br/>
-						<label for="isDailyDouble">Is this a Daily Double?</label><br/>
-						<select name="isDailyDouble" id="">
-							<option value="No">No</option>
-							<option value="Yes">Yes</option>
-						</select>
-					</div>
-					<h4 style="text-align:left;">Question:</h4>
-					<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
-						<label for="question">Text </label><br/>
-						<textarea name="questionText" style="width:100%" rows="3"></textarea>
-						<br/>
-						<label for="questionImage">Image</label><br/>
-						<select name="questionImage" id="" style="width:100%">
-							<option value="name">Name</option>
-						</select>
-						<br/>
-						<label for="questionAudio">Audio</label><br/>
-						<select name="questionAudio" id="" style="width:100%">
-							<option value="name">Name</option>
-						</select>
-						<label for="questionURL">URL</label><br/>
-						<input type="text" name="questionURL" style="width:100%"/>
-					</div>
-					<h4 style="text-align:left;">Answer:</h4>
-					<div class="questionFormDetails" style="padding-left:5%;text-align:left;">
-						<label for="answer">Text </label><br/>
-						<textarea name="answerText" style="width:100%" rows="3"></textarea>
-						<br/>
-						<label for="answerImage">Image</label><br/>
-						<select name="answerImage" id="" style="width:100%">
-							<option value="name">Name</option>
-						</select>
-						<br/>
-						<label for="answerAudio">Audio</label><br/>
-						<select name="answerAudio" id="" style="width:100%">
-							<option value="name">Name</option>
-						</select>
-						<label for="answerURL">URL</label><br/>
-						<input type="text" name="answerURL" style="width:100%"/>
-					</div>
-					<div id="questionFormActions2" style="text-align:right;">
-						<button onclick="onSaveQuestion()">SAVE</button>
-						<button onclick="onCancelQuestionForm()">CANCEL</button>
-					</div>
+				<div id="addCategoriesSection" style="margin-top:5%; text-align:left; border-top:2px solid white; padding:2%;">
+					<button class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onAddCategory(event)">Add Category</button>
 				</div>
+				<div id="questionForm" class="hidden"></div>
+				<div id="categoryForm" class="hidden"></div>
 			</div>
 
-			<div id="edit_section_game_settings" class="edit_section hidden">
+			<div id="edit_section_game_settings" class="centered edit_section hidden">
 				<input id="settings_identifier" type="text" value="settings_identifier" hidden>
 				<table id="settings_table" class="edit_game_section_table" style="width:100%;">
 					<colgroup>
@@ -164,10 +93,10 @@
 
 			<div id="edit_section_game_media" class="edit_section hidden">
 
-				<p class="section_description">
+				<p class="section_description centered">
 					OPTIONAL: Upload any images or audio you want to use in your game.
 				</p>
-				<div>
+				<div class="centered">
 					<h3>
 						<a id="gameFormURL" class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
 							Upload Game Media Here
@@ -180,47 +109,7 @@
 				<h3>Current Game Media: &nbsp; <span id="syncNotifier"></span></h3>
 				<div id="game_media">
 					<p>N/A</p>
-					<!-- <ul id="game_media"></ul> -->
 				</div>
-
-				<!-- <table id="game_media_details_table">
-					<colgroup>
-						<col style="width:25%;">
-						<col/>
-					</colgroup>
-					<tbody>
-						<tr>
-							<th>
-								<h3>
-									Upload Form
-								</h3>
-							</th>
-							<td>
-								<a class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
-									Upload Game Media
-								</a>
-							</td>
-						</tr>
-						<tr>
-							<th><h3>Game ID</h3></th>
-							<td>
-								<p>
-									When it asks for a <strong>Game ID</strong>, use this value.
-								</p>
-								<span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span>
-							</td>
-						</tr>
-						<tr>
-							<th></th>
-							<td style="text-align:left;">
-								<h3>Synced Game Media</h3>
-								<button class="pointer" onclick="onSyncGameMedia()">Sync Game Media</button> <span id="syncNotifier"></span>
-								<ul id="game_media"></ul>
-							</td>
-						</tr>
-					</tbody>
-					
-				</table> -->
 			</div>
 
 			<div id="edit_section_play" class="edit_section hidden">
@@ -325,7 +214,7 @@
 	<!-- My Google Drive code -->
 	<script src="../../src/googledrive.js"></script>
 	<!-- My Source JS -->
-	<script src="../../src/new/templates.js"></script>
-	<script src="../../src/new/jeopardy2.js"></script>
-	<script src="../../src/new/hostEdit.js"></script>
+	<script src="../../src/templates.js"></script>
+	<script src="../../src/jeopardy.js"></script>
+	<script src="../../src/hostEdit.js"></script>
 </html>

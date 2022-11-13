@@ -1,23 +1,23 @@
 [
     {
-        "Name":"Bands/Rock",
-        "FinalJeopardy": false,
+        "Name": "Bands/Rock",
         "Order": 1,
-        "Questions":
-        [
+        "FinalJeopardy": false,
+        "ValueCount": 100,
+        "Questions": [
             {
                 "Value": 100,
                 "DailyDouble": "No",
                 "Question": {
-                    "Text": "",
-                    "Image": "",
+                    "Text": "This is question #1 -- yaaya",
                     "Audio": "",
+                    "Image": "",
                     "URL": ""
                 },
                 "Answer": {
-                    "Text": "",
-                    "Image": "",
+                    "Text": "This is answer # 1sdf",
                     "Audio": "",
+                    "Image": "",
                     "URL": ""
                 }
             },
@@ -25,15 +25,71 @@
                 "Value": 200,
                 "DailyDouble": "No",
                 "Question": {
-                    "Text": "",
-                    "Image": "",
+                    "Text": "Teasfdds",
                     "Audio": "",
+                    "Image": "",
                     "URL": ""
                 },
                 "Answer": {
-                    "Text": "",
-                    "Image": "",
+                    "Text": "asdfsfasdf",
                     "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                }
+            },
+            {
+                "Value": "300",
+                "DailyDouble": "No",
+                "Question": {
+                    "Text": "Third question",
+                    "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                },
+                "Answer": {
+                    "Text": "Test",
+                    "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                }
+            },
+            {
+                "Value": 400,
+                "DailyDouble": "No",
+                "Question": {
+                    "Text": "This is the 4th question in the set. Hip hip hooray",
+                    "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                },
+                "Answer": {
+                    "Text": "This is teh answer",
+                    "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                }
+            }
+        ]
+    },
+    {
+        "Name": "FINAL JEOPARDY!",
+        "Order": 99,
+        "FinalJeopardy": true,
+        "ValueCount": 100,
+        "Questions": [
+            {
+                "Value": 100,
+                "DailyDouble": "No",
+                "Question": {
+                    "Text": "This is question #1 -- yaaya",
+                    "Audio": "",
+                    "Image": "",
+                    "URL": ""
+                },
+                "Answer": {
+                    "Text": "This is answer # 1sdf",
+                    "Audio": "",
+                    "Image": "",
                     "URL": ""
                 }
             }

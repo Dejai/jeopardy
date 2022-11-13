@@ -11,16 +11,11 @@ var CURR_GAME_LIST_ID = "";
 var CURR_GAME_PASSWORD = "";
 var CURR_MEDIA_CHECKLIST_ID = "";
 
-var CURR_GAME_CODE = "";
-
-var TRELLO_IDS = {};
-
-var CURR_GAME_RULES =  undefined;
-var USE_DEFAULT_RULES = true;
 
 // The instance of this jeopardy game
 var JeopardyGame;
-var CurrentSection = "edit_section_game_media"; //default first tab of edit page
+var CurrentSection = "edit_section_game_questions"; //default first tab of edit page
+var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -30,33 +25,21 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 		MyTrello.SetBoardName("jeopardy");
 
 		// Loading up this page based on pathname;
-		let path = location.pathname;
 		onKeyboardKeyup();
 
-		if (path.includes("/host/edit"))
+		let query_map = mydoc.get_query_map();
+		let gameID = query_map["gameid"];
+		if(gameID != undefined)
 		{
-			let query_map = mydoc.get_query_map();
-			let gameID = query_map["gameid"];
-			if(gameID != undefined)
-			{
-
-				// Get the game
-				onGetGame(gameID);
-
-				// Prevent accidental closing
-				// window.addEventListener("beforeunload", onClosePage);
-			}
-			else
-			{
-				// Navigate to load page if no game ID
-				location.href = "/host/load";
-			}
+			// Get the game
+			onGetGame(gameID);
+			// Prevent accidental closing
+			// window.addEventListener("beforeunload", onClosePage);
 		}
-
-		// If loading the game, 
-		if (path.includes("/host/load"))
+		else
 		{
-			onGetListOfGames();
+			// Navigate to load page if no game ID is present
+			location.href = "/host/load/";
 		}
 	});
 
@@ -364,11 +347,19 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 			// Clear out the N/A before setting media
 			mydoc.setContent("#game_media", {"innerHTML": ""});
 
+			// Keep track if all images have been loaded
+			let allAudioSet = false;
+			let firstImageSet = false;
+
+			// Set the media (ordered by audio fist) 
 			mediaFiles.forEach( (media)=>{
+				if(media.Type == "Image"){ allAudioSet = true; }
+				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
 				media["MediaHTML"] = media.getMediaHTML();
 				MyTemplates.getTemplate("../../templates/host/mediaItem.html", media, (template)=>{
-					mydoc.setContent("#game_media", {"innerHTML": template}, true);
+					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
 				});
+				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
 			});
 		}
 	}
@@ -376,11 +367,65 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 
 /*** SAVE ACTIONS: Saving the game details ********/
 
+	// Indicates that something should be saved
+	function onChangeInSection()
+	{
+		if(!SectionsToBeSaved.includes(CurrentSection))
+		{
+			
+			SectionsToBeSaved.push(CurrentSection);
+		}
+
+		// Show the button as something is to be saved
+		if(SectionsToBeSaved.length > 0)
+		{
+			mydoc.removeClass("#saveButton", "dlf_button_gray");
+			mydoc.addClass("#saveButton", "dlf_button_limegreen");
+		}
+	}
+
 	// The general save -- keeps track of diffs & saves accordingly
-	function onSaveGame2()
+	function onSaveGame()
 	{
 		// Switch what to save based on the section
-		switch(CurrentSection)
+		
+		
+
+		if(SectionsToBeSaved.length > 0)
+		{
+			let loadingGIF = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">`
+			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
+			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
+			mydoc.addClass("#saveButton", "dlf_button_blue");
+
+			while(SectionsToBeSaved.length > 0)
+			{
+				let section = SectionsToBeSaved.pop();
+				
+				onSaveBySection(section);
+			}
+
+			// Reset  button;
+			setTimeout(()=>{
+				mydoc.setContent("#saveButton", {"innerHTML":"DONE"});
+				mydoc.removeClass("#saveButton", "dlf_button_blue");
+				mydoc.addClass("#saveButton", "dlf_button_limegreen");
+
+				// Final phase
+				setTimeout(()=>{
+					mydoc.setContent("#saveButton", {"innerHTML":"SAVE"});
+					mydoc.removeClass("#saveButton", "dlf_button_limegreen");
+					mydoc.addClass("#saveButton", "dlf_button_gray");
+				}, 1500);
+
+			}, 1500);
+		}
+	}
+
+	// Save the details based on section
+	function onSaveBySection(section)
+	{
+		switch(section)
 		{
 			case "edit_section_game_details":
 				// Get the name of the game
@@ -401,11 +446,11 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 				onSaveGameFile(JSON.stringify(JeopardyGame.categories), "categories.json");
 				break;
 			case "edit_section_game_media":
-				console.log(JSON.stringify(JeopardyGame.Media));
+				
 				onSaveGameFile(JSON.stringify(JeopardyGame.Media), "media.json");
 				break;
 			default:
-				console.log("Meh?");
+				
 		}
 	}
 
@@ -449,8 +494,8 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 		// var fileName = "config.json";
 		var currAttachmentID = JeopardyGame.getAttachmentID(fileName);
 
-		console.log("Saving " + fileName);
-		console.log(jsonString);
+		
+		
 
 		// Save the config file
 		MyTrello.create_card_attachment(gameID,fileName,jsonString,(data)=>{
@@ -458,28 +503,6 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 			{
 				let newFile = myajax.GetJSON(data.responseText);
 				JeopardyGame.setAttachmentID(fileName, newFile.id);
-				MyTrello.delete_card_attachment(JeopardyGame.gameID,currAttachmentID,(data)=>{
-					Logger.log(data.responseText);
-				});
-			}
-		}, (err)=>{ console.error(err);});
-	}
-
-
-	// Save the config
-	function onSaveConfig()
-	{
-		var gameID = JeopardyGame.getGameID();
-		var jsonData = JeopardyGame.config.getConfigJSON();
-		var fileName = "config.json";
-		var currAttachmentID = JeopardyGame.getAttachmentID(fileName);
-
-		// Save the config file
-		MyTrello.create_card_attachment(gameID,fileName,jsonData,(data)=>{
-			if(data.status >= 200 && data.status < 300)
-			{
-				let newConfig = myajax.GetJSON(data.responseText);
-				JeopardyGame.setAttachmentID(fileName, newConfig.id);
 				MyTrello.delete_card_attachment(JeopardyGame.gameID,currAttachmentID,(data)=>{
 					Logger.log(data.responseText);
 				});
@@ -512,7 +535,8 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 		mydoc.showContent(`#${targetSection}`);
 
 		// Conditional actions
-		var syncMedia = (targetSection == "edit_section_game_media") ? onSyncMedia("start") : onSyncMedia("stop");
+		
+		var syncMedia = (targetSection == "edit_section_game_media") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
 
 		// Set the current section
 		CurrentSection = targetSection;
@@ -586,24 +610,59 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 		onToggleRuleOptionDetails(sourceEle);
 	}
 
-/***** QUESTION FORM ACTIONS: Actions that involve the question form */
 
-	// Toggle the visibility of the Form
-	function onToggleQuestionForm(state)
+/***** GENERAL FORM ACTIONS: Actions that involve the forms */
+
+	// Toggle forms;
+	function onToggleForm(state, formIdentifier)
 	{
 		if(state == "show")
 		{
-			mydoc.showContent("#questionForm");
+			mydoc.showContent(formIdentifier);
 			mydoc.hideContent("#listOfCategories");
+			mydoc.hideContent("#addCategoriesSection");
 			mydoc.hideContent("#save_game_details");
 		}
 		else if (state == "hide")
 		{
-			mydoc.hideContent("#questionForm");
+			mydoc.hideContent(formIdentifier);
 			mydoc.showContent("#listOfCategories");
+			mydoc.showContent("#addCategoriesSection");
 			mydoc.showContent("#save_game_details");
 		}
 	}
+
+	// Load a form HTMl
+	function loadFormHTML(identifier, formValuesObject)
+	{
+
+		let formName = identifier.replace("#","");
+		let templateName = `../../templates/host/${formName}.html`;
+
+		// Get the media object for the question form
+		let audioOptions = JeopardyGame.getMediaOptions("Audio");
+		let imageOptions = JeopardyGame.getMediaOptions("Image");
+		let mediaObj = {"AudioOptions":audioOptions, "ImageOptions":imageOptions}
+
+		// The object for the form
+		let formObject = (identifier == "#questionForm") ? mediaObj : {}
+
+		// Set the form template & the form values
+		MyTemplates.getTemplate(templateName, formObject,(template)=>{
+			
+			mydoc.setContent(identifier, {"innerHTML": template});
+			
+			// Run the function to set the values
+			if(identifier == "#questionForm"){ onSetQuestionFormValues(formValuesObject); }
+			if(identifier == "#categoryForm"){ onSetCategoryFormValues(formValuesObject); }
+
+			// Toggle the form
+			onToggleForm("show", identifier);
+
+		});
+	}
+
+/***** QUESTION FORM ACTIONS: Actions that involve the question form */
 
 	// Adding a new question
 	function onAddQuestion(event)
@@ -614,9 +673,11 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 
 		// Set the form values;
 		let category = JeopardyGame.getCategory(categoryName);
-		onSetQuestionFormValues(category);
+		let questionFormObj = {"Category": category, "Value":undefined};
 
-		onToggleQuestionForm("show");
+		// Load the form
+		loadFormHTML("#questionForm", questionFormObj);
+		
 	}
 
 	// On edit of a question
@@ -630,32 +691,35 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 
 		// Get the appropriate category + questions
 		let category = JeopardyGame.getCategory(categoryName);
-		onSetQuestionFormValues(category, value);
 
-		onToggleQuestionForm("show");
+		// Object to use to set the form
+		let questionFormObj = {"Category": category, "Value":value};
+		loadFormHTML("#questionForm", questionFormObj);
 	}
 
 	// On cancel of a question.
 	function onCancelQuestionForm()
 	{
 		// Control visibility of the sections
-		onToggleQuestionForm("hide");
+		onToggleForm("hide", "#questionForm");
+
 	}  
 
 	// Set the values of the form
-	function onSetQuestionFormValues(categoryObject, value)
+	function onSetQuestionFormValues(categoryObject)
 	{
-		// Should always know/set the category name
-		mydoc.setContent("#questionFormCategoryName",{"innerText":categoryObject.Name});
+		let category = categoryObject.Category;
+		let value = categoryObject.Value;
 
-		console.log(mydoc.getContent("#questionFormValue")?.value);
+		// Should always know/set the category name
+		mydoc.setContent("#questionFormCategoryName",{"innerText":category.Name});
 
 		// Attempt to get the question Object
-		var questionsObj = categoryObject.getQuestion(value);
+		var questionsObj = category.getQuestion(value);
 
 		// Set the values to be set
-		let questionValue = questionsObj?.Value ?? categoryObject.getNextValue();
-		let isDailyDouble = categoryObject?.isDailyDouble ?? "No";
+		let questionValue = questionsObj?.Value ?? category.getNextValue();
+		let isDailyDouble = category?.isDailyDouble ?? "No";
 		let questionText = questionsObj?.Question.Text ?? "";
 		let questionImage = questionsObj?.Question.Image ?? "";
 		let questionAudio = questionsObj?.Question.Audio ?? "";
@@ -702,43 +766,155 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 			"Question": { "Text": questionText, "Image": questionImage, "Audio": questionAudio, "URL": questionURL },
 			"Answer": { "Text": answerText, "Image": answerImage, "Audio": answerAudio, "URL": answerURL }
 		}
-		console.log(newCategoryQuestion);
+		
 
 		// Update the saved category question
 		let results = JeopardyGame.updateCategoryQuestion(categoryName, newCategoryQuestion);
 
-		console.log(results);
+		// Reload the question row -- so the page shows latest results
 		let category = JeopardyGame.getCategory(categoryName);
 		let questions = category.Questions;
-		console.log(questions);
+		
 		MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
 			mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
 		});
 
-		onToggleQuestionForm("hide");
+		onToggleForm("hide", "#questionForm");
+
+		// Indicate a change is needed
+		onChangeInSection();
 	}
 
-/*** Game Medie */
+/***** CATEGORY FORM ACTIONS: Actions that involve the question form */
 
-	function onSyncMedia(state)
+	// Adding a new question
+	function onAddCategory(event)
+	{
+		loadFormHTML("#categoryForm",{});
+	}
+
+	// On cancel of adding a category
+	function onCancelCategoryForm()
+	{
+		// Control visibility of the sections
+		onToggleForm("hide", "#categoryForm");
+	} 
+
+	// On edit of a category
+	function onEditCategory(event)
+	{
+		let target = event.target;
+		let section = target.closest(".categorySection");
+		let categoryName = section.querySelector(".categoryName")?.innerText;
+
+		// Get the appropriate category + questions
+		let category = JeopardyGame.getCategory(categoryName);
+		loadFormHTML("#categoryForm",category);
+	}
+	
+	// Set the pieces of a category
+	function onSetCategoryFormValues(categoryObject)
+	{
+		// Set the values to be set
+		let categoryName = categoryObject?.Name ?? "";
+		let categoryOrder = categoryObject?.Order ?? JeopardyGame.categories.length+1;
+		let finalJeopardy = (categoryObject?.FinalJeopardy ??  false) ? "Yes" : "No";
+		let valueCount = categoryObject?.ValueCount ?? 100;
+			
+		// Set the content:
+		mydoc.setContent("#categoryForm [name='categoryFormID']",{"value":categoryName});
+		mydoc.setContent("#categoryForm [name='categoryFormName']",{"value":categoryName});
+		mydoc.setContent("#categoryForm [name='categoryFormOrder']",{"value":categoryOrder});
+		mydoc.setContent("#categoryForm [name='categoryFormFinalJeopardy']",{"value":finalJeopardy});
+	}
+
+	// Save a category
+	function onSaveCategory()
+	{
+		// Get the values to be saved
+		let categoryID = mydoc.getContent("#categoryForm [name='categoryFormID']")?.value ?? "";
+		let categoryName = mydoc.getContent("#categoryForm [name='categoryFormName']")?.value ?? "";
+		let categoryOrder = mydoc.getContent("#categoryForm [name='categoryFormOrder']")?.value ?? "";
+		let finalJeopardy = mydoc.getContent("#categoryForm [name='categoryFormFinalJeopardy']")?.value ?? "No";
+		
+		// Object to be saved
+		let newCategory = {
+			"ID" : categoryID,
+			"Name": categoryName,
+			"Order": categoryOrder,
+			"FinalJeopardy": finalJeopardy,
+			"ValueCount": 100
+		}
+		console.log(newCategory);
+
+		if(categoryID != "")
+		{
+			console.log("Updating category")
+			// Update the category
+			JeopardyGame.updateCategory(newCategory);
+
+			// Need to reload all categories (just in case order changed?)
+			onSetGameQuestions();
+
+			// Hide the form
+			onToggleForm("hide", "#categoryForm");
+					
+			// Indicate a change is needed
+			onChangeInSection();
+		}
+		else if(categoryName != "")
+		{
+			
+
+			// Add the new category
+			JeopardyGame.addCategory(newCategory);
+
+			// Get the new category
+			let category = JeopardyGame.getCategory(categoryName);
+			let questions = [];
+			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+
+				// Take the formatted questions & set the section
+				let sectionJSON = {"categoryName":category.Name, "categorySectionBody":template}
+				MyTemplates.getTemplate("../../templates/host/categorySection.html", sectionJSON, (template) =>{
+
+					// Append the new category
+					mydoc.setContent("#listOfCategories", {"innerHTML":template}, true);
+
+					// Hide the form
+					onToggleForm("hide", "#categoryForm");
+					
+					// Indicate a change is needed
+					onChangeInSection();
+				});
+			});
+			
+		}		
+	}
+
+/*** Game Media */
+
+	// Control the syncing of the game media
+	function onSyncMediaInterval(state)
 	{
 		// Always stop the interval first. ;) 
-		console.log("Stopping sync");
+		
 		clearInterval(syncMediaInterval);
 
 		// If starting, then setup interval
 		if(state == "start")
 		{
 			// Run it first, then start an Interval
-			onSyncMediaInterval()
-			var syncMediaInterval = setInterval( onSyncMediaInterval, 60000);
+			onSyncMedia()
+			var syncMediaInterval = setInterval( onSyncMedia, 60000);
 		}
 	}
-	function onSyncMediaInterval()
+
+	// Run the sync of the media
+	function onSyncMedia()
 	{
 
-		console.log("Starting sync");
-
+		
 		loading_html = `
 			<span>Syncing</span>
 			<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
@@ -786,6 +962,8 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 			if(newMediaAdded)
 			{
 				onSetGameMedia(); //update page
+
+				onChangeInSection() // indicate need to save
 			}
 			MyNotification.clear("#syncNotifier", "notify_orange");
 			MyNotification.notify("#syncNotifier", "Synced", "notify_limegreen");
@@ -801,49 +979,13 @@ var CurrentSection = "edit_section_game_media"; //default first tab of edit page
 		{
 			document.getElementById(mediaID).remove();
 			JeopardyGame.setMediaToInactive(mediaID);
+			onChangeInSection();
 		}
 		catch(err)
 		{
 			console.error(err);
 		}
 	}
-
-	// Syncing the game media for this game
-	function onSyncGameMedia()
-	{
-		if(CURR_MEDIA_CHECKLIST_ID != "")
-		{
-
-			
-
-			// First, get the list of media already in Trello
-			MyTrello.get_card_checklist_items(CURR_MEDIA_CHECKLIST_ID, (data) =>{
-
-				response = JSON.parse(data.responseText);
-
-				// Set the existing media as a list of objects
-				existing_media = {};
-				response.forEach(function(obj) {
-					state = obj["state"];
-					file_id = obj["id"]
-					checklist_details = obj["name"]?.split(" ~ ") ?? ["", ""];
-					file_name = checklist_details[0];
-					file_url = checklist_details[1];
-
-					existing_media[file_name] = {
-						"id": file_id,
-						"state": state,
-						"url": file_url
-					}
-				});
-
-
-
-			});
-		}
-	}
-	
-
 
 /****** HELPER OBJECT: Simplifing approach for hosting ****************************/ 
 

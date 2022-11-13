@@ -1,25 +1,30 @@
+<hr/>
 <div class="categorySection" data-jpd-category-section="{{categoryName}}">
-    <h2 style="text-align:left;" class="categoryTitle">Category: <span class="categoryName">{{categoryName}}</span></h2>
-    <div class="listOfCategoryQuestions">
-        <table style="width:100%;">
+    <h2 style="text-align:left;" class="categoryTitle">
+        Category:
+        <span class="categoryName">{{categoryName}}</span>
+        &nbsp;&nbsp;
+        <span class="fa fa-edit pointer" style="font-size:80%;" onclick="onEditCategory(event)"> Edit</span>
+    </h2>
+    <div class="listOfCategoryQuestions" style="padding-left:5%; padding-bottom:1%;">
+        <table style="width:100%;text-align:left;">
             <thead>
                 <tr>
                     <th>Value</th>
-                    <th>Daily Double?</th>
                     <th>Question</th>
                     <th>Answer</th>
+                    <th>Daily Double?</th>
                     <th>&nbsp;</th>
                 </tr>
             </thead>
             <tbody class="categorySectionBody">{{categorySectionBody}}</tbody>
             <tbody>
                 <tr>
-                    <td colspan="5" style="text-align:right;">
-                        <span class="pointer" onclick="onAddQuestion(event)">Add Question</span>
+                    <td colspan="5" style="text-align:left;padding-top:2%;">
+                        <span class="pointer dlf_button dlf_button_blue dlf_button_round_corners" style="padding:1%" onclick="onAddQuestion(event)">Add Question</span>
                     </td>
                 </tr>
             </tbody>            
         </table>
-        <!-- <button onclick="onAddQuestion(event)">Add Question</button> -->
     </div>
 </div>

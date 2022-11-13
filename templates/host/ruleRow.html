@@ -4,7 +4,7 @@
         <p>&nbsp;</p>
     </th>
     <td>
-        <select id="{{Key}}" data-jpd-rule-name="{{Name}}" class="ruleOption input_mash" onChange="onRuleOptionChange(event)">
+        <select id="{{Key}}" data-jpd-rule-name="{{Name}}" class="ruleOption input_mash" onChange="onRuleOptionChange(event); onChangeInSection();">
             {{FormattedOptions}}
         </select>
         <div class="rule_details_div">

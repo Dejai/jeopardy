@@ -179,7 +179,7 @@
 
 /* ADMIN/HOST VIEW */
 
-	.edit_section { width: 85%; margin:auto; text-align:center;  }
+	/* .edit_section { width: 85%; margin:auto; text-align:center;  } */
 	.edit_section .description { cursor:pointer; color:goldenrod; padding-left:2%; }
 	.edit_section .section_description { font-size:120%; margin-bottom:5% }
 	/* #host_edit_tab_section { border-bottom:3px solid white; margin-bottom:5%; } */
@@ -208,7 +208,7 @@
 
 	.edit_game_subsection {border-bottom:2px solid white; padding:5%; padding-top:0%; }
 	#game_media a { color:lightblue; }
-	.delete_media { cursor:pointer; }
+	.delete_media { cursor:pointer; color:red; }
 	.delete_media:hover { color:red; }
 
 	.rule_input { width:100%; }
