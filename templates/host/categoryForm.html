@@ -1,20 +1,18 @@
 <h2 style="text-align:left;">Category Details</h2>
 <div class="categoryFormDetails" style="padding-left:5%;text-align:left;">
     <input id="categoryFormID" type="text" name="categoryFormID" value="" hidden disabled>
-    <label for="categoryFormName">Name</label><br/>
+    <label for="categoryFormName">Name:</label><br/>
     <input id="categoryFormName" type="text" name="categoryFormName" placeholder="Enter name of category" value="">
     <br/><br/>
-    <label for="categoryFormOrder">Order</label><br/>
+    <label for="categoryFormOrder">Order:</label><br/>
     <input id="categoryFormOrder" type="number" min="1" max="99" name="categoryFormOrder" value="">
     <br/>
     <span>NOTE: If multiple categories have the same order, they will be ordered alphabetically.</span>
     <br/><br/>
-    <label for="categoryFormName">Is this the Final Jeopardy?</label><br/>
-    <select name="categoryFormFinalJeopardy" id="categoryFormFinalJeopardy">
+    <select name="categoryFormFinalJeopardy" id="categoryFormFinalJeopardy" disabled hidden>
         <option value="No" seleced>No</option>
         <option value="Yes">Yes</option>
     </select>
-    
 </div>
 <div id="categoryFormActions1" style="width:40%; text-align:center;">
     <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveCategory()">SAVE</button>

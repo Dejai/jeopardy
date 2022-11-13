@@ -1,12 +1,4 @@
 NEXT:
 
-    Add button for adding a new Category
-        - related functionality of updating Class object
-        - defaulting some values?
-
     Add a way to move both questions & categories
         - order on page is order in game. 
-
-    
-    Add a list of media on the questions page (so that users can just pick from options)
-        - filter based on type so it only shows acceptable types in the list

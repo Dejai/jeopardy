@@ -3,7 +3,12 @@
     <td class="questionText">{{Question.Text}}</td>
     <td class="answerText">{{Answer.Text}}</td>
     <td class="questionDailyDouble">{{DailyDouble}}</td>
+    <td>
+        <span class="fa fa-arrow-up pointer" onclick="onSwapQuestionOrder(event)" style="font-size:80%;"></span>
+        <span class="fa fa-arrow-down pointer" onclick="onSwapQuestionOrder(event)" style="font-size:80%;"></span>
+    </td>
     <td onclick="onEditQuestion(event)" style="cursor:pointer;">
         <span class="fa fa-edit pointer" style="font-size:80%;"> Edit</span>
     </td>
+    
 </tr>

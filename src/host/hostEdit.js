@@ -1,17 +1,3 @@
-
-
-
-// Used for the card that has all the game details
-var CURR_GAME_ID =  "";
-var CURR_GAME_NAME = "";
-
-// Used for the instance of a game
-var CURR_GAME_LIST_ID = "";
-
-var CURR_GAME_PASSWORD = "";
-var CURR_MEDIA_CHECKLIST_ID = "";
-
-
 // The instance of this jeopardy game
 var JeopardyGame;
 var CurrentSection = "edit_section_game_questions"; //default first tab of edit page
@@ -46,8 +32,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Prevent the page accidentally closing
 	function onClosePage(event)
 	{
-		event.preventDefault();
-		event.returnValue='';
+		if(SectionsToBeSaved.length > 0)
+		{
+			event.preventDefault();
+			event.returnValue='';
+		}
 	}
 
 	// Create or return an instance of the Jeopardy game
@@ -310,22 +299,35 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// The category HTML to load
 		categoryHTML = "";
 
+		// Assume final jeopardy category is missing
+		let missingFinalJeopardy = true;
+
 		// Loop through each category & build HTML templates;
 		JeopardyGame.getCategories()?.forEach( (category, idx, array)=> {
+
+			// Confirm if final jeopardy content is set
+			if(category.isFinalJeopardy()){ missingFinalJeopardy = false; }
+
 			// First, loop through the questions in this category
 			questions = category.Questions;
+
 			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
 
 				// Take the formatted questions & set the section
-				let sectionJSON = {"categoryName":category.Name, "categorySectionBody":template}
+				let categorylabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
+				let sectionJSON = {"categoryLabel":categorylabel, "categoryName":category.Name, "categorySectionBody":template}
 				MyTemplates.getTemplate("../../templates/host/categorySection.html", sectionJSON, (template) =>{
 
 					// Add to the category HTML
 					categoryHTML += template;
 
 					// If last one in set, then show all on the page;
-					if(idx === array.length-1){
+					if(idx === array.length-1)
+					{
 						mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
+						var action = (missingFinalJeopardy) ?
+										mydoc.removeClass(".addFinalJeopardyCategory","hidden")
+										: mydoc.addClass(".addFinalJeopardyCategory", "hidden")
 					}
 				});
 			});
@@ -363,7 +365,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			});
 		}
 	}
-
 
 /*** SAVE ACTIONS: Saving the game details ********/
 
@@ -610,7 +611,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		onToggleRuleOptionDetails(sourceEle);
 	}
 
-
 /***** GENERAL FORM ACTIONS: Actions that involve the forms */
 
 	// Toggle forms;
@@ -620,14 +620,14 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		{
 			mydoc.showContent(formIdentifier);
 			mydoc.hideContent("#listOfCategories");
-			mydoc.hideContent("#addCategoriesSection");
+			mydoc.hideContent(".addCategoriesSection");
 			mydoc.hideContent("#save_game_details");
 		}
 		else if (state == "hide")
 		{
 			mydoc.hideContent(formIdentifier);
 			mydoc.showContent("#listOfCategories");
-			mydoc.showContent("#addCategoriesSection");
+			mydoc.showContent(".addCategoriesSection");
 			mydoc.showContent("#save_game_details");
 		}
 	}
@@ -695,6 +695,47 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Object to use to set the form
 		let questionFormObj = {"Category": category, "Value":value};
 		loadFormHTML("#questionForm", questionFormObj);
+	}
+
+	// Swapping question
+	function onSwapQuestionOrder(event)
+	{
+		let target = event.target;
+
+		// Determine direction we are swapping
+		let isUp = target.classList.contains("fa-arrow-up");
+		let isDown = target.classList.contains("fa-arrow-down");
+
+		// Get the appropriate Category
+		let section = target.closest(".categorySection");
+		let categoryName = section.querySelector(".categoryName")?.innerText;
+		let category = JeopardyGame.getCategory(categoryName);
+
+		// Based on category, get the current question obj
+		let currentRow = target.closest(".questionRow");
+		let currentValue = currentRow?.querySelector(".questionValue")?.innerText ?? "";
+		let currentQuestion = category?.getQuestion(currentValue);
+
+		// Based on category & swap direction, get sibling to swap with
+		let siblingRow = (isUp) ? currentRow.previousElementSibling : (isDown) ? currentRow.nextElementSibling : undefined;
+		let siblingValue = siblingRow?.querySelector(".questionValue")?.innerText ?? "";
+		let siblingQuestion = category?.getQuestion(siblingValue);
+
+		// Do the swap
+		if(currentQuestion != undefined && siblingQuestion != undefined)
+		{
+			siblingQuestion.Value = Number(currentValue);
+			currentQuestion.Value = Number(siblingValue);
+
+			// Reload the questions after swapping
+			let questions = category.getQuestions();
+			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
+			});
+
+			// Indicate a change is needed
+			onChangeInSection();
+		}
 	}
 
 	// On cancel of a question.
@@ -790,7 +831,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Adding a new question
 	function onAddCategory(event)
 	{
-		loadFormHTML("#categoryForm",{});
+		let target = event.target; 
+		let isFinalJeopardy = target.classList.contains("addFinalJeopardyCategory");
+		let categoryObj = (isFinalJeopardy) ? {"FinalJeopardy":"Yes", "Order":99 } : {}
+		loadFormHTML("#categoryForm",categoryObj);
 	}
 
 	// On cancel of adding a category
@@ -818,10 +862,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Set the values to be set
 		let categoryName = categoryObject?.Name ?? "";
 		let categoryOrder = categoryObject?.Order ?? JeopardyGame.categories.length+1;
-		let finalJeopardy = (categoryObject?.FinalJeopardy ??  false) ? "Yes" : "No";
+		// let categoryOrderClass = (categoryObject?.FinalJeopardy == "Yes") ? "hidden" : ""
+		let finalJeopardy = categoryObject?.FinalJeopardy ?? "No";
 		let valueCount = categoryObject?.ValueCount ?? 100;
-			
+
 		// Set the content:
+		// mydoc.addClass(".categoryFormOrderSection", categoryOrderClass);
 		mydoc.setContent("#categoryForm [name='categoryFormID']",{"value":categoryName});
 		mydoc.setContent("#categoryForm [name='categoryFormName']",{"value":categoryName});
 		mydoc.setContent("#categoryForm [name='categoryFormOrder']",{"value":categoryOrder});
@@ -847,49 +893,30 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		}
 		console.log(newCategory);
 
+
+		// Updat existing category
 		if(categoryID != "")
 		{
 			console.log("Updating category")
 			// Update the category
 			JeopardyGame.updateCategory(newCategory);
-
-			// Need to reload all categories (just in case order changed?)
-			onSetGameQuestions();
-
-			// Hide the form
-			onToggleForm("hide", "#categoryForm");
-					
-			// Indicate a change is needed
-			onChangeInSection();
 		}
+		// Or add new category
 		else if(categoryName != "")
 		{
-			
-
+			console.log("Adding category")
 			// Add the new category
 			JeopardyGame.addCategory(newCategory);
-
-			// Get the new category
-			let category = JeopardyGame.getCategory(categoryName);
-			let questions = [];
-			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
-
-				// Take the formatted questions & set the section
-				let sectionJSON = {"categoryName":category.Name, "categorySectionBody":template}
-				MyTemplates.getTemplate("../../templates/host/categorySection.html", sectionJSON, (template) =>{
-
-					// Append the new category
-					mydoc.setContent("#listOfCategories", {"innerHTML":template}, true);
-
-					// Hide the form
-					onToggleForm("hide", "#categoryForm");
-					
-					// Indicate a change is needed
-					onChangeInSection();
-				});
-			});
-			
 		}		
+
+		// Reload all categories
+		onSetGameQuestions();
+
+		// Hide the form
+		onToggleForm("hide", "#categoryForm");
+				
+		// Indicate a change is needed
+		onChangeInSection();
 	}
 
 /*** Game Media */

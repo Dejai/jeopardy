@@ -22,13 +22,23 @@
 		}
 
 		// Return if this category is the final jeopardy
-		isFinalJeopardy() { return this.finalJeopardy; }
+		isFinalJeopardy() { return (this.FinalJeopardy == "Yes"); }
 
 		// Get the category name;
 		getName(){ return this.name; }
 
 		// Get/Set the questions of this category;
-		getQuestions(){ return this.questions; }
+		getQuestions()
+		{ 
+			let theListOfQuestions = this.Questions;
+			theListOfQuestions.sort( (a,b)=>{
+				if(a["Value"] < b["Value"]){ return -1; }
+				if(a["Value"] > b["Value"]){ return 1; }
+				return 0;
+			});
+			return theListOfQuestions; 
+		}
+		// Get a single question
 		getQuestion(value)
 		{
 			let theQuestion = undefined

@@ -7,6 +7,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="../../src/game.css">
+    <link rel="stylesheet" type="text/css" href="../../src/host/host.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 	<link rel="stylesheet" type="text/css" href="../../src/game.css">
@@ -63,9 +64,16 @@
 
 			<div id="edit_section_game_questions" class="edit_section hidden">
 
-				<div id="listOfCategories"></div>
-				<div id="addCategoriesSection" style="margin-top:5%; text-align:left; border-top:2px solid white; padding:2%;">
+				<div class="addCategoriesSection" style="margin-bottom:5%; text-align:left; padding:2%;">
 					<button class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onAddCategory(event)">Add Category</button>
+					<button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy!</button>
+				</div>
+
+				<div id="listOfCategories"></div>
+
+				<div class="addCategoriesSection" style="margin-top:5%; text-align:left; border-top:2px solid white; padding:2%;">
+					<button class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onAddCategory(event)">Add Category</button>
+					<button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy!</button>
 				</div>
 				<div id="questionForm" class="hidden"></div>
 				<div id="categoryForm" class="hidden"></div>
@@ -216,5 +224,5 @@
 	<!-- My Source JS -->
 	<script src="../../src/templates.js"></script>
 	<script src="../../src/jeopardy.js"></script>
-	<script src="../../src/hostEdit.js"></script>
+	<script src="../../src/host/hostEdit.js"></script>
 </html>
