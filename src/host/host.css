@@ -6,7 +6,13 @@
     .searchBar.searchPlaceholder { color:gray; }
     .searchBar.searchText { color: black; }
 
-/* TAB: Questions/Answers */
+/* CREATE: */
+    .notificationSection { color:red;font-style:bolder;font-size:120%; }
+    .createFieldSection{ margin-top:5%;}
+    #newGameSection h2 {margin:0px; }
+    #newGameSection p  {margin:3px; }
+
+/* EDIT: Tab for Questions/Answers */
 
     /* Control visibility of order buttons */
     .categorySectionBody tr.questionRow:nth-child(1) td span.fa-arrow-up { display:none; }

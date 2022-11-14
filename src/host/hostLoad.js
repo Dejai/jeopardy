@@ -34,9 +34,9 @@
                     // Get list of games
                     let gameList = [];
 
-					// Setup a map of all cards
+                    // Setup a map of all cards
 					response.forEach((card) => {
-                        gameList.push( {"ID": card["id"],"Name":card["name"] })
+                        gameList.push( {"ID": card["id"],"Name":card["name"], "Description":card["desc"]})
 					});
 
                     // Sort games by name
@@ -59,6 +59,7 @@
 		}
 	}
 
+    // Load the game that is clicked
     function onLoadGame(event)
     {
         let target = event.target;

@@ -196,16 +196,16 @@
 		}
 
 		// Set instance data
-		createConfiguration(configMap)
+		createConfiguration(jsonObj)
 		{
-
-			if(configMap != undefined)
+			if(jsonObj != undefined)
 			{
-				configMap = typeof(configMap) == 'string' ? JSON.parse(configMap) : configMap;
-				let configKeys = Object.keys(configMap);
+				let configJSON = JeopardyHelper.getJSON(jsonObj);
+				// configMap = typeof(configMap) == 'string' ? JSON.parse(configMap) : configMap;
+				let configKeys = Object.keys(configJSON);
 				configKeys.forEach( (configKey)=> {
 					let keyName = JeopardyHelper.getKeyName(configKey);
-					this[keyName] = configMap[configKey];
+					this[keyName] = configJSON[configKey];
 				});
 			}
 		}
@@ -287,7 +287,7 @@
 	{
 		constructor(gameID, gameName)
 		{
-			this.gameID = gameID;
+			this.GameID = gameID;
 
 			// Set updatable values
 			this.setGameName(gameName);
@@ -297,11 +297,12 @@
 			this.Categories = []
 
 			// List of smaller objects
-			this.config = new Config();
+			this.Config = new Config();
 			this.Media = []
 
 			// Store the attachment IDs for the different files
 			this.attachmentIDs = {}
+			this.Attachments = {}
 		}
 
 	/* Subsection: Categories * */
@@ -441,7 +442,7 @@
 		getGameName(){ return this.gameName; }
 
 		// Get the game ID
-		getGameID(){ return this.gameID; }
+		getGameID(){ return this.GameID; }
 
 		// Get the game passphrase
 		getGamePass(){ return this.gamePass; }
@@ -522,8 +523,18 @@
 		}
 	/* Subsection: Attachments */
 		// Set/Get: Attachment ID
-		setAttachmentID(name, id){ this.attachmentIDs[name] = id; }
-		getAttachmentID(name){ return this.attachmentIDs[name] ?? ""; }
+		setAttachments(jsonObj)
+		{
+			let attachments = JeopardyHelper.getJSON(jsonObj);
+			attachments?.forEach( (attachment)=>{
+				if(attachment.fileName.includes(".json"))
+				{
+					this.Attachments[attachment.fileName] = attachment.id;
+				}
+			});	
+		}
+		setAttachmentID(name, id){ this.Attachments[name] = id; }
+		getAttachmentID(name){ return this.Attachments[name] ?? ""; }
 
 		// Set the passphrase for the game
 		setGamePass(pass){ this.gamePass = pass; }

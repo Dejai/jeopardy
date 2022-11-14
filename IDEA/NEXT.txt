@@ -1,4 +1,11 @@
 NEXT:
 
-    Add a way to move both questions & categories
-        - order on page is order in game. 
+    Add a loader on the Create form to know something is spinning
+
+    Adjust the TEST/PLAY page to only show buttons based on validation
+        > Sub-validation that you cannot play a game without testing it
+        > Maybe testing must be saved in a cookie?
+
+    Make the board be returned in a template
+
+    Adjust the game board side to use the full jeopardy class for everything.

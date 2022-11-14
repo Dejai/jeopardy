@@ -6,7 +6,9 @@
 	<!-- jQuery library -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="../src/game.css">
+	<link rel="stylesheet" type="text/css" href="../../src/game.css">
+    <link rel="stylesheet" type="text/css" href="../../src/host/host.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 	<link rel="stylesheet" type="text/css" href="../src/game.css">
@@ -14,26 +16,33 @@
 <body>
 
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy<br/>Create Game</h1>
-		<a id="home_button" href="../host/">
-      		<button class="fa fa-caret-square-o-left">&nbsp;Back</button>
-      	</a>
+		<h1 id="homemade_jeopardy_title">Homemade Jeopardy:<br/>Create Game</h1>
 		<hr/>
 	</div>
 
-	<div id="enter_game_name_section">
-		<div class="center_section_50 centered">
-			<h2>Game Name:</h2>
-			<input id="given_game_name" type="text" name="game_name" placeholder="Enter game name" class="input_mash">
-			<br/><br/>
+	<div id="newGameSection">
+		<div class="center_section_70 centered">
+			<img id="loadingGIF" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:20px;height:20xp;">
+			<div class="createFieldSection">
+				<h2>Game Name:</h2>
+				<p>Enter a name for your game</p>
+				<input id="gameName" type="text" name="gameName" placeholder="Enter name" class="input_mash">
+			</div>
+			<div class="createFieldSection">
+				<h2>Description:</h2>
+				<p>Enter a brief description about your game</p>
+				<textarea name="gameDescription" id="gameDescription" cols="20" rows="2" style="width:100%;" placeholder="Enter description" class="input_mash"></textarea>
+			</div>
+			<div class="createFieldSection">
+				<h2>Pass Phrase:</h2>
+				<p>Enter a pass phrase that will be used to access the admin view of your game.</p>
+				<input id="passPhrase" type="text" name="passPhrase" placeholder="Enter a pass phrase" class="input_mash">
+			</div>
+			<div class="createFieldSection">
+				<div class="notificationSection"></div>
+				<button onclick="onCreateNewGame()" class="dlf_button_large dlf_button_blue dlf_button_round_corners">Create Game</button>
 
-			<h2>Pass Phrase:</h2>
-			<input id="given_pass_phrase" type="text" name="game_password" placeholder="Enter a passpharse used to access your game" class="input_mash">
-			<p>Remember this pass phrase.<br/>You will need it to re-open your game later.</p>
-			<button onclick="validate_new_game()" class="dlf_button_large dlf_button_blue dlf_button_round_corners">Create Game</button>
-			<br/>
-			<img id="loading_gif" class="hidden" src="../assets/img/loading1.gif" class="hidden" style="width:100px;height:100px;">
-			<p id="loading_results_section"></p>
+			</div>
 		</div>
 	</div>
 	
@@ -43,7 +52,7 @@
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<!-- My Source JS -->
-	<script src="../src/rules.js"></script>
-	<script src="../src/settings.js"></script>
-	<script src="../src/host.js"></script>
+	<script src="../../src/templates.js"></script>
+	<script src="../../src/jeopardy.js"></script>
+	<script src="../../src/host/hostCreate.js"></script>
 </html>

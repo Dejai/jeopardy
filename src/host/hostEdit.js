@@ -1,6 +1,7 @@
 // The instance of this jeopardy game
-var JeopardyGame;
-var CurrentSection = "edit_section_game_creds"; //default first tab of edit page
+var JeopardyGame = undefined;
+var GameCard = undefined; // Used to store the game card from Trello
+var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
@@ -16,6 +17,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		let gameID = mydoc.get_query_param("gameid");
 		if(gameID != undefined)
 		{
+			// Get the game
+			onGetGame(gameID);
+
 			// Validate Access
 			onValidateAccess(gameID);
 		}
@@ -25,6 +29,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			location.assign("/host/load/");
 		}
 	});
+
+/***** BEGIN: Key things to set/do when getting started ****************************/ 
 
 	// Allowing access to the page
 	function onValidateAccess()
@@ -48,13 +54,19 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				if(customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase())
 				{
 					mydoc.hideContent("#edit_section_game_creds");
-					onGetGame(gameID);
+
+					// Set the password in the Jeopardy object
+					JeopardyGame.setGamePass(customFieldValue);
+					mydoc.setContent("#game_pass_phrase", {"value":customFieldValue});
+
+					// onGetGame(gameID);
+					onGetGameDetails();
 
 					// Hide login tab
 					mydoc.hideContent("#hostEditLoginSection");
 
 					// Set the cookie with 30 minute expiration
-					mydoc.setCookie(gameID,customFieldValue,30);
+					if(gamePasswordCookie == ""){ mydoc.setCookie(gameID,customFieldValue,30); }
 				}
 				else
 				{
@@ -70,10 +82,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Set a default tab
 	function onSetDefaultSection()
 	{
-		console.log("Clicking default tab");
 		let sectionParam = mydoc.get_query_param("section");
-
 		let section = "";
+
 		// If provided use the section parameter
 		if(sectionParam != undefined)
 		{
@@ -138,18 +149,30 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{
 		try
 		{
-			console.log("Getting the game");
-
 			// Query Trello for this card
 			MyTrello.get_single_card(gameID,(data) => {
 
 				// If we got the game (i.e. card) .. get the details
 				response = JSON.parse(data.responseText);
-				onGetGameDetails(response);
+				console.log(response);
+
+				// Get game components
+				var gameID = response["id"];
+				var gameName = response["name"];
+				var attachments = response["attachments"];
+
+				// Create a new Jeopardy instance
+				onCreateJeopardyGame(gameID, gameName);
+				
+				// Set the attachments mapping;
+				JeopardyGame.setAttachments(attachments);
+
+				// Set game name & ID on the page
+				onSetGameName();
+				onSetGameID();
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				console.log(data);
 				set_loading_results(result);
 			});
 		}
@@ -160,44 +183,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	}
 
 	// Get the key details of an existing game
-	function onGetGameDetails(cardResponse)
+	function onGetGameDetails()
 	{
 		try
 		{
-			console.log("Setting game details");
-
-			// Confirm Game ID
-			var gameID = cardResponse["id"];
-			var gameName = cardResponse["name"];
-
-			// Setup the Jeopardy Game object
-			onCreateJeopardyGame(gameID, gameName);
-
-			// Get the game's Passphrase
-			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
-				let response = JSON.parse(data.responseText);
-				let value = response[0]?.value?.text ?? "";
-				mydoc.setContent("#game_pass_phrase", {"value":value});
-				JeopardyGame.setGamePass(value);
+			// Get the game files
+			let attachments = Object.keys(JeopardyGame.Attachments);
+			attachments.forEach( (fileName)=>{
+				onGetGameFile(JeopardyGame.getGameID(),fileName)
 			});
-
-			// Get the attachments details; Loop through and get the game files
-			var attachments = cardResponse["attachments"] ?? [];
-			attachments.forEach( (attachment)=>{
-				var url = attachment.url;
-				var values = url.substring(url.indexOf("1")+2).split("/")
-				
-				// Get the key parts of the json file to load
-				let cardID = values[1];
-				let attachmentID = values[3];
-				let fileName = values[5];
-
-				onGetGameFile(cardID, attachmentID, fileName);
-			});
-
-			// Set things on page:
-			onSetGameName();
-			onSetGameID();
 
 			// Adjust visibility of tabs
 			mydoc.showContent("#host_edit_tab_section");
@@ -207,7 +201,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 			// See what sections can be shown after getting the diff components
 			setTimeout( ()=>{
-				console.log("Make sections visible");
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
@@ -221,22 +214,22 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	}
 
 	// Get the attachment & do the corresponding callback
-	function onGetGameFile(cardID, attachmentID, fileName)
+	function onGetGameFile(cardID, fileName)
 	{
 		try 
 		{
+			// Get the attachment ID;
+			let attachmentID = JeopardyGame.getAttachmentID(fileName);
+
 			// Get the corresponding attachment
 			MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
 						
 				let response = myajax.GetJSON(data.responseText);
 
-				// Set the attachment IDs
-				JeopardyGame.setAttachmentID(fileName, attachmentID);
-
 				// The file with the game rules
 				if(fileName == "config.json")
 				{
-					JeopardyGame.config.createConfiguration(response);
+					JeopardyGame.Config.createConfiguration(response);
 					
 					// Set the game rules after the config is setup
 					onSetGameRules();
@@ -291,7 +284,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{
 		Rules2.forEach( (ruleObj)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
-			let savedConfig = JeopardyGame.config.getConfiguration(ruleKey)
+			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
 			ruleObj["Key"] = ruleKey;
 			// Update options based on saved configuration
 			ruleObj.Options?.forEach((option)=>{
@@ -462,7 +455,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				
 				break;
 			case "edit_section_game_settings":
-				onSaveGameFile(JSON.stringify(JeopardyGame.config), "config.json");
+				onSaveGameFile(JSON.stringify(JeopardyGame.Config), "config.json");
 				break;
 			case "edit_section_game_questions":
 				onSaveGameFile(JSON.stringify(JeopardyGame.Categories), "categories.json");
@@ -503,7 +496,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 			if(data.status >= 200 && data.status < 300)
 			{
-				Logger.log("Updated custom field == " + customFieldName);
+				Logger.log("Updated custom field == Pass Phrase");
 			}
 		});
 	}
@@ -512,7 +505,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSaveGameFile(jsonString, fileName)
 	{
 		var gameID = JeopardyGame.getGameID();
-		// var jsonData = JeopardyGame.config.getConfigJSON();
+		// var jsonData = JeopardyGame.Config.getConfigJSON();
 		// var fileName = "config.json";
 		var currAttachmentID = JeopardyGame.getAttachmentID(fileName);
 
@@ -525,7 +518,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			{
 				let newFile = myajax.GetJSON(data.responseText);
 				JeopardyGame.setAttachmentID(fileName, newFile.id);
-				MyTrello.delete_card_attachment(JeopardyGame.gameID,currAttachmentID,(data)=>{
+				MyTrello.delete_card_attachment(JeopardyGame.getGameID(),currAttachmentID,(data)=>{
 					Logger.log(data.responseText);
 				});
 			}
@@ -856,7 +849,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		let proceed = confirm("Are you sure you want to delete this question?")
 		if(proceed)
 		{
-			console.log("Deleting question");
 			category.deleteQuestion(questionValue);
 
 			let questions = category.Questions;
@@ -938,20 +930,16 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			"FinalJeopardy": finalJeopardy,
 			"ValueCount": 100
 		}
-		console.log(newCategory);
-
 
 		// Updat existing category
 		if(categoryID != "")
 		{
-			console.log("Updating category")
 			// Update the category
 			JeopardyGame.updateCategory(newCategory);
 		}
 		// Or add new category
 		else if(categoryName != "")
 		{
-			console.log("Adding category")
 			// Add the new category
 			JeopardyGame.addCategory(newCategory);
 		}		
@@ -1068,12 +1056,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Delete the media
 	function onDeleteMedia(mediaID)
 	{
-		// remove_existing_media_from_page(mediaID);
 		try
 		{
-			document.getElementById(mediaID).remove();
-			JeopardyGame.setMediaToInactive(mediaID);
-			onChangeInSection();
+			let proceed = confirm("Are you sure you want to remove this media item?");
+			if(proceed)
+			{
+				document.getElementById(mediaID).remove();
+				JeopardyGame.setMediaToInactive(mediaID);
+				onChangeInSection();
+			}
 		}
 		catch(err)
 		{
@@ -1106,7 +1097,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				if(customInput != ""){ ruleObj["value"] = customInput; }
 
 				// Get the saved value
-				let savedObj = JeopardyGame.config.getConfiguration(obj.id)
+				let savedObj = JeopardyGame.Config.getConfiguration(obj.id)
 
 				if(HostUtility.isDiffValues( JSON.stringify(ruleObj), JSON.stringify(savedObj) ) )
 				{
@@ -1114,7 +1105,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 					hasDifferences = true;
 
 					// Update the JeapartyGame config
-					JeopardyGame.config.setConfiguration(obj.id, ruleObj);
+					JeopardyGame.Config.setConfiguration(obj.id, ruleObj);
 				}
 				keys.push(ruleObj);
 			});

@@ -124,7 +124,7 @@
 	.hyperlink { color:dodgerblue;}
 
 	.jeopardy_image{ max-width:95%; max-height:400px; }
-	#homemade_jeopardy_title { text-decoration:underline; }
+	/* #homemade_jeopardy_title { text-decoration:underline; } */
 
 	.notify_limegreen { color:limegreen !important; }
 	.notify_orange { color:orange !important; }
