@@ -3,6 +3,7 @@ var JeopardyGame = undefined;
 var GameCard = undefined; // Used to store the game card from Trello
 var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
+var TestListID = undefined;
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -22,6 +23,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 			// Validate Access
 			onValidateAccess(gameID);
+
+			// Always get the test list ID
+			onGetTestListID();
 		}
 		else
 		{
@@ -140,6 +144,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		});
 	}
 
+	// Get the TEST list ID
+	function onGetTestListID()
+	{
+		MyTrello.get_list_by_name( "TEST", (data)=>{
+			let listsResp = JSON.parse(data.responseText);
+			TestListID = listsResp[0]?.id ?? undefined;
+		});
+	}
+
 
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
@@ -154,7 +167,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 				// If we got the game (i.e. card) .. get the details
 				response = JSON.parse(data.responseText);
-				console.log(response);
 
 				// Get game components
 				var gameID = response["id"];
@@ -546,9 +558,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		mydoc.addClass(`#${targetSection}`, "selected_section");
 		mydoc.showContent(`#${targetSection}`);
 
-		// Conditional actions
-		
+		// Conditional action for syncing media
 		var syncMedia = (targetSection == "edit_section_game_media") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
+
+		// Setting if the game can be played
+		var canPlay = (targetSection == "edit_section_play") ? onSetCanPlay() : undefined; 
 
 		// Set the current section
 		CurrentSection = targetSection;
@@ -982,7 +996,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSyncMediaInterval(state)
 	{
 		// Always stop the interval first. ;) 
-		
 		clearInterval(syncMediaInterval);
 
 		// If starting, then setup interval
@@ -1070,6 +1083,78 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		{
 			console.error(err);
 		}
+	}
+
+/****** TEST/PLAY Game ****************************/ 
+
+	// To test the game
+	function onTestGame()
+	{
+		let checkGame = JeopardyGame.isValidGame();
+		let gameID = JeopardyGame.getGameID();
+
+		let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
+		mydoc.setContent("#testGameLoading", {"innerHTML": loadingGIF});
+		
+		if(!checkGame.IsValid)
+		{
+			let messages ="";
+			checkGame.Messages.forEach( (message)=>{
+				messages+= `<li>${message}</li>`;
+			});
+			let messageList = `<ul>${messages}</ul>`;
+			mydoc.setContent("#testGameValidation", {"innerHTML": ("This game is not valid for the following reasons" + messageList) })
+
+			// Set a cookie to indicate game has been tested; Expires in 60 minutes;
+			mydoc.setCookie(gameID+"Tested", "0", 60);
+			onSetCanPlay();
+
+			return;
+		}
+
+		console.log("Still testing");
+
+		// If we get to this point, actually play the game
+		let newURL = `/board/?gameid=${gameID}&listid=${TestListID}&test=1`;
+		console.log(newURL);
+		window.open(newURL, "_blank");
+
+		// Set a cookie to indicate game has been tested; Expires in 60 minutes;
+		mydoc.setCookie(gameID+"Tested", "1", 60);
+
+		// If tested, then we can enable the play button
+		onSetCanPlay();
+	}
+
+	// Set the ability to play
+	function onSetCanPlay()
+	{
+		let gameID = JeopardyGame.getGameID();
+		let testedCookie = mydoc.getCookie(gameID+"Tested") ?? "";
+		JeopardyGame.Tested = (testedCookie == "1") ? true : JeopardyGame.Tested;
+
+		if(JeopardyGame.Tested)
+		{
+			mydoc.removeClass("#playGameButton", "dlf_button_gray");
+			mydoc.addClass("#playGameButton", "dlf_button_blue");
+		}
+		else
+		{
+			mydoc.addClass("#playGameButton", "dlf_button_gray");
+			mydoc.removeClass("#playGameButton", "dlf_button_blue");
+		}
+	}
+	// Action to play a real game
+	function onPlayGame()
+	{
+		console.log("Checking if we can play this game"); 
+		// If the game has not been tested, then exit
+		if(!JeopardyGame.Tested)
+		{
+			return;
+		}
+
+		console.log("Create list and play a new game");
 	}
 
 /****** HELPER OBJECT: Simplifing approach for hosting ****************************/ 

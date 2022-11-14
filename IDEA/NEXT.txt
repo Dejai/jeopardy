@@ -1,7 +1,5 @@
 NEXT:
 
-    Add a loader on the Create form to know something is spinning
-
     Adjust the TEST/PLAY page to only show buttons based on validation
         > Sub-validation that you cannot play a game without testing it
         > Maybe testing must be saved in a cookie?

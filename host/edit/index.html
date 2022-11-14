@@ -121,93 +121,33 @@
 			</div>
 
 			<div id="edit_section_play" class="edit_section hidden">
-				<p class="section_description">
-					Use these buttons to test or play this game. 
-				</p>
-				<div class="center_section_70">
-					<table class="edit_game_section_table" style="width:100%;text-align:left;">
-						<colgroup>
-							<col style="width:40%;"/>
-							<col style="width:65%;"/>
-						</colgroup>
-						<tbody>
-							<tr>
-								<td style="text-align:center;">
-									<button id="test_game_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
-										<h3>
-											TEST GAME
-										</h3>
-									</button>
-									<span id="test_game_loading"></span>
-								</td>
-								<td>
-									<p>Use this to do a TEST run of your game.</p>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2" style="border-top:2px solid white; padding-left:5%; padding-top:7%;">
-									<h2 style="text-align:center;">Ready to Play?</h2>
-									<p>Please confirm the following: </p>
-									<input id="confirm_settings" type="checkbox" onchange="onConfirmForPlay()">
-									<label for="confirm_settings" class="pointer">I have configured my Settings/Rules for the game.</label>
-									<br/>
-									<input id="confirm_testing" type="checkbox" onchange="onConfirmForPlay()">
-									<label for="confirm_testing" class="pointer">I have done a TEST GAME (above) and everything works as expected.</label>
-									<br/>
-									<input id="confirm_real_game" type="checkbox" onchange="onConfirmForPlay()">
-									<label for="confirm_real_game" class="pointer">I am ready to play a real game - with real teams.</label>
-									
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">
-									<p id="play_game_confirmation_error" style="color:red;" class="hidden">Please confirm the things above before you can play a real game.</p>
-								</td>
-							</tr>
-							<tr>
-								<td style="text-align:center;">
-									<button id="play_button" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onPlayGame()">
-										<h3>
-											PLAY GAME
-										</h3>
-									</button>
-									<span id="play_game_loading"></span>
-								</td>
-								<td>
-									<p>Use this to play a <strong>real game</strong>.</p>
-								</td>
-							</tr>
-							<tr class="host_view_section">
-								<td colspan="2">
-									<hr>
-								</td>
-							</tr>
-							<tr class="host_view_section">
-								<td>
-									<button class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onOpenHostView()">
-										<h3>
-											HOST VIEW
-										</h3>
-									</button>
-								</td>
-								<td>
-									<p>Use this to open the "Host" view. </p>
-									<p>This is how you can see the questions & answers at the same time.</p>
-									<p>This is only visible when the setting for "Answering Questions" is set to "First to Buzz!"</p>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">
-									<div id="play_notification_section">
-
-									</div>
-								</td>
-							</tr>
-
-						</tbody>
-					</table>
+				<div class="center_section_702">
+					<h2>Test the Game</h2>
+					<div style="padding-left:5%;">
+						<p>Run a test of the game to ensure everything works as expected.</p>
+						<p>This should not be used for the real game.</p>
+						<div>
+							<button id="testGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
+								TEST GAME
+							</button>
+							<span id="testGameLoading" style="margin-top:2%;"></span>
+						</div>
+						<p id="testGameValidation" style="color:red;"></p>
+					</div>
+					<hr/>
+					<h2>Play the Game</h2>
+					<div style="padding-left:5%;">
+						<p>Play the real game with a real game code (to be shared with players).</p>
+						<p>This can only be done if you have tested the game within the last hour.</p>
+						<div>
+							<button id="playGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onPlayGame()">
+								PLAY GAME
+							</button>
+							<span id="playGameLoading" style="margin-top:2%;"></span>
+						</div>
+						<p id="playGameValidation" style="color:red;"></p>
+					</div>
 				</div>
-
 			</div>			
 		</div>
 	</div>
