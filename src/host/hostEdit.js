@@ -1147,12 +1147,12 @@ var TestListID = undefined;
 		if(JeopardyGame.Tested)
 		{
 			mydoc.removeClass("#playGameButton", "dlf_button_gray");
-			mydoc.addClass("#playGameButton", "dlf_button_blue");
+			mydoc.addClass("#playGameButton", "dlf_button_limegreen");
 		}
 		else
 		{
 			mydoc.addClass("#playGameButton", "dlf_button_gray");
-			mydoc.removeClass("#playGameButton", "dlf_button_blue");
+			mydoc.removeClass("#playGameButton", "dlf_button_limegreen");
 		}
 	}
 	// Action to play a real game

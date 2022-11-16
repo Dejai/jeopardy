@@ -782,12 +782,14 @@
 				// Select directly by code
 				case "2":
 					teamName = this.getTeam(code)?.Name ?? undefined;
+					this.LastTeamCorrect = code;
 					break;
 
 				// Questions picked randomy, so no need for this
 				case "3":
 					teamName = this.Teams[0]?.Name ?? undefined;
 					break;
+					
 				// Defaults to next option
 				default:
 					let idx = Math.floor(Math.random() * this.Teams.length);
@@ -797,11 +799,6 @@
 			this.PlayerSelected = (teamName != undefined);
 			return teamName; 
 		}
-
-		// Set team by code
-		setTeamByCode(code){ return this.setCurrentTeam("2",code); }
-		// Set last team to be correct
-		setLastTeamCorrect(){ return this.setCurrentTeam(this.LastTeamCorrect); }
 	}
 
 	

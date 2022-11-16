@@ -1,5 +1,4 @@
 NEXT:
-
     For anything that needs to be hidden based on the config options
         > Set a common class of "optionsBased"
         > Then couple that with the thing itself (e.g. section for current player)

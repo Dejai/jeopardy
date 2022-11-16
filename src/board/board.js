@@ -817,17 +817,12 @@ var IS_TEST_RUN = true;
 		// Then, close the question popup
 		onCloseQuestion();
 
-		// Updating turn and resetting answers; Only if NOT Final Jeopardy
-		if(!JeopardyGame.Game.IsFinalJeopardy)
-		{
-			onUpdateTurn(); // Pick whos turn it is next
+		// Reset the answers for each team, so it no longer shows
+		resetAnswers(); // Reset the answers for each team.
 
-			// Reset the answers for each team, so it no longer shows
-			resetAnswers(); // Reset the answers for each team.
-		}
-		else if (JeopardyGame.Game.IsFinalJeopardy)
+		// If assigning final jeopardy points;
+		if (JeopardyGame.Game.IsFinalJeopardy)
 		{
-			
 			// Indicate the end of the game.
 			let gameBoardSect = document.getElementById("game_board_section")
 			let currContent = gameBoardSect.innerHTML;
@@ -846,7 +841,7 @@ var IS_TEST_RUN = true;
 		var question_value = document.getElementById("value_block").innerText; // Get the value of the question
 
         // Get the setting mode;
-        let mode = JeopardyGame.Config["SelectingQuestions"]?.option ?? "";
+        let mode = JeopardyGame.Config.SelectingQuestions?.option ?? "";
 
 		// Get the team inputs for Who Got It Right?
 		var teamInputs = document.querySelectorAll(".who_got_it_right") ?? [];
@@ -856,15 +851,15 @@ var IS_TEST_RUN = true;
 
 			let teamCode = obj.getAttribute("data-jpd-team-code");
 
-			// If version where single person gets it right; 
-			if(mode == "2" && obj.checked)
-			{
-				JeopardyGame.Game.LastTeamCorrect = teamCode;
-			}
+			// If Last Team keeps going, set them as last team
+			if(mode == "2" && obj.checked){ JeopardyGame.Game.LastTeamCorrect = teamCode;}
 
 			// Calculate and set the score based on teamCode and if object is checked
 			setNewTeamScore(teamCode, question_value, obj.checked);
 		});
+
+		// Update the turn; Always send last team correct (only used in specific mode);
+		onUpdateTurn(JeopardyGame.Game.LastTeamCorrect); 
 		
 		// Update the leader board
 		updateLeader();
@@ -873,12 +868,17 @@ var IS_TEST_RUN = true;
 	// Updates the turn to the next player
 	function onUpdateTurn(givenCode=undefined)
 	{
+		// Don't do anything if this is Final Jeopardy
+		if(JeopardyGame.Game.IsFinalJeopardy)
+			return
+		
+		// Determine if player is set
 		let playerSet = (JeopardyGame.Game.PlayerSelected);
 
+		// Determine which mode we are setting for
 		let whoFirstMode = JeopardyGame.Config.WhoGoesFirst?.option ?? "";
         let selectMode = JeopardyGame.Config.SelectingQuestions?.option ?? ""
-		// Set mode based on apprach
-		mode = (playerSet) ? selectMode : whoFirstMode;
+		let mode = (playerSet) ? selectMode : whoFirstMode;
 
 		// Switch on possible modes;
 		switch(mode)
@@ -1009,9 +1009,6 @@ var IS_TEST_RUN = true;
 		}
 		return nextQuestion;
 	}
-
-
-
 
 
 /********** HELPER FUNCTIONS -- GETTERS **************************************/
@@ -1153,11 +1150,14 @@ var IS_TEST_RUN = true;
 	// Reset the answer
 	function resetAnswers()
 	{
+		// Don't reset if it's final jeopardy
+		if(JeopardyGame.Game.IsFinalJeopardy)
+			return
+
 		Logger.log("Clearing Answers in 5 seconds!");
 		setTimeout(function(){
 			let teams = Array.from(document.querySelectorAll(".team_name"));
 			teams.forEach(function(obj){
-
 				card_id = obj.getAttribute("data-jpd-team-code");
 				MyTrello.update_card_description(card_id, "");
 			});
