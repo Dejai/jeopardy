@@ -715,6 +715,7 @@
 			this.AllHeadersVisible = false;
 			this.HeadersVisible = 0;
 			this.IsFinalJeopardy = false;
+			this.IsTestRun = false;
 			this.IsOver = false;
 		}
 

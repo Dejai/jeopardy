@@ -5,9 +5,6 @@ var CurrentSection = "";
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 var TestListID = undefined;
 
-var IS_TEST_RUN = true;
-
-
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
 	mydoc.ready(function()
@@ -414,12 +411,12 @@ var IS_TEST_RUN = true;
 		// mydoc.showContent("#finalJeopardyButton");
 
 		// Set a comment indicating the game is being played
-		// if(!IS_TEST_RUN && CURR_GAME_CODE != "TEST")
-		// {
-		// 	let date = Helper.getDateFormatted();
-		// 	let comment = `${date} --> ${CURR_GAME_CODE}`;
-		// 	MyTrello.create_card_comment(CURR_GAME_ID, comment);
-		// }
+		if(!JeopardyGame.Game.IsTestRun && JeopardyGame.Game.Code != "TEST")
+		{
+			let date = Helper.getDateFormatted();
+			let comment = `${date} --> ${JeopardyGame.Game.Code}`;
+			MyTrello.create_card_comment(CURR_GAME_ID, comment);
+		}
 	}
 
     // Set the question popup; Also used to reset after closing 
@@ -596,11 +593,11 @@ var IS_TEST_RUN = true;
 	function onEndGame()
 	{
 		// Only archive if it is NOT a test run;
-		if(!IS_TEST_RUN)
+		if(!JeopardyGame.Game.IsTestRun)
 		{
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
-			let archive_name = `${dateCode} - ${CURR_GAME_CODE} - ${GAME_NAME}`;
+			let archive_name = `${dateCode} - ${JeopardyGame.Game.Code} - ${JeopardyGame.getGameName()}`;
 			MyTrello.update_list_state(CURR_LIST_ID, "closed", archive_name , (data)=>{
 				alert("Game has been archived");
 			});
@@ -665,7 +662,7 @@ var IS_TEST_RUN = true;
         mydoc.showContent("#question_view");
 
 		// Log that a question was asked; Including setting in Trello
-		// if(!IS_TEST_RUN)
+		// if(!JeopardyGame.Game.IsTestRun)
 		// {
 		// 	MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
 		// }
@@ -768,9 +765,8 @@ var IS_TEST_RUN = true;
 
 		// Slowly bring in people's answer
 		setTimeout(()=>{
-			mydoc.showContent("#correct_block");
-			// mydoc.addClass("#correct_block", "visibleBlockSmall");
-			// mydoc.removeClass("#correct_block", "hiddenBlock");
+			mydoc.addClass("#correct_block", "visibleBlock");
+			mydoc.removeClass("#correct_block", "hiddenBlock");
 		},1500);
 
 		// Add reveal timestamp
