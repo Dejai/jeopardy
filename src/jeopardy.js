@@ -140,6 +140,7 @@
 
 		// Get the answer part object
 		getAnswer(){ return JSON.stringify(this.Answer); }
+
 	}
 
 /****** CLASS: "Question" ; For the question parts of a question ********/
@@ -162,6 +163,32 @@
 			this.URL = jsonObj.URL;
 			return true;
 		}
+
+		// Get question formatted for the game
+		getQuestionHTML(jeopardyInstance)
+		{
+			let content = "";
+			let newLine = "<br/>";
+
+			let imageHTML = "";
+			let audioHTML = "";
+			let textHTML = "";
+			let urlHTML = ""
+
+			// Add the Media components to the content (if applicable);
+			if(this.Image != ""){ imageHTML = jeopardyInstance.getMediaHTML(this.Image); }
+			if(this.Audio != ""){ audioHTML = jeopardyInstance.getMediaHTML(this.Audio); }
+			if(this.Text != ""){ textHTML = JeopardyHelper.formatText(this.Text); }
+			if(this.URL != ""){ urlHTML = JeopardyHelper.formatURL(this.URL); }
+
+			// Add the pieces to the overall content
+			content += (content != "") ? (newLine + imageHTML) : imageHTML;
+			content += (content != "") ? (newLine + audioHTML) : audioHTML;
+			content += (content != "") ? (newLine + textHTML) : textHTML;
+			content += (content != "") ? (newLine + urlHTML) : urlHTML;
+
+			return content;
+		}
 	}
 
 /****** CLASS: "Answer" ; For the parts of an answer ********/
@@ -183,6 +210,32 @@
 			this.Image = jsonObj.Image;
 			this.URL = jsonObj.URL;
 			return true;
+		}
+
+		// Get answer formatted for the game
+		getAnswerHTML(jeopardyInstance)
+		{
+			let content = "";
+			let newLine = "<br/>";
+
+			let imageHTML = "";
+			let audioHTML = "";
+			let textHTML = "";
+			let urlHTML = ""
+
+			// Add the Media components to the content (if applicable);
+			if(this.Image != ""){ imageHTML = jeopardyInstance.getMediaHTML(this.Image); }
+			if(this.Audio != ""){ audioHTML = jeopardyInstance.getMediaHTML(this.Audio); }
+			if(this.Text != ""){ textHTML = JeopardyHelper.formatText(this.Text); }
+			if(this.URL != ""){ urlHTML = JeopardyHelper.formatURL(this.URL); }
+
+			// Add the pieces to the overall content
+			content += (content != "") ? (newLine + imageHTML) : imageHTML;
+			content += (content != "") ? (newLine + audioHTML) : audioHTML;
+			content += (content != "") ? (newLine + textHTML) : textHTML;
+			content += (content != "") ? (newLine + urlHTML) : urlHTML;
+
+			return content;
 		}
 	}
 
@@ -257,7 +310,8 @@
 			}
 		}
 
-		getMediaHTML(isAudioAutoPlay)
+		// Get the formatted HTML for the media;
+		getMediaHTML(isAudioAutoPlay=false)
 		{
 			let html = "";
 			if(this.Type == "Image")
@@ -302,8 +356,14 @@
 
 			// Keep track of the game being tested
 			this.Tested = false;
+
+			// Keep a map of questions/answers (used for board)
+			this.QAMap = {}
 		}
 
+	/* Subsection: Game * */
+		newGame(code){ this.Game = new Game(code) }
+	
 	/* Subsection: Categories * */
 		// Get the list of categories
 		getCategories()
@@ -373,6 +433,14 @@
 
 
 	/* Subsection: Media * */
+		getMediaHTML(mediaID, autoPlay=false)
+		{
+			let filtered = this.Media?.filter((media)=>{
+				return (media.ID == mediaID);
+			});
+			let mediaHTML = filtered[0]?.getMediaHTML(autoPlay)  ?? "";
+			return mediaHTML;
+		}
 		// Get/Set the media files
 		getMedia(name)
 		{ 
@@ -445,6 +513,49 @@
 		setGamePass(pass){ this.gamePass = pass; }
 		// Get the game passphrase
 		getGamePass(){ return this.gamePass; }
+
+	/* Subsection: The Game Board */
+		
+		// Get/Set the game board
+		getGameBoard2(callback)
+		{
+			// Loop through categories to build board
+			this.getCategories()?.forEach( (category, idx, array)=> {
+
+				// Is this the final Jeopardy category;
+				let isFinalJeopardy = (category.FinalJeopardy == "Yes");
+
+				// Determine the width of this category
+				let width = (isFinalJeopardy) ? 100 : 100 * (1 / (this.Categories.length-1) );
+				let dynamicWidth = `style="width:${width}%;"`;
+				
+				// Loop through the questions in this category; Set key
+				let questions = category.Questions;
+				questions.forEach((q)=>{
+					let key = `${category.Name}-${q.Value}`;
+					q.Key = key;
+					// Add question to the game
+					this.Game.addQuestion(key,q);
+				});
+	
+				// Set the question templates
+				MyTemplates.getTemplate("../../templates/board/boardQuestion.html", questions, (questionsTemplate)=>{
+					
+					// The category template object
+					let categoryObj = {
+							"DynamicWidth": dynamicWidth,
+							"CategoryName":(category.FinalJeopardy=="Yes") ? "" : category.Name,
+							"PreFilledCategoryName":(category.FinalJeopardy=="Yes") ? "Final Jeopardy!" : "",
+							"Questions":questionsTemplate,
+						}
+					// Set the category templates;
+					MyTemplates.getTemplate("../../templates/board/boardCategory.html", categoryObj, (categoriesTemplate)=>{
+						callback(categoriesTemplate,isFinalJeopardy);
+					});
+				});
+			});
+		}
+
 		// Get the game board
 		getGameBoard()
 		{
@@ -581,7 +692,119 @@
 		}
 	};
 
+/****** CLASS: "Game" ; This stores details specific to a single game of Jeopardy ********/
 
+	class Game 
+	{
+		constructor(code)
+		{
+			this.Code = code;
+			this.ListID = undefined;
+
+			// Keeping track of questions/answers
+			this.QAMap = {};
+			this.Asked = []; //Keeps track of questions already asked;
+
+			// Keep track of teams in this game;
+			this.Teams = [];
+			this.CurrentTeamIdx = -1;
+			this.PlayerSelected = false;
+			this.LastTeamCorrect = undefined;
+
+			// Keep track of game state
+			this.AllHeadersVisible = false;
+			this.HeadersVisible = 0;
+			this.IsFinalJeopardy = false;
+			this.IsOver = false;
+		}
+
+		// Add the list ID
+		setListID(listID){ this.ListID = listID; }
+		getListID(){ return this.ListID; }
+
+
+		// Get the game code
+		getCode(){ return this.Code; }
+
+		// Add a question for the game
+		addQuestion(key, question){ this.QAMap[key] = question; }
+		// Get a question
+		getQuestion(key)
+		{
+			let question = undefined;
+			
+			let questObj = this.QAMap[key] ?? undefined;
+			if(questObj != undefined)
+			{
+				question = questObj;
+				this.Asked.push(key);
+				console.log("Process all the question; Including audio/images");
+			}
+			return question;
+		}
+
+		// Add a team (if not already exists)
+		addTeam(jsonObj)
+		{
+			let added = false;
+			let teamObj = JeopardyHelper.getJSON(jsonObj);
+			let gameCard = teamObj?.Name?.includes("GAME_CARD_");
+			if(this.getTeam(teamObj?.Code) == undefined && !gameCard)
+			{
+				this.Teams.push(teamObj);
+				added = true;
+			}
+			return added;
+		}
+		// Get a team based on their code
+		getTeam(code)
+		{
+			let result = this.Teams.filter((team)=>{
+				return (team.Code == code);
+			});
+			let team = result[0] ?? undefined;
+			return team
+		}
+
+		// Set the current team
+		setCurrentTeam(mode, code)
+		{
+			let teamName = undefined;
+			switch(mode)
+			{	
+				// Next Available (everyone gets a turn)
+				case "1":
+					let nextIdx = this.CurrentTeamIdx+1
+					nextIdx = (nextIdx >= this.Teams.length) ? 0 : nextIdx;
+					teamName = this.Teams[nextIdx]?.Name ?? undefined;
+					break;
+
+				// Select directly by code
+				case "2":
+					teamName = this.getTeam(code)?.Name ?? undefined;
+					break;
+
+				// Questions picked randomy, so no need for this
+				case "3":
+					teamName = this.Teams[0]?.Name ?? undefined;
+					break;
+				// Defaults to next option
+				default:
+					let idx = Math.floor(Math.random() * this.Teams.length);
+					let team = this.Teams.length[idx];
+					teamName = team?.Name;
+			}
+			this.PlayerSelected = (teamName != undefined);
+			return teamName; 
+		}
+
+		// Set team by code
+		setTeamByCode(code){ return this.setCurrentTeam("2",code); }
+		// Set last team to be correct
+		setLastTeamCorrect(){ return this.setCurrentTeam(this.LastTeamCorrect); }
+	}
+
+	
 
 /****** CONST: "JeopardyHelper" ; For general helper methods used by multiple classes ********/
 	const JeopardyHelper = 
@@ -610,5 +833,44 @@
 		formatContent: (value) => {
 			let formatted = value.replaceAll(/((^|\s))\"/g, "$1&#8220;").replaceAll(/\"/g, "&#8221;")
 			return formatted
+		},
+
+		// Format text for Questions/Answers
+		formatText: (value)=>{
+			formatted = "";
+			value = value.trim();
+			Logger.log("Text value: " + value);
+	
+	
+			if(value.trim() != "")
+			{
+				let new_value = value.trim()
+							.replaceAll("\\n", "<br/>")
+							.replaceAll("{subtext}", "<span class='jpd_subtext'>")
+							.replaceAll("{/subtext}", "</span>")
+							.replaceAll("{bold}", "<strong><em>")
+							.replaceAll("{/bold}", "</em></strong>");
+				formatted = `<span>${new_value}</span>`
+			}
+			return formatted;
+		},
+
+		// Format a URL
+		formatURL: (value)=>{
+			formatted = "";
+			value = value.trim();
+			Logger.log("Hyperlink value: " + value);
+
+			if(value != "")
+			{
+				formatted = `<a class='answer_link' href=\"${value}\" target='_blank'>${value}</a>`;
+			}
+			return formatted;
 		}
+
+	}
+
+	function formatURL(value)
+	{
+		
 	}

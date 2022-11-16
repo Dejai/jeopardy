@@ -1,0 +1,16 @@
+<tr class="team_row">
+    <td class="team_name_cell">
+        <h2>
+            <span id="teamChevron_{{Code}}" data-jpd-team-code="{{Code}}" class="fa fa-code pointer" style="color:orange;font-size:60%;" onclick="onToggleTeamShortCode(event)"></span>
+            <span data-jpd-team-code="{{Code}}" class="team_name pointer">{{Name}}</span>
+        </h2>
+        <p id="hiddenShortCode_{{Code}}" class="hiddenShortCode hidden">{{ShortCode}}</p>
+    </td>
+    <td>
+        <h2><span data-jpd-team-code="{{Code}}" class="team_score">...</span></h2>
+    </td>
+    <td class="wager_row">
+        <button class="setTeamDirectly option{{Mode}}" data-jpd-team-code="{{Code}}" onclick="setCurrentPlayerByCode(event)">Set as First Team</button>
+        <h2><span data-jpd-team-code="{{Code}}" class="team_wager hidden"></span></h2>
+    </td>
+</tr>

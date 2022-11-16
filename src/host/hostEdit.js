@@ -294,7 +294,9 @@ var TestListID = undefined;
 	// Set the game Config/Rules
 	function onSetGameRules()
 	{
-		Rules2.forEach( (ruleObj)=>{
+		rulesHTML = "";
+
+		Rules2.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
 			ruleObj["Key"] = ruleKey;
@@ -308,12 +310,18 @@ var TestListID = undefined;
 				ruleObj["FormattedOptions"] = template;
 
 				MyTemplates.getTemplate("../../templates/host/ruleRow.html",ruleObj,(template)=>{
-					mydoc.setContent("#settings_table_body", {"innerHTML": template}, true); // append to existing HTML;
+					
+					rulesHTML += template;
 
-					// Run the option details immediately
-					document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-						onToggleRuleOptionDetails(ruleOpt);
-					});
+					if(idx == array.length-1)
+					{
+						mydoc.setContent("#settings_table_body", {"innerHTML": rulesHTML});
+						// Run the option details immediately
+						document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+							onToggleRuleOptionDetails(ruleOpt);
+						});
+					}
+					
 				});
 			});
 		});
@@ -399,7 +407,6 @@ var TestListID = undefined;
 	{
 		if(!SectionsToBeSaved.includes(CurrentSection))
 		{
-			
 			SectionsToBeSaved.push(CurrentSection);
 		}
 
@@ -415,8 +422,6 @@ var TestListID = undefined;
 	function onSaveGame()
 	{
 		// Switch what to save based on the section
-		
-		
 
 		if(SectionsToBeSaved.length > 0)
 		{
@@ -428,7 +433,6 @@ var TestListID = undefined;
 			while(SectionsToBeSaved.length > 0)
 			{
 				let section = SectionsToBeSaved.pop();
-				
 				onSaveBySection(section);
 			}
 
@@ -452,6 +456,8 @@ var TestListID = undefined;
 	// Save the details based on section
 	function onSaveBySection(section)
 	{
+		console.log("Saving section = " + section);
+
 		switch(section)
 		{
 			case "edit_section_game_details":
@@ -517,12 +523,10 @@ var TestListID = undefined;
 	function onSaveGameFile(jsonString, fileName)
 	{
 		var gameID = JeopardyGame.getGameID();
-		// var jsonData = JeopardyGame.Config.getConfigJSON();
-		// var fileName = "config.json";
 		var currAttachmentID = JeopardyGame.getAttachmentID(fileName);
 
-		
-		
+		console.log("Attachment ID: " + currAttachmentID);
+		console.log(JSON.parse(jsonString));
 
 		// Save the config file
 		MyTrello.create_card_attachment(gameID,fileName,jsonString,(data)=>{
@@ -633,6 +637,11 @@ var TestListID = undefined;
 	function onRuleOptionChange(event)
 	{
 		let sourceEle = event.srcElement;	
+		let sourceID = sourceEle.id;
+		let value = sourceEle.value;
+		// Update the game
+		JeopardyGame.Config[sourceID].option = value;
+		// Toggle details
 		onToggleRuleOptionDetails(sourceEle);
 	}
 
@@ -1112,10 +1121,8 @@ var TestListID = undefined;
 			return;
 		}
 
-		console.log("Still testing");
-
 		// If we get to this point, actually play the game
-		let newURL = `/board/?gameid=${gameID}&listid=${TestListID}&test=1`;
+		let newURL = `/board/?gameid=${gameID}&gamecode=TEST&test=1`;
 		console.log(newURL);
 		window.open(newURL, "_blank");
 
@@ -1124,6 +1131,10 @@ var TestListID = undefined;
 
 		// If tested, then we can enable the play button
 		onSetCanPlay();
+
+		// Clear the spinning
+		mydoc.setContent("#testGameLoading", {"innerHTML":""});
+
 	}
 
 	// Set the ability to play

@@ -343,16 +343,6 @@
 
 /************ HELPER FUNCTIONS -- DOM Manipulation ***************************************/
 
-	// Create the Game Board TABLE
-	function createGameBoard()
-	{
-		Logger.log("Creating the Game Board.");
-		game_board = getJeopardyGameBoard();
-		categories = JEOPARDY_GAME.getCategories();
-		TOTAL_CATEGORIES = categories?.length-1 ?? 0;
-		mydoc.loadContent(game_board, "game_board_body");
-	}
-
 	// Print the errors
 	function printErrors(errors)
 	{
@@ -363,23 +353,23 @@
 		gameNotification(errorMessage, true);
 	}
 
-	// Add game name to the board
-	function addGameName()
-	{
-		// Set Game Name on the board
-		document.getElementById("game_name").innerHTML = GAME_NAME 
-	}
+	// // Add game name to the board
+	// function addGameName()
+	// {
+	// 	// Set Game Name on the board
+	// 	document.getElementById("game_name").innerHTML = GAME_NAME 
+	// }
 
-	// Show the appropriate game section
-	function showGameSections()
-	{
-		// Hide Content
-		mydoc.hideContent("#load_game_section");
-		mydoc.hideContent("#homemade_jeopardy_title");
+	// // Show the appropriate game section
+	// function showGameSections()
+	// {
+	// 	// Hide Content
+	// 	mydoc.hideContent("#load_game_section");
+	// 	mydoc.hideContent("#homemade_jeopardy_title");
 
-		// Show Content
-		mydoc.showContent("#game_section");
-	}
+	// 	// Show Content
+	// 	mydoc.showContent("#game_section");
+	// }
 
 	// Manage the notifications on the page
 	function gameNotification(content, isErrorMsg=false, isLoaderHidden=true)
@@ -440,6 +430,10 @@
 	//	>> If the [mode] passed in is in the list [hidIfMod] list, then it will be hidden
 	function loadQuestionViewSection(sectionID, content, mode, showInFinalJeopardy, hideIfMode="")
 	{
+
+		loadQuestionViewSection("question_block", question, mode, true);
+
+
 		let element = document.getElementById(sectionID);
 		let modesToHideFor = (hideIfMode) ?? "-1";
 
@@ -553,34 +547,33 @@
 
 
 	// Set syncing details
-	function setSyncingDetails(message, iconColor)
-	{
-		refreshScores = document.getElementById("team_sync_message");
-		refreshScores.innerHTML = `&nbsp; ${message}`;
-		refreshScores.style.color = iconColor;
-	}
-
+	// function setSyncingDetails(message, iconColor)
+	// {
+	// 	refreshScores = document.getElementById("team_sync_message");
+	// 	refreshScores.innerHTML = `&nbsp; ${message}`;
+	// 	refreshScores.style.color = iconColor;
+	// }
 
 
 /******************* EVENT LISTENERS ************************/
 
 	// Adds the listeners to the category columns once loaded
-	function addListenerCategoryClick()
-	{
-		var categories = document.querySelectorAll(".category_title");
-		categories.forEach(function(cell){
-			cell.addEventListener("click", onCategoryClick);
-		});
-	}
+	// function addListenerCategoryClick()
+	// {
+	// 	var categories = document.querySelectorAll(".category_title");
+	// 	categories.forEach(function(cell){
+	// 		cell.addEventListener("click", onCategoryClick);
+	// 	});
+	// }
 
-	// Add listeners to the game cells;
-	function addListenerQuestionClick()
-	{
-		var cells = document.querySelectorAll(".category_option");
-		cells.forEach(function(cell){
-			cell.addEventListener("click", onQuestionClick);
-		});
-	}
+	// // Add listeners to the game cells;
+	// function addListenerQuestionClick()
+	// {
+	// 	var cells = document.querySelectorAll(".category_option");
+	// 	cells.forEach(function(cell){
+	// 		cell.addEventListener("click", onQuestionClick);
+	// 	});
+	// }
 
 	// Listener for keyboard event = keyup
 	function onKeyboardKeyup()
@@ -706,9 +699,11 @@
 		loadQuestionViewSection("question_block", question, mode, true);
 		loadQuestionViewSection("value_header", undefined, mode, false);
 		loadQuestionViewSection("value_block", questionValue, mode, false);
+
 		loadQuestionViewSection("answer_block", answer, mode, false, "1,2");
 		loadQuestionViewSection("reveal_answer_block", undefined, mode, true, "2");
 		loadQuestionViewSection("correct_block", undefined, mode, false, "1");
+
 		document.getElementById("assignScoresButton").disabled = true; 
 		
 		// Show the question section
@@ -839,7 +834,7 @@
 		// Hide Content
 		mydoc.hideContent("#rules_section");
 		
-		//  Show Content
+		// Show Content
 		mydoc.showContent("#game_board");	
 		mydoc.showContent("#teams_table");
 		mydoc.showContent("#teams_sync_section");
@@ -1145,184 +1140,6 @@
 
 
 /********** HELPER FUNCTIONS -- GETTERS **************************************/
-
-	// Get the table section for "Who Got It Right?"
-	function getWhotGotItRight_Section()
-	{
-
-		let tableHtml = "";
-
-		let setting = SETTINGS_MAPPING["Answering Questions"];
-		let mode = setting.option;
-		
-		// Load the different sections of who got it right
-		let colGroupSection = getWhoGotItRight_ColGroup(mode);
-		let headSection = getWhoGotItRight_Head(mode);
-		let bodySection = getWhoGotItRight_Body(mode);
-
-		tableHtml = colGroupSection + headSection + bodySection;
-
-		return tableHtml;
-
-	}
-
-	// Get the <colgroup> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_ColGroup(mode)
-	{
-		let colGroupSection = undefined;
-
-		// An override if it is final jeopardy
-		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
-
-		switch(mode)
-		{
-			case "1":
-				colGroupSection = `<colgroup>
-										<col style="width:30%"/>
-										<col style="width:40%">
-										<col/>
-									</colgroup>`;
-				break;
-			case "2":
-				colGroupSection = `<colgroup>
-										<col style="width:10%"/>
-									</colgroup>`;
-				break;
-			case "FJ!":
-					colGroupSection = `<colgroup>
-											<col style="width:20%"/>
-											<col style="width:30%">
-											<col style="width:35%">
-											<col/>
-										</colgroup>`;
-					break;
-			default:
-				colGroupSection = "";
-		}
-		return colGroupSection;
-	}
-
-	// Get the <head> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_Head(mode)
-	{
-		let headSection = undefined;
-
-		// An override if it is final jeopardy
-		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
-
-		switch(mode)
-		{
-			case "1":
-				headSection = `<thead>
-									<tr>
-										<th>Team</th>
-										<th>Answer</th>
-										<th>Correct?</th>
-									</tr>
-								</thead>`;
-				break;
-			case "2":
-				headSection = `<thead>
-									<tr>
-										<th>Select Team</th>
-									</tr>
-								</thead>`;
-				break;
-			case "FJ!":
-					headSection = `<thead>
-										<tr>
-											<th>Team</th>
-											<th>Answer</th>
-											<th>Correct?</th>
-										</tr>
-									</thead>`;
-					break;
-			default:
-				headSection = "";
-		}
-		return headSection;
-	}
-
-	// Get the <body> section for the section = "Who Got It Right?"
-	function getWhoGotItRight_Body(mode)
-	{
-		// Get the list of teams;
-		var teams = document.querySelectorAll(".team_name");
-
-		// Building the teams for "Who Got It Right?"
-		var teamListWhoGotItRight = "";
-
-		// An override if it is final jeopardy
-		mode = (IS_FINAL_JEOPARDY) ? "FJ!" : mode;
-
-		teams.forEach(function(obj){
-			let teamName = obj.innerHTML;
-			let code = obj.getAttribute("data-jpd-team-code");
-
-			let teamOption = "";
-
-			switch(mode)
-			{
-				case "1":
-					teamOption = getWhotGotItRight_CheckBoxRow(teamName, code);
-					break;
-				case "2":
-					teamOption = getWhotGotItRight_RadioButtonRow(teamName, code);
-					break;
-				case "FJ!":
-						teamOption = getWhotGotItRight_CheckBoxRow(teamName, code, true);
-						break;
-				default:
-					teamOption = "";
-			}
-			teamListWhoGotItRight += teamOption;
-		});
-
-		let bodySection = `<tbody id="team_answers_list">${teamListWhoGotItRight}</tbody>`;
-
-		return bodySection;
-	}
-
-	// Get an individual Row+Checkbox for a team;
-	function getWhotGotItRight_CheckBoxRow(teamName, teamCode, includeWager=false)
-	{
-		label = `<td><label for="checkboxrow_${teamCode}">${teamName}</label><span>&nbsp;</span></td>`;
-		answer = `<td><label for="checkboxrow_${teamCode}" class="team_answer" data-jpd-team-code="${teamCode}"></label></td>`;
-		input = `<td><input id="checkboxrow_${teamCode}" type="checkbox" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="${teamCode}" onchange="onTeamGotItRight()"></td>`;
-		return "<tr>" + label + answer + input + "</tr>";
-	}
-
-	// Get an individual Radio button for a team;
-	function getWhotGotItRight_RadioButtonRow(teamName, teamCode)
-	{
-		radioButtonRow = `<tr><td><p>
-							<input id="radio_${teamCode}" type="radio" data-jpd-team-code="${teamCode}" class="who_got_it_right" name="who_got_it_right" onchange="onTeamGotItRight()"> &nbsp;
-							<label style="cursor:pointer;" for="radio_${teamCode}">${teamName}</label>
-						</p></td></tr>`;
-		return radioButtonRow;
-	}
-
-	// Get the image and audio used for Daily Double
-	function getDailyDoubleContent()
-	{
-		Logger.log("Getting Daily Double Content");
-		let content = "";
-		content += formatImages("_daily_double_image");
-		content += formatAudio("_daily_double_audio", true);
-		content += "<br/>";
-		return content;
-	}
-
-	// Get the game media based on a given value
-	function getGameMediaURL(value)
-	{
-		let url = "";
-		if(GAME_MEDIA.hasOwnProperty(value))
-		{
-			url = GAME_MEDIA[value];
-		}
-		return url;
-	}
 
 	// Get details about a team based on the teams table
 	function getTeamDetails(teamCode)

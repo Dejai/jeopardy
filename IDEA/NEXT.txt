@@ -1,9 +1,9 @@
 NEXT:
 
-    Adjust the TEST/PLAY page to only show buttons based on validation
-        > Sub-validation that you cannot play a game without testing it
-        > Maybe testing must be saved in a cookie?
+    For anything that needs to be hidden based on the config options
+        > Set a common class of "optionsBased"
+        > Then couple that with the thing itself (e.g. section for current player)
+        > Then have CSS that says if a certain combo, then it should be hidden
+            (e.g. PlayerSection.optionsBased.3 = hide )
 
-    Make the board be returned in a template
-
-    Adjust the game board side to use the full jeopardy class for everything.
+    Don't forget to double check the combination of the different settings
