@@ -26,7 +26,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		}
         else
         {
-            console.log("ERROR: Could not load the game; Missing the Game ID");
+            
         }
 	});
 
@@ -246,7 +246,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 				if(idx == array.length-1)
 				{
-					console.log("Setting the rules");
+					
 					mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
 					mydoc.showContent("#rules_section");
 				}
@@ -406,10 +406,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Load the question popup
         onSetQuestionPopup();
 
-		// Set the timer details
-		setTimerDetails();
-
-
 		// Set a comment indicating the game is being played
 		if(!JeopardyGame.Game.IsTestRun && JeopardyGame.Game.Code != "TEST")
 		{
@@ -425,6 +421,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         // Setting the timer is part of this process
         MyTemplates.getTemplate("../../templates/board/timer.html", {},(template)=>{
             mydoc.setContent("#timer_section",{"innerHTML":template});
+
+			// Set the timer details
+			setTimerDetails();
+
         });
 
         // Setting the parts of the question
@@ -440,6 +440,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         mydoc.setContent("#team_sync_message", {"innerHTML": " Syncing"});
         mydoc.addClass("#team_sync_message","syncing");
 
+		// Get the highest score at the time
+		let highestScore = getHighestScore();
+
 		MyTrello.get_cards(JeopardyGame.Game.getListID(), function(data){
 
             response = JSON.parse(data.responseText);
@@ -452,8 +455,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				let isGameCard = (obj.name.startsWith("GAME_CARD_"));
 
                 // If this is a game that started, then restore it;
-                if(isGameCard)
+                if(isGameCard && JeopardyGame.Game.Asked.length == 0)
                 {
+					// The card ID for the game details 
+					JeopardyGame.Game.GameCard = obj["id"];
                     loadGameState(obj);
                 }
                 else
@@ -482,15 +487,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     //If FINAL_JEOPARDY -- set the wager (initially hidden);
                     if(JeopardyGame.Game.IsFinalJeopardy && !JeopardyGame.Game.IsOver)
                     {
-                        let highestScore = getHighestScore();
-                        getWagersPerTeam(code, highestScore);		
+                        getWagersPerTeam(teamID, highestScore);		
                     }
                 }
 			});
 
 			// Set the first player if it is not already set
-			if(!JeopardyGame.Game.PlayerSelected)
+			if(!JeopardyGame.Game.PlayerSelected && !JeopardyGame.Game.IsFinalJeopardy)
             {
+				console.log("Updating turn");
 				// Set the current player based on mode
 				onUpdateTurn();
 			}
@@ -517,7 +522,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     // Sync the team scores
     function onSyncTeamScores()
     {
-        console.log("Syncing scores");
+        
         // Loop through teams and update score
         document.querySelectorAll(".team_name")?.forEach( (team)=>{
 
@@ -654,7 +659,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		let key = cell.getAttribute("data-jpd-quest-key");
 
 		// Determing if the question can be opened;
-		let proceed = canOpenQuestion(key);
+		let proceed = (JeopardyGame.Game.IsFinalJeopardy) ? canOpenFJ() : canOpenQuestion(key);
 		if(!proceed){ return; }
 
         // Get the question based on the key;
@@ -713,8 +718,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         let mode = JeopardyGame.Config["AnsweringQuestions"]?.option ?? "1";
         mode = (JeopardyGame.Game.IsFinalJeopardy) ? "FJ" : mode;
 
-		console.log("Playing with mode = " + mode);
-		console.log(JeopardyGame.Config);
+		
+		
 
         // Set the path the templates based on the mode
         let bodyTemplatePath = `../../templates/board/whoGotRight/body/option${mode}.html`;
@@ -897,7 +902,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         let selectMode = JeopardyGame.Config.SelectingQuestions?.option ?? ""
 		let mode = (playerSet) ? selectMode : whoFirstMode;
 
-		console.log("Mode for setting turn: " + mode);
+		
 
 		// Switch on possible modes;
 		switch(mode)
@@ -921,7 +926,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			case "3":
 				JeopardyGame.Game.setCurrentTeam(mode); // Not used, but allows to bypass warning 
 				let questionValue = onGetRandomQuestion();
-				console.log("Setting player selected to True: " + (JeopardyGame.Game.PlayerSelected));
+				
 				onSetCurrentTurn(questionValue);
 				break;
 			
@@ -943,8 +948,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     // Set team name on page
     function onSetCurrentTurn(value)
     {
-		console.log("Setting current turn");
-		console.log(value);
+		// Don't set the current team if final jeopardy
+		if(JeopardyGame.Game.IsFinalJeopardy)
+			return 
+
+		
+		
 
         // Set the team name
         mydoc.setContent("#current_turn", {"innerHTML":value});
@@ -1126,36 +1135,42 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Get the wager for the current team (adjust to max possible - in case someone tries to cheat)
 	function getWagersPerTeam(teamCode, highestScore)
 	{
-		let settings = SETTINGS_MAPPING["Final Jeopardy Wager"];
-		let mode = settings.option; 
+		let mode = JeopardyGame.Config.FinalJeopardyWager?.option ?? "";
+		let teamScore = mydoc.getContent(`.team_score[data-jpd-team-code="${teamCode}"]`)?.innerText ?? "";
 
-		let teamDetails = getTeamDetails(teamCode);
+		if(mode != "" && teamScore != "")
+		{
+			// Show the wager column;
+			mydoc.showContent(`.team_wager[data-jpd-team-code="${teamCode}"]`);
 
-		// Reveal the wager element and set to zero by default
-		teamDetails["wager_ele"].classList.remove("hidden"); 
+			// Set the max possible wager;
+			let maxWager = (mode == "2") ? highestScore : teamScore;
+	
+			// Get the wager value from the wager field; Set in field
+			MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
+	
+				
 
-		let maxWager = (mode == "2") ? highestScore : teamDetails["score"];
+				let customField = JSON.parse(data.responseText);
+				let custom_value = customField[0]?.value?.text ?? undefined;
+				let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
+	
+				if(wagerValue != undefined)
+				{
+					wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
+					mydoc.setContent(`.team_wager[data-jpd-team-code="${teamCode}"]`, {"innerText":wagerValue});
+					mydoc.addClass(`.team_wager[data-jpd-team-code="${teamCode}"]`, "wager_hidden");
+				}
 
-		// Get the wager value from the wager field; Set in field
-		MyTrello.get_card_custom_field_by_name(teamCode, "Wager", (data) => {
+				// Make the card reflect the true wager if they tried to go over;
+				if(wagerValue > maxWager)
+				{
+					MyTrello.update_card_custom_field_by_name(teamCode, "Wager", maxWager.toString());
+				}	
+			});
+		}
 
-			let customField = JSON.parse(data.responseText);
-			let custom_value = customField[0]?.value?.text ?? undefined;
-			let wagerValue = (!isNaN(Number(custom_value))) ? Number(custom_value) : undefined;
 
-			if(wagerValue != undefined)
-			{
-				wagerValue = (wagerValue > maxWager) ? maxWager : wagerValue;
-				teamDetails["wager_ele"].innerText = wagerValue;
-				teamDetails["wager_ele"].classList.add("wager_hidden");
-			}
-
-			// Make the card reflect the true wager if they tried to go over;
-			if(wagerValue > maxWager)
-			{
-				MyTrello.update_card_custom_field_by_name(teamCode, "Wager", maxWager.toString());
-			}	
-		});
 	}
 
 /********** HELPER FUNCTIONS -- SETTERS, UPDATERS, and RESETERS **************************************/
@@ -1249,12 +1264,28 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		
 		// Is the first team set
 		let firstTeamSet = (JeopardyGame.Game.PlayerSelected);
-		console.log("First team set: " + JeopardyGame.Game.PlayerSelected )
+		
 		if(!firstTeamSet){ alert("Please select a team that will start (see below);"); }
 
 		canOpen = headersVisible && allowOpen && firstTeamSet;
 
 		return canOpen; 
+	}
+
+	// Check if we can open the FJ
+	function canOpenFJ()
+	{
+		let teamLength = JeopardyGame.Game.Teams?.length ?? 0;
+		let wagers = document.querySelectorAll(".team_wager.wager_hidden")?.length ?? 0;
+
+		let canOpen = false;
+		if(wagers < teamLength)
+		{
+			canOpen = confirm("Not all wagers have been set. Are you sure you want to open the question") 
+
+			if(!canOpen) { onSyncTeams(); }
+		}
+		return canOpen;
 	}
 
     // Checking if there are points that could be assigned before closing

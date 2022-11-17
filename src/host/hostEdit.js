@@ -1192,6 +1192,10 @@ var TestListID = undefined;
 		// If the game has not been tested, then exit
 		if(!JeopardyGame.Tested)
 		{
+			setTimeout(()=>{
+				mydoc.setContent("#playGameLoading", {"innerHTML": ""});
+				mydoc.setContent("#playGameValidation", {"innerHTML": "Can't Play game without testing first"});
+			}, 1000);
 			return;
 		}
 
@@ -1239,17 +1243,22 @@ var TestListID = undefined;
 	{
 		mydoc.setContent("#hostGameLoading", {"innerHTML": loadingGIF2});
 
-		let gameID = JeopardyGame.getGameID();
-		if(JeopardyGame.Tested)
+		if(!JeopardyGame.Tested)
 		{
-			// If we get to this point, actually play the game
-			let newURL = `/board/host/code.html?gameid=${gameID}`;
-			console.log(newURL);
-			window.open(newURL, "_blank");
-
-			mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
-
+			setTimeout(()=>{
+				mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
+				mydoc.setContent("#hostGameValidation", {"innerHTML": "Can't Host game without testing first"});
+			}, 1000);
+			return;
 		}
+
+		let gameID = JeopardyGame.getGameID();
+		// If we get to this point, actually play the game
+		let newURL = `/board/host/code.html?gameid=${gameID}`;
+		console.log(newURL);
+		window.open(newURL, "_blank");
+
+		mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
 	}
 
 /****** HELPER OBJECT: Simplifing approach for hosting ****************************/ 

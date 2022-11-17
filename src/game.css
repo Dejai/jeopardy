@@ -271,20 +271,6 @@
 	.pre_team_block_value { background-color:blue;color:yellow;padding:1%; }
 
 /* TEAMS SECTION */
-	.teams_icons { cursor:pointer; }
-	#teams_sync_section { width:50%;margin:auto; }
-	#teams_table { width:60%; margin:auto; border-spacing:0px; text-align:left; }
-	#teams_table tr th { background-color:#060CE9; color:#F5F5F5; }
-	#teams_table tbody tr td{ border-bottom:2px solid white; border-top:2px solid white; }
-	.team_score { padding:1% }
-	.team_name { border-bottom:2px solid black; }
-
-	.hiddenShortCode { padding-left: 2%; color:orange; font-weight:bolder; }
-
-	.setTeamDirectly { cursor: pointer; }
-
-	.wager_hidden { color:black; }
-	.wager_hidden::before { content:"*"; color:limegreen; }
 
 	/* OLDER */
 	#teams_block { margin:60%;  margin:auto; border-top:1px solid white; padding-top:1%; }

@@ -16,6 +16,21 @@
     .setTeamDirectly.option1 { display:none; }
     .setTeamDirectly.option2 { display:block; }
     .setTeamDirectly.option3 { display:none; }
+    
+    .teams_icons { cursor:pointer; }
+	#teams_sync_section { width:50%;margin:auto; }
+	#teams_table { width:60%; margin:auto; border-spacing:0px; text-align:left; }
+	#teams_table tr th { background-color:#060CE9; color:#F5F5F5; }
+	#teams_table tbody tr td{ border-bottom:2px solid white; border-top:2px solid white; }
+	.team_score { padding:1% }
+	.team_name { border-bottom:2px solid black; }
+
+	.hiddenShortCode { padding-left: 2%; color:orange; font-weight:bolder; }
+
+	.setTeamDirectly { cursor: pointer; }
+    
+    .wager_hidden { color:black; }
+	.wager_hidden::before { content:"*"; color:limegreen; }
 
 /* QUESTION: The question popup  */
     #question_view { z-index:100; width:100%; position:fixed; bottom:0; top:0; background-color:#060CE9; color:#F5F5F5; text-align:center; overflow-y: scroll; }

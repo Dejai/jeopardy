@@ -1,8 +1,3 @@
 NEXT:
 
-    Ensure to create a GAME_CARD in the new list
-
     Also make sure we are saving the GAME_CARD id for adding commentary when a new question is asked
-
-    Don't open Final Jeopardy without a CONFIRM -- making sure all wagers have been accounted for
-
