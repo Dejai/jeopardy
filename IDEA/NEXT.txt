@@ -1,11 +1,8 @@
 NEXT:
-    For anything that needs to be hidden based on the config options
-        > Set a common class of "optionsBased"
-        > Then couple that with the thing itself (e.g. section for current player)
-        > Then have CSS that says if a certain combo, then it should be hidden
-            (e.g. PlayerSection.optionsBased.3 = hide )
 
-    Don't forget to double check the combination of the different settings
+    Ensure to create a GAME_CARD in the new list
 
+    Also make sure we are saving the GAME_CARD id for adding commentary when a new question is asked
 
-    Make sure user is getting "set" for Random Picked game
+    Don't open Final Jeopardy without a CONFIRM -- making sure all wagers have been accounted for
+

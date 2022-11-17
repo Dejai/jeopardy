@@ -247,7 +247,7 @@
 	.menu_button { float:right; margin-right:1%; margin-top:2%; cursor:pointer; }
 	#home_button { display:block; text-align:left; margin-left:1%; margin-top:1%; cursor:pointer; }
 	#home_button button { border:none; font-size:25px; cursor:pointer;}
-	#finalJeopardyButton{ float:right; cursor:pointer; }
+	#finalJeopardyButton{ float:right; cursor:pointer; font-size:120%; padding:3%; }
 
 
 

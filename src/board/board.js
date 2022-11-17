@@ -3,7 +3,6 @@ var JeopardyGame = undefined;
 var GameCard = undefined; // Used to store the game card from Trello
 var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
-var TestListID = undefined;
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -113,6 +112,7 @@ var TestListID = undefined;
                     
                     // Only set the code after we get a list 
                     mydoc.setContent("#game_code", {"innerHTML":JeopardyGame.Game.getCode()});
+					mydoc.showContent("#game_code_header");
 
                     // Only show the start button after we get a list
                     onShowStartButton();
@@ -682,7 +682,7 @@ var TestListID = undefined;
         // Show the question;
         mydoc.showContent("#question_view");
 
-		// Log that a question was asked; Including setting in Trello
+		// Log that a question was asked (on the game card);
 		// if(!JeopardyGame.Game.IsTestRun)
 		// {
 		// 	MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
@@ -691,8 +691,8 @@ var TestListID = undefined;
 		// Set the selected cell to disabled;
         onSetQuestionAsAsked(key);
 
-		// // Force a sync of teams to ensure wagers are received.
-		// if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
+		// Force a sync of teams to ensure wagers are received.
+		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
 	}
 
     // Set question as "asked"

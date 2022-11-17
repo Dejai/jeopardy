@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Board</title>
+<html>
+<head>
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../../src/game.css">
+    <link rel="stylesheet" type="text/css" href="../../src/board/board.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+
+	<!-- The header section -->
+	<div id="homemade_jeopardy_title" class="centered"></div>
+
+    <div class="centered">
+        <h2>Enter Game Code</h2>
+		<p>This is the game code that appears on the game board when you play/test a game.</p>
+        <input id="gameCode" type="text" name="gameCode" placeholder="Enter game code">
+        <br/><br/>
+        <button onclick="onValidateGameCode()" class="dlf_button dlf_button_round_corners dlf_button_limegreen">Submit</button>
+    </div>
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<script src="../../src/rules.js"></script>
+	<script src="../../src/settings.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<!-- My Google Drive code -->
+	<script src="../../src/googledrive.js"></script>
+	<!-- My Source JS -->
+	<script src="../../src/templates.js"></script>
+	<script src="../../src/jeopardy.js"></script>
+	<script src="../../src/board/boardHostCode.js"></script>
+</html>

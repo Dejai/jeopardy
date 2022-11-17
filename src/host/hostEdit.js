@@ -1161,13 +1161,23 @@ var TestListID = undefined;
 
 		if(JeopardyGame.Tested)
 		{
+			// Set the Play button
 			mydoc.removeClass("#playGameButton", "dlf_button_gray");
 			mydoc.addClass("#playGameButton", "dlf_button_limegreen");
+
+			// Set the host button
+			mydoc.removeClass("#hostGameButton", "dlf_button_gray");
+			mydoc.addClass("#hostGameButton", "dlf_button_blue");
 		}
 		else
 		{
+			// Unset the Play button
 			mydoc.addClass("#playGameButton", "dlf_button_gray");
 			mydoc.removeClass("#playGameButton", "dlf_button_limegreen");
+
+			// Unset the host button
+			mydoc.addClass("#hostGameButton", "dlf_button_gray");
+			mydoc.removeClass("#hostGameButton", "dlf_button_blue");
 		}
 	}
 	// Action to play a real game
@@ -1179,8 +1189,20 @@ var TestListID = undefined;
 		{
 			return;
 		}
-
 		console.log("Create list and play a new game");
+	}
+
+	// Hosting the game
+	function onHostGame()
+	{
+		let gameID = JeopardyGame.getGameID();
+		if(JeopardyGame.Tested)
+		{
+			// If we get to this point, actually play the game
+			let newURL = `/board/host/code.html?gameid=${gameID}`;
+			console.log(newURL);
+			window.open(newURL, "_blank");
+		}
 	}
 
 /****** HELPER OBJECT: Simplifing approach for hosting ****************************/ 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Board</title>
+<html>
+<head>
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../../src/game.css">
+    <link rel="stylesheet" type="text/css" href="../../src/board/board.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+
+	<!-- The header section -->
+	<div id="homemade_jeopardy_title" class="centered"></div>
+
+	<!-- The section that shows the game board -->
+	<div id="game_board_section">
+		<table id="game_board" class="hidden">
+			<colgroup>
+				<col style="width:auto;"/>
+			</colgroup>
+			<tbody id="game_board_body">
+				<tr id="round_1_row" class="hidden"></tr>
+				<tr id="final_jeopardy_row" class="hidden"></tr>
+			</tbody>
+		</table>
+	</div>
+
+	<!-- The magic question/answer section that displays -->
+	<div id="question_view" class="hidden">
+		<div id="timer_section"></div>
+		<div id="show_question_section"></div>
+	</div>
+
+	<!-- Game Board Sections -->
+	<div id="game_section" class="hidden2"></div>
+
+	<!-- Loading section -->
+	<div id="main_section">
+		<div id="load_game_section">
+			<img id="loading_gif" src="../../assets/img/loading1.gif" class="hidden">
+			<div id="loading_results_section"></div>
+		</div>
+	</div>
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<script src="../../src/rules.js"></script>
+	<script src="../../src/settings.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<!-- My Google Drive code -->
+	<script src="../../src/googledrive.js"></script>
+	<!-- My Source JS -->
+	<script src="../../src/timer.js"></script>
+	<script src="../../src/templates.js"></script>
+	<script src="../../src/jeopardy.js"></script>
+	<script src="../../src/board/boardHost2.js"></script>
+</html>
