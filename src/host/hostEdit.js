@@ -1189,7 +1189,41 @@ var TestListID = undefined;
 		{
 			return;
 		}
-		console.log("Create list and play a new game");
+
+		// Create the list and appropriate Game Card
+		let newGameCode =  Helper.getCode();
+		MyTrello.create_list(newGameCode, (data)=>{
+			
+			// Get the list ID;
+			let response = JSON.parse(data.responseText);
+			let listID =  response["id"] ?? undefined;
+
+			if(listID != undefined)
+			{
+				// Create the game card
+				let newGameInstanceName = `GAME_CARD_${newGameCode} | ${JeopardyGame.getGameName()}`;
+				MyTrello.create_card(listID, newGameInstanceName,(newCardData)=>{
+
+					let newGameResp = JSON.parse(newCardData.responseText);
+					let gameCardID = newGameResp["id"];
+
+					if(gameCardID != undefined)
+					{
+						let gameSettings = "[" + JSON.stringify(JeopardyGame.Config) + "]";
+						// Update the description with the game's settings
+						MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
+
+							// Finally - navigate to the new game page
+							console.log("Create list and play a new game");
+							let gameID = JeopardyGame.getGameID();
+
+							let newURL = `/board/?gameid=${gameID}&gamecode=${newGameCode}`;
+							window.open(newURL, "_blank");
+						});
+					}
+				});
+			}
+		});
 	}
 
 	// Hosting the game
