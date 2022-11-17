@@ -1,6 +1,8 @@
 /* General */
     .hostHomeLink { text-decoration: none; color:inherit;}
 
+    .actionButtonSection { display:flex; align-items: center;}
+
 
 /* LOAD: */
     .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; margin:3%; }

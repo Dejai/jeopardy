@@ -1111,14 +1111,15 @@ var TestListID = undefined;
 
 /****** TEST/PLAY Game ****************************/ 
 
+	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
+
 	// To test the game
 	function onTestGame()
 	{
 		let checkGame = JeopardyGame.isValidGame();
 		let gameID = JeopardyGame.getGameID();
 
-		let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
-		mydoc.setContent("#testGameLoading", {"innerHTML": loadingGIF});
+		mydoc.setContent("#testGameLoading", {"innerHTML": loadingGIF2});
 		
 		if(!checkGame.IsValid)
 		{
@@ -1180,10 +1181,14 @@ var TestListID = undefined;
 			mydoc.removeClass("#hostGameButton", "dlf_button_blue");
 		}
 	}
+	
 	// Action to play a real game
 	function onPlayGame()
 	{
 		console.log("Checking if we can play this game"); 
+		mydoc.setContent("#playGameLoading", {"innerHTML": loadingGIF2});
+
+
 		// If the game has not been tested, then exit
 		if(!JeopardyGame.Tested)
 		{
@@ -1219,6 +1224,9 @@ var TestListID = undefined;
 
 							let newURL = `/board/?gameid=${gameID}&gamecode=${newGameCode}`;
 							window.open(newURL, "_blank");
+
+							// Stop spinning
+							mydoc.setContent("#playGameLoading", {"innerHTML": ""});
 						});
 					}
 				});
@@ -1229,6 +1237,8 @@ var TestListID = undefined;
 	// Hosting the game
 	function onHostGame()
 	{
+		mydoc.setContent("#hostGameLoading", {"innerHTML": loadingGIF2});
+
 		let gameID = JeopardyGame.getGameID();
 		if(JeopardyGame.Tested)
 		{
@@ -1236,6 +1246,9 @@ var TestListID = undefined;
 			let newURL = `/board/host/code.html?gameid=${gameID}`;
 			console.log(newURL);
 			window.open(newURL, "_blank");
+
+			mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
+
 		}
 	}
 
