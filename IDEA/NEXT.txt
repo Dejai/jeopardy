@@ -6,3 +6,6 @@ NEXT:
             (e.g. PlayerSection.optionsBased.3 = hide )
 
     Don't forget to double check the combination of the different settings
+
+
+    Make sure user is getting "set" for Random Picked game

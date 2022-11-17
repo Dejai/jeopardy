@@ -639,10 +639,25 @@ var TestListID = undefined;
 		let sourceEle = event.srcElement;	
 		let sourceID = sourceEle.id;
 		let value = sourceEle.value;
+
 		// Update the game
 		JeopardyGame.Config[sourceID].option = value;
+
 		// Toggle details
 		onToggleRuleOptionDetails(sourceEle);
+	}
+
+	// Saving the option VALUE if applicable
+	function onRuleValueChange(event)
+	{
+		let sourceEle = event.srcElement;	
+		let key = sourceEle.getAttribute("data-jpd-rule-key");
+		let value = sourceEle.value;
+	
+		// Set the value;
+		JeopardyGame.Config[key].value = value;
+
+		onChangeInSection();
 	}
 
 /***** GENERAL FORM ACTIONS: Actions that involve the forms */

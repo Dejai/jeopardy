@@ -523,10 +523,10 @@
 			this.getCategories()?.forEach( (category, idx, array)=> {
 
 				// Is this the final Jeopardy category;
-				let isFinalJeopardy = (category.FinalJeopardy == "Yes");
+				let isFinalJeopardyCategory = category.isFinalJeopardy();
 
 				// Determine the width of this category
-				let width = (isFinalJeopardy) ? 100 : 100 * (1 / (this.Categories.length-1) );
+				let width = (isFinalJeopardyCategory) ? 100 : 100 * (1 / (this.Categories.length-1) );
 				let dynamicWidth = `style="width:${width}%;"`;
 				
 				// Loop through the questions in this category; Set key
@@ -534,6 +534,7 @@
 				questions.forEach((q)=>{
 					let key = `${category.Name}-${q.Value}`;
 					q.Key = key;
+					q.Value = (isFinalJeopardyCategory) ? category.Name : q.Value;
 					// Add question to the game
 					this.Game.addQuestion(key,q);
 				});
@@ -544,13 +545,13 @@
 					// The category template object
 					let categoryObj = {
 							"DynamicWidth": dynamicWidth,
-							"CategoryName":(category.FinalJeopardy=="Yes") ? "" : category.Name,
-							"PreFilledCategoryName":(category.FinalJeopardy=="Yes") ? "Final Jeopardy!" : "",
+							"CategoryName":(isFinalJeopardyCategory) ? "" : category.Name,
+							"PreFilledCategoryName":(isFinalJeopardyCategory) ? "Final Jeopardy!" : "",
 							"Questions":questionsTemplate,
 						}
 					// Set the category templates;
 					MyTemplates.getTemplate("../../templates/board/boardCategory.html", categoryObj, (categoriesTemplate)=>{
-						callback(categoriesTemplate,isFinalJeopardy);
+						callback(categoriesTemplate,isFinalJeopardyCategory);
 					});
 				});
 			});
@@ -788,7 +789,7 @@
 
 				// Questions picked randomy, so no need for this
 				case "3":
-					teamName = this.Teams[0]?.Name ?? undefined;
+					teamName = ""; // Empty team name; But not undefined;
 					break;
 					
 				// Defaults to next option

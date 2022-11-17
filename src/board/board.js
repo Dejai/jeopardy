@@ -16,9 +16,10 @@ var TestListID = undefined;
 		onKeyboardKeyup();
 
         // Check for test run
-        if( mydoc.get_query_param("gameid") != undefined){ mydoc.addTestBanner(); }
+        if( mydoc.get_query_param("test") != undefined){ mydoc.addTestBanner(); }
 
 		let gameID = mydoc.get_query_param("gameid");
+
 		if(gameID != undefined)
 		{
 			// Get the game (i.e. card)
@@ -93,6 +94,10 @@ var TestListID = undefined;
         {
             // Create new game
             JeopardyGame.newGame(gameCode);
+
+			// Set if this is a test run game
+			JeopardyGame.Game.IsTestRun = (mydoc.get_query_param("test") != undefined);
+
 
             // Parse through lists & get one with the code
             MyTrello.get_lists("open", (data)=>{
@@ -207,19 +212,21 @@ var TestListID = undefined;
 	// Set the game Config/Rules
 	function onSetGameRules()
 	{
+		var rulesHTML = "";
         // Format the rules for hte board
 		Rules2.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
-            // The rule object that gets displayed on the page;
+           
+			// The rule object that gets displayed on the page;
             newRuleObj = {"Rule": "", "SubRules":"" }
 
 			// Set the current rule based on saved option
 			ruleObj.Options?.forEach((option)=>{
                 if(option.id == savedConfig.option)
                 {
-                    // Set the rules & SubRules
-                    newRuleObj["Rule"] = option['rule'];
+					let theValue = savedConfig?.value ?? "";
+                    newRuleObj["Rule"] = option['rule'].replace("${VALUE}",theValue);
                     
                     // Set any subrules;
                     if(option["subRules"]?.length > 0)
@@ -235,14 +242,15 @@ var TestListID = undefined;
 
             // Set the template for the rules
             MyTemplates.getTemplate("../../templates/board/ruleItem.html",newRuleObj,(template)=>{
-                mydoc.setContent("#rules_list", {"innerHTML":template}, true);
-			});	
+				rulesHTML += template; 
 
-            // Show the rules section
-            if(idx == array.length-1)
-            {
-                mydoc.showContent("#rules_section");
-            }
+				if(idx == array.length-1)
+				{
+					console.log("Setting the rules");
+					mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
+					mydoc.showContent("#rules_section");
+				}
+			});	
 		});
 	}
 
@@ -250,8 +258,8 @@ var TestListID = undefined;
 	function onSetGameQuestions()
 	{
 		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard2((categoryTemplate, isFinalJeopardy)=>{
-            var x = (isFinalJeopardy) ?
+        JeopardyGame.getGameBoard2((categoryTemplate, isFinalJeopardyCategory)=>{
+            var x = (isFinalJeopardyCategory) ?
                         mydoc.setContent("#final_jeopardy_row", {"innerHTML":categoryTemplate}, true) :
                         mydoc.setContent("#round_1_row", {"innerHTML":categoryTemplate}, true);
         });
@@ -376,22 +384,11 @@ var TestListID = undefined;
     function onShowStartButton()
     {
         mydoc.showContent("#startGameSection");
-
-        // TEMP: Just start game
-        setTimeout(()=>{
-            onStartGame();
-        }, 500);
     }
 
     // Reveal the game board & set initial team
 	function onStartGame()
 	{
-		// Determine if the How To button should display
-		// showHowToPlayButton();
-
-		// Account for any existing game state
-		// onSetGameState();
-
 		// Sync teams before starting game; 
 		onSyncTeams();
 
@@ -404,11 +401,14 @@ var TestListID = undefined;
 		mydoc.showContent("#teams_table");
 		mydoc.showContent("#teams_sync_section");
 		mydoc.showContent("#round_1_row");
+		mydoc.showContent("#finalJeopardyButton");
 
-        // Load the question popup
+		// Load the question popup
         onSetQuestionPopup();
 
-		// mydoc.showContent("#finalJeopardyButton");
+		// Set the timer details
+		setTimerDetails();
+
 
 		// Set a comment indicating the game is being played
 		if(!JeopardyGame.Game.IsTestRun && JeopardyGame.Game.Code != "TEST")
@@ -558,6 +558,27 @@ var TestListID = undefined;
 		}
 	}
 
+
+	// Set Timer values
+	function setTimerDetails()
+	{
+		// Set timer callback
+		if(Timer)
+		{
+			Timer.setTimeUpCallback(function(){
+				document.getElementById("time_up_sound").play();
+			});
+
+			// Set the default timer
+			let customTime = JeopardyGame.Config.TimeToAnswerQuestions?.value ?? "";
+			if(customTime != "")
+			{ 
+				let time = Number(customTime);
+				time = isNaN(time) ? Timer.getTimerDefault() : time;
+				Timer.setTimerDefault(time);
+			}
+		}
+	}
 
 
 
@@ -876,6 +897,8 @@ var TestListID = undefined;
         let selectMode = JeopardyGame.Config.SelectingQuestions?.option ?? ""
 		let mode = (playerSet) ? selectMode : whoFirstMode;
 
+		console.log("Mode for setting turn: " + mode);
+
 		// Switch on possible modes;
 		switch(mode)
 		{
@@ -896,8 +919,9 @@ var TestListID = undefined;
 
 			// Random suggestion by game
 			case "3":
-				if(!playerSet){  JeopardyGame.Game.setCurrentTeam("default"); } // Not used, but allows to bypass warning 
+				JeopardyGame.Game.setCurrentTeam(mode); // Not used, but allows to bypass warning 
 				let questionValue = onGetRandomQuestion();
+				console.log("Setting player selected to True: " + (JeopardyGame.Game.PlayerSelected));
 				onSetCurrentTurn(questionValue);
 				break;
 			
@@ -1004,6 +1028,43 @@ var TestListID = undefined;
 			nextQuestion = cell?.getAttribute("data-jpd-quest-key")?.replace("-", " - ");
 		}
 		return nextQuestion;
+	}
+
+
+	//Show the Final Jeopardy section
+	function onFinalJeopardy()
+	{
+
+		let nextQuestion = onGetRandomQuestion()
+
+		// Only proceed if there are no more questions
+		if(nextQuestion == "N/A" || JeopardyGame.Game.IsTestRun)
+		{
+			JeopardyGame.Game.IsFinalJeopardy = true;
+
+			// Hide Content
+			mydoc.hideContent("#round_1_row");
+			mydoc.hideContent("#round_2_row"); // Will hide round 2 if applicable;
+			mydoc.hideContent("#current_turn_section");
+			mydoc.hideContent("#time_view_regular");
+			mydoc.hideContent("#finalJeopardyButton");
+			mydoc.hideContent("#assignScoresButton");
+			mydoc.hideContent("#nobodyGotItRightButton");
+			mydoc.hideContent("#value_header");
+
+			// Show Content
+			mydoc.showContent("#final_jeopardy_audio");
+			mydoc.showContent("#final_jeopardy_row");
+			mydoc.showContent("#finalJeopardyAssign");
+			mydoc.showContent(".wager_row");
+
+			// Add Classes
+			mydoc.addClass("#final_jeopardy_row", "final_jeopardy_row");
+		}
+		else 
+		{
+			alert("Cannot start Final Jeopardy until all questions have been asked.");
+		}		
 	}
 
 
@@ -1172,45 +1233,26 @@ var TestListID = undefined;
         return ddAudio + ddImage + "<br/>";
 	}
 
-	// check if a current player has been set
-	function isCurrentPlayerSet()
-	{
-		return (CURRENT_TEAM_IDX > -1);
-	}
-	
-	// Validate the headers are shown
-	function isHeadersVisible()
-	{
-		let headersVisible = (JeopardyGame.Game.AllHeadersVisible)
-		if( !headersVisible ){ alert("Please show all the headers before beginning") }
-		return headersVisible;
-	}
-
-	// Re-open the same question?
-	function isReopenQuestion(key)
-	{
-		let canOpen = true; 
-		if(JeopardyGame.Game.Asked.includes(key)){ canOpen = confirm("This question has already been presented. Do you still want to open it?") == 1; }
-		return canOpen;
-	}
-
-	function isFirstTeamSet()
-	{
-		let firstTeamSet = (JeopardyGame.Game.PlayerSelected);
-		if(!firstTeamSet){ alert("Please select a team that will start (see below);"); }
-		return firstTeamSet;
-	}
-
 	// Check if the question can be opened;
 	function canOpenQuestion(key)
 	{
 		let canOpen = true;
 
-		let allHeadersVisible = isHeadersVisible();
-		let isSafeToOpen = isReopenQuestion(key);
-		let firstTeamSet = isFirstTeamSet();
+		// Are all the headers available
+		let headersVisible = (JeopardyGame.Game.AllHeadersVisible)
+		if( !headersVisible ){ alert("Please show all the headers before beginning") }
 
-		canOpen = allHeadersVisible && isSafeToOpen && firstTeamSet;
+		// Are we opening (even if already opened)?
+		let allowOpen = (JeopardyGame.Game.Asked.includes(key)) ?
+							(confirm("This question has already been presented. Do you still want to open it?") ) 
+							: true;
+		
+		// Is the first team set
+		let firstTeamSet = (JeopardyGame.Game.PlayerSelected);
+		console.log("First team set: " + JeopardyGame.Game.PlayerSelected )
+		if(!firstTeamSet){ alert("Please select a team that will start (see below);"); }
+
+		canOpen = headersVisible && allowOpen && firstTeamSet;
 
 		return canOpen; 
 	}

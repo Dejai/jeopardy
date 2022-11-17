@@ -159,8 +159,8 @@
 	.gameCodeSmaller { font-size:smaller; }
 
 /* HOME PAGE */
-	#main_section { width:80%; margin:auto; text-align:center; font-size:120%; }
-	#main_section input {width:80%; font-size:140%; text-align:center; }
+	/* #main_section { width:80%; margin:auto; text-align:center; font-size:120%; } */
+	/* #main_section input {width:80%; font-size:140%; text-align:center; } */
 	/* .identify_yourself { display:block; text-align:center; padding:2%; width:40%; margin:auto; cursor:pointer; */
 							 /* background-color:lightgray; margin-bottom:2%; } */
 
@@ -249,10 +249,7 @@
 	#home_button button { border:none; font-size:25px; cursor:pointer;}
 	#finalJeopardyButton{ float:right; cursor:pointer; }
 
-/* RULES SECTION */
-	#rules_section h1 { text-align: center; }
-	#rules_section .rule_item { margin-bottom:5%; font-size:120%;}
-	#rules_section .rule { color:darkorange;  }
+
 
 /* MAIN VIEW */
 	#main_view_section { padding-left:1%; padding-right:1%; display:relative; }

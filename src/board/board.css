@@ -1,3 +1,11 @@
+/* RULES: The rule   */
+    #rules_section h1 { text-align: center; }
+    #rules_section .rule_item { margin-bottom:5%; font-size:120%;}
+    #rules_section .rule { color:darkorange;  }
+    #rules_list { text-align: left; text-align-last:left; }
+    #rules_section blockquote { border-left: 3px solid white; }
+    .subRule { display:block; margin-left:3%; text-align-last:left; }
+
 /* TEAMS: Icons to show the syncing state of Teams  */
     .syncIcon { text-decoration:none !important; }
     .syncIcon.main { color:white !important }

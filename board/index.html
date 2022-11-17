@@ -15,24 +15,20 @@
 <body>
 
 	<div id="homemade_jeopardy_title" class="centered"></div>
-	<div id="main_section">
-		<div id="load_game_section">
-			<img id="loading_gif" src="../assets/img/loading1.gif" class="hidden">
-			<div id="loading_results_section"></div>
-		</div>
-	</div>
 
 	<!-- The rules section -->
-	<div id="rules_section" class="centered hidden">
+	<div id="rules_section" style="width:60%;margin:auto;" class="centered hidden">
 		<h2>The Rules:</h2>
-		<div class="center_section_50">
+		<div style="padding-left:17%;">
 			<ol id="rules_list"></ol>
 		</div>
 	</div>
 
 	<!-- The subsection for the start game button -->
 	<div id="startGameSection" class="centered hidden">
-		<button id="startGameButton" class="button_mash" onclick="onStartGame()"">Start Game</button>
+		<button id="startGameButton" class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onStartGame()"">
+			START GAME
+		</button>
 	</div>
 
 	<!-- The section that shows the game board -->
@@ -85,6 +81,14 @@
 			</thead>
 			<tbody id="teams_block"></tbody>
 		</table>
+	</div>
+
+	<!-- The loading section -->
+	<div id="main_section">
+		<div id="load_game_section">
+			<img id="loading_gif" src="../assets/img/loading1.gif" class="hidden">
+			<div id="loading_results_section"></div>
+		</div>
 	</div>
 
 
