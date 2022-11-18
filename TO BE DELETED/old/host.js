@@ -599,7 +599,7 @@ var USE_DEFAULT_RULES = true;
 	// Test a game
 	function onTestGame()
 	{
-		loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+		loading_html = `<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:25%;height:25%;">`;
 
 		MyNotification.notify("#test_game_loading", loading_html);
 		mydoc.hideContent("#test_game_button");
@@ -624,7 +624,7 @@ var USE_DEFAULT_RULES = true;
 			mydoc.hideContent("#play_game_confirmation_error");
 
 
-			loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+			loading_html = `<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:25%;height:25%;">`;
 			MyNotification.notify("#play_game_loading", loading_html);
 			mydoc.hideContent("#play_button");
 
@@ -780,7 +780,7 @@ var USE_DEFAULT_RULES = true;
 		// Start the loading process
 		loading_html = `
 			<span>Saving </span>
-			<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
+			<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:5%;height:5%;">
 			`;
 		MyNotification.notify(`#${identifier}`, loading_html, "notify_orange");
 
@@ -975,7 +975,7 @@ var USE_DEFAULT_RULES = true;
 
 			loading_html = `
 				<span>Syncing</span>
-				<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:5%;height:5%;">
+				<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:5%;height:5%;">
 				`;
 			MyNotification.notify("#syncNotifier", loading_html, "notify_orange");
 

@@ -4,7 +4,7 @@ RULES  OBJECT
 This object stores the individual rules for the game
 ******/
 
-const Rules2 = [
+const Rules = [
 	{
 		"Name": "Answering Questions",
 		"Options": [
@@ -135,8 +135,3 @@ const Rules2 = [
 		]
 	}
 ];
-
-const Rules = 
-{
-	
-}

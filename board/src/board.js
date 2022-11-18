@@ -214,7 +214,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{
 		var rulesHTML = "";
         // Format the rules for hte board
-		Rules2.forEach( (ruleObj, idx, array)=>{
+		Rules.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
            
@@ -305,13 +305,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
             "ID": "_dailyDoubleAudio", 
             "Name": "_dailyDoubleAudio", 
             "Type": "Audio",
-            "Src": "assets/audio/daily_double.m4a"
+            "Src": "src/audio/daily_double.m4a"
         }
         let dailyDoubleImage = { 
             "ID": "_dailyDoubleImage", 
             "Name": "_dailyDoubleImage", 
             "Type": "Image",
-            "Src": "assets/img/daily_double.jpeg"
+            "Src": "src/img/daily_double.jpeg"
         }
 
         // Add the daily double media

@@ -12,8 +12,8 @@
 	var HOW_TO_IS_HIDDEN = true;
 
 	var GAME_MEDIA = {
-		"_daily_double_audio":"../assets/audio/daily_double.m4a",
-		"_daily_double_image":"../assets/img/daily_double.jpeg",
+		"_daily_double_audio":"../src/audio/daily_double.m4a",
+		"_daily_double_image":"../src/img/daily_double.jpeg",
 	};
 
 	// Storing details about the questions and game stage

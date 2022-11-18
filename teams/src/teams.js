@@ -47,7 +47,7 @@
 		let listName = splits[0]?.trim() ?? "";
 		let teamSuffix = splits[1]?.trim() ?? "";
 
-		let loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+		let loading_html = `<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:25%;height:25%;">`;
 		MyNotification.notify("#notification_section", loading_html);
 
 		// Parse the code to re-login
@@ -220,7 +220,7 @@
 		// Disable the button and show loading gif;
 		document.getElementById("create_team_button").disabled = true;
 
-		let loading_html = `<img class="component_saving_gif" src="../assets/img/loading1.gif" style="width:25%;height:25%;">`;
+		let loading_html = `<img class="component_saving_gif" src="../src/img/loading1.gif" style="width:25%;height:25%;">`;
 		MyNotification.notify("#notification_section", loading_html)
 
 		// mydoc.showContent("#loading_gif");

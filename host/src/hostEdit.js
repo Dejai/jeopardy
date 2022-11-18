@@ -296,7 +296,7 @@ var TestListID = undefined;
 	{
 		rulesHTML = "";
 
-		Rules2.forEach( (ruleObj, idx, array)=>{
+		Rules.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
 			ruleObj["Key"] = ruleKey;
@@ -425,7 +425,7 @@ var TestListID = undefined;
 
 		if(SectionsToBeSaved.length > 0)
 		{
-			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">`
+			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:5%;height:5%;">`
 			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
 			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
 			mydoc.addClass("#saveButton", "dlf_button_blue");
@@ -1036,7 +1036,7 @@ var TestListID = undefined;
 	{
 		loading_html = `
 			<span>Syncing</span>
-			<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">
+			<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:5%;height:5%;">
 			`;
 		MyNotification.notify("#syncNotifier", loading_html, "notify_orange");
 
@@ -1111,7 +1111,7 @@ var TestListID = undefined;
 
 /****** TEST/PLAY Game ****************************/ 
 
-	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
+	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:10%;height:10%;">`
 
 	// To test the game
 	function onTestGame()
