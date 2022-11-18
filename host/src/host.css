@@ -22,3 +22,14 @@
     /* Control visibility of order buttons */
     .categorySectionBody tr.questionRow:nth-child(1) td span.fa-arrow-up { display:none; }
     .categorySectionBody tr.questionRow:last-child td span.fa-arrow-down { display:none; } 
+
+    /* Highlighting the ones that are indeed daily double */
+    .IsDailyDoubleYes { color:limegreen !important; font-weight:bolder; }
+
+    /* For questions that use an image */
+    .HasImageNo { display:none !important; }
+    .HasImageYes { color:lightblue; }
+
+    /* For questions that use an audio file */
+    .HasAudioNo { display:none !important; }
+    .HasAudioYes { color:orange; }

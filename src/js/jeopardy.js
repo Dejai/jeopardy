@@ -153,6 +153,11 @@
 			this.Audio 	= jsonObj.Audio;
 			this.Image 	= jsonObj.Image;
 			this.URL	= jsonObj.URL;
+
+			// Set if this media item has certain attributes
+			this.HasImage = (this.Image != "") ? "Yes" : "No";
+			this.HasAudio = (this.Audio != "") ? "Yes" : "No";
+			this.HasURL = (this.URL != "") ? "Yes" : "No";
 		}
 
 		updateQuestion(jsonObj)
@@ -201,6 +206,11 @@
 			this.Audio 	= jsonObj.Audio;
 			this.Image 	= jsonObj.Image;
 			this.URL	= jsonObj.URL;
+
+			// Set if this media item has certain attributes
+			this.HasImage = (this.Image != "") ? "Yes" : "No";
+			this.HasAudio = (this.Audio != "") ? "Yes" : "No";
+			this.HasURL = (this.URL != "") ? "Yes" : "No";
 		}
 
 		updateAnswer(jsonObj)
@@ -339,13 +349,14 @@
 
 	class Jeopardy
 	{
-		constructor(gameID, gameName)
+		constructor(gameID, gameName, gameDesc="")
 		{
 			this.GameID = gameID;
 
 			// Set updatable values
 			this.setGameName(gameName);
 			this.setGamePass("");
+			this.setGameDesc(gameDesc);
 
 			// List for the key parts of the game
 			this.Categories = []
@@ -502,7 +513,7 @@
 		}
 
 		
-	/* Subsection: Game Name & Password */
+	/* Subsection: Game Name & Password & Descriptoin */
 		// Set a new Game Name
 		setGameName(name){ this.gameName = name; }
 		// Get the name of the game
@@ -513,6 +524,9 @@
 		setGamePass(pass){ this.gamePass = pass; }
 		// Get the game passphrase
 		getGamePass(){ return this.gamePass; }
+		// Get Set description
+		setGameDesc(desc) { this.gameDesc = desc; }
+		getGameDesc() { return this.gameDesc;}
 
 	/* Subsection: The Game Board */
 		

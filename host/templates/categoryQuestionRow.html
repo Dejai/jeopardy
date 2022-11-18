@@ -1,8 +1,16 @@
 <tr class="questionRow">
     <td class="questionValue">{{Value}}</td>
-    <td class="questionText">{{Question.Text}}</td>
-    <td class="answerText">{{Answer.Text}}</td>
-    <td class="questionDailyDouble">{{DailyDouble}}</td>
+    <td class="questionText">
+        <span class="fa fa-picture-o HasImage{{Question.HasImage}} pointer" title="image"></span>
+        <span class="fa fa-volume-up HasAudio{{Question.HasAudio}} pointer" title="audio"></span>
+        {{Question.Text}}
+    </td>
+    <td class="answerText">
+        <span class="fa fa-picture-o HasImage{{Answer.HasImage}} pointer" title="image"></span>
+        <span class="fa fa-volume-up HasAudio{{Answer.HasAudio}} pointer" title="audio"></span>
+        {{Answer.Text}}
+    </td>
+    <td class="questionDailyDouble IsDailyDouble{{DailyDouble}}">{{DailyDouble}}</td>
     <td>
         <span class="fa fa-arrow-up pointer" onclick="onSwapQuestionOrder(event)" style="font-size:80%;"></span>
         <span class="fa fa-arrow-down pointer" onclick="onSwapQuestionOrder(event)" style="font-size:80%;"></span>

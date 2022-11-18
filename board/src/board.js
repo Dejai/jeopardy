@@ -246,7 +246,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 				if(idx == array.length-1)
 				{
-					
 					mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
 					mydoc.showContent("#rules_section");
 				}

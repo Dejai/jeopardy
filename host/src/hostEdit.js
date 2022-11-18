@@ -21,8 +21,14 @@ var TestListID = undefined;
 			// Get the game
 			onGetGame(gameID);
 
-			// Validate Access
-			onValidateAccess(gameID);
+			// Validate Access; Show section if no password;
+			onValidateAccess(()=>{
+				// Ensure the sections are visible for password (or beyond);
+				set_loading_results("");
+				mydoc.showContent("#hostEditLoginSection");
+				mydoc.showContent("#edit_game_section");
+				mydoc.showContent("#edit_section_game_login");
+			});
 
 			// Always get the test list ID
 			onGetTestListID();
@@ -36,18 +42,33 @@ var TestListID = undefined;
 
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
 
-	// Allowing access to the page
-	function onValidateAccess()
+	// Validate the user entered password
+	function onValidatePassword()
 	{
+		// Loading gif
+		mydoc.setContent("#loginLoading", {innerHTML:loadingGIF2});
 
+		onValidateAccess(()=>{
+			mydoc.setContent("#loginLoading", {innerHTML:""});
+			mydoc.setContent("#loginMessage", {innerHTML:"Incorrect password"});
+		});
+
+	}
+
+	// Allowing access to the page
+	function onValidateAccess(callback)
+	{
 		// Get the game ID; Do it again so that form submission can use same form;
 		let gameID = mydoc.get_query_param("gameid");
 
 		if(gameID != undefined)
 		{
+			
+			// Get the password details
 			let gamePasswordCookie = mydoc.getCookie(gameID) ?? ""
-			let gamePasswordForm = mydoc.getContent("#editGameCredsForm #gamePassPhrase")?.value ?? "";
+			let gamePasswordForm = mydoc.getContent("#loginForm #loginPassPhrase")?.value ?? "";
 			let password = (gamePasswordCookie != "") ? gamePasswordCookie : gamePasswordForm;
+			
 
 			// Check the field vs the given password or edit URL;
 			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
@@ -57,7 +78,7 @@ var TestListID = undefined;
 				// Only load if valid;
 				if(customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase())
 				{
-					mydoc.hideContent("#edit_section_game_creds");
+					mydoc.hideContent("#edit_section_game_login");
 
 					// Set the password in the Jeopardy object
 					JeopardyGame.setGamePass(customFieldValue);
@@ -72,13 +93,7 @@ var TestListID = undefined;
 					// Set the cookie with 30 minute expiration
 					if(gamePasswordCookie == ""){ mydoc.setCookie(gameID,customFieldValue,30); }
 				}
-				else
-				{
-					set_loading_results("");
-					mydoc.showContent("#hostEditLoginSection");
-					mydoc.showContent("#edit_game_section");
-					mydoc.showContent("#edit_section_game_creds");
-				}
+				else { callback(); }
 			});
 		}
 	}
@@ -117,9 +132,9 @@ var TestListID = undefined;
 	}
 
 	// Create or return an instance of the Jeopardy game
-	function onCreateJeopardyGame(gameID, gameName)
+	function onCreateJeopardyGame(gameID, gameName, gameDesc="")
 	{
-		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName) : JeopardyGame;
+		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName, gameDesc) : JeopardyGame;
 		return JeopardyGame
 	}
 
@@ -131,12 +146,7 @@ var TestListID = undefined;
 			switch(event.code)
 			{
 				case "Enter":
-					inputEle = document.getElementById("given_game_password");
-					if(inputEle == document.activeElement)
-					{
-						loadGame('edit', true)
-
-					}
+					if(CurrentSection == ""){ onValidatePassword(); }
 					break;
 				default:
 					return;
@@ -171,16 +181,18 @@ var TestListID = undefined;
 				// Get game components
 				var gameID = response["id"];
 				var gameName = response["name"];
+				var gameDesc = response["desc"];
 				var attachments = response["attachments"];
 
 				// Create a new Jeopardy instance
-				onCreateJeopardyGame(gameID, gameName);
+				onCreateJeopardyGame(gameID, gameName, gameDesc);
 				
 				// Set the attachments mapping;
 				JeopardyGame.setAttachments(attachments);
 
 				// Set game name & ID on the page
 				onSetGameName();
+				onSetGameDescription();
 				onSetGameID();
 		
 			}, (data) => {
@@ -282,6 +294,13 @@ var TestListID = undefined;
 		var gameName = JeopardyGame.getGameName();
 		mydoc.setContent("#game_name_value", {"value":gameName});
 		mydoc.setContent("#edit_game_name", {"innerText":gameName});
+	}
+
+	// Set the game description
+	function onSetGameDescription()
+	{
+		var gameDesc = JeopardyGame.getGameDesc();
+		mydoc.setContent("#gameDescription", {"value":gameDesc});
 	}
 
 	// Set the game ID
@@ -425,7 +444,7 @@ var TestListID = undefined;
 
 		if(SectionsToBeSaved.length > 0)
 		{
-			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:5%;height:5%;">`
+			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">`
 			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
 			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
 			mydoc.addClass("#saveButton", "dlf_button_blue");
@@ -464,13 +483,17 @@ var TestListID = undefined;
 				// Get the name of the game
 				let savedName = JeopardyGame.getGameName();
 				let newName =  mydoc.getContent("#game_name_value")?.value ?? savedName;
-				if( HostUtility.isDiffValues(newName, savedName)){ onSaveGameName(newName); }
+
+				// Get the descriptoin
+				let savedDesc = JeopardyGame.getGameDesc();
+				let newDesc =  mydoc.getContent("#gameDescription")?.value ?? savedDesc;
 
 				// Get the passphrase
 				let savedPass = JeopardyGame.getGamePass();
 				let newPass = mydoc.getContent("#game_pass_phrase")?.value ?? savedPass;
-				if( HostUtility.isDiffValues(newPass, savedPass)){ onSavePassphrase(newPass); }
-				
+
+				// Save the details
+				onSaveGameDetails(newName, newDesc, newPass);
 				break;
 			case "edit_section_game_settings":
 				onSaveGameFile(JSON.stringify(JeopardyGame.Config), "config.json");
@@ -479,7 +502,6 @@ var TestListID = undefined;
 				onSaveGameFile(JSON.stringify(JeopardyGame.Categories), "categories.json");
 				break;
 			case "edit_section_game_media":
-				
 				onSaveGameFile(JSON.stringify(JeopardyGame.Media), "media.json");
 				break;
 			default:
@@ -487,36 +509,41 @@ var TestListID = undefined;
 		}
 	}
 
-	// Save the game name
-	function onSaveGameName(newName)
+	// Save the basic game details
+	function onSaveGameDetails(newName,newDesc,newPass)
 	{
-		Logger.log("Updating game Name");
+		Logger.log("Updating Game Details");
 
-		let gameID = JeopardyGame.getGameID();
-		// Update in Trello
-		MyTrello.update_card_name(gameID,newName, (data)=>{
-			if(data.status >= 200 && data.status < 300)
-			{
-				JeopardyGame.setGameName(newName);
-				onSetGameName();
-			}
-		});
-	}
+		let gameID = JeopardyGame.getGameID() ?? "";
 
-	// Save a custom field based on given name
-	function onSavePassphrase(newValue)
-	{
-		Logger.log("Updating Pass Phrase");
+		if(gameID != "")
+		{
+			// Game name
+			MyTrello.update_card_name(gameID, newName, (data)=>{
+				if(data.status >= 200 && data.status < 300)
+				{
+					JeopardyGame.setGameName(newName);
+					onSetGameName();
+				}
+			});
 
-		let gameID = JeopardyGame.getGameID();
+			// Game description
+			MyTrello.update_card_description(gameID, newDesc, (data)=>{
+				if(data.status >= 200 && data.status < 300)
+				{
+					Logger.log("Updated description");
+				}
+			});
 
-		MyTrello.update_card_custom_field_by_name(gameID, "Pass Phrase", newValue, (data)=> {
+			// Game pass
+			MyTrello.update_card_custom_field_by_name(gameID, "Pass Phrase", newPass, (data)=> {
 
-			if(data.status >= 200 && data.status < 300)
-			{
-				Logger.log("Updated custom field == Pass Phrase");
-			}
-		});
+				if(data.status >= 200 && data.status < 300)
+				{
+					Logger.log("Updated custom field == Pass Phrase");
+				}
+			});
+		}
 	}
 
 	// Save one of the config files (config, category, media, etc?)
@@ -1036,7 +1063,7 @@ var TestListID = undefined;
 	{
 		loading_html = `
 			<span>Syncing</span>
-			<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:5%;height:5%;">
+			<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">
 			`;
 		MyNotification.notify("#syncNotifier", loading_html, "notify_orange");
 
@@ -1111,7 +1138,7 @@ var TestListID = undefined;
 
 /****** TEST/PLAY Game ****************************/ 
 
-	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/src/img/loading1.gif" style="width:10%;height:10%;">`
+	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
 
 	// To test the game
 	function onTestGame()

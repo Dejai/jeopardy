@@ -19,7 +19,7 @@
 	<div style="border-bottom: 2px solid white;">
 		<div class="homeIconSection" style="border-right:2px solid white;width:16%;display: inline-block;margin:none;">
 			<h1 style="font-size:20px;">
-				<span><a href="/host/" class="hostHomeLink">Homemade Jeopardy:</a><br/></span>
+				<span><a href="/host/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/></span>
 				<span id="edit_game_name"></span>
 			</h1>
 		</div>
@@ -37,25 +37,24 @@
 			</div>
 		</div>
 	</div>
-	<div id="load_game_section" style="text-align:center;">
-		<img id="loading_gif" src="../../src/img/loading1.gif" class="">
-		<div id="loading_results_section"></div>
-	</div>
-	<div id="edit_game_section" class="hidden">
+	<div id="edit_game_section" style="margin-top:3%;" class="hidden">
 		<div class="dlf_centered_block_medium centered">
 			<span id="generalNotificationBar"></span>
 		</div>
-
 		<div class="center_section_70">
-			<div class="center_section_70 centered hidden">
-				<p id="loading_results_section"></p>
-			</div>
-			<div id="edit_section_game_creds" class="edit_section2 hidden2">
-				<div id="editGameCredsForm">
+			<div id="edit_section_game_login" class="edit_section2 hidden2">
+				<div id="loginForm">
 					<h2>Game Passphrase</h2>
-					<input id="gamePassPhrase" type="text" placeholder="Enter game pass phrase ..">
-					<br/>
-					<button class="dlf_button dlf_button_round_corners dlf_button_blue" onclick="onValidateAccess()">Submit</button>
+					<p>
+						<input id="loginPassPhrase" style="font-size:20px; width:40%;" type="text" placeholder="Enter game pass phrase ..">
+					</p>
+					<div class="actionButtonSection">
+						<button class="dlf_button dlf_button_round_corners dlf_button_blue" onclick="onValidatePassword()">
+							SUBMIT
+						</button>
+						<span id="loginLoading" style="margin-top:2%;"></span>
+					</div>
+					<p id="loginMessage" style="color:red;"></p>
 				</div>
 			</div>
 
@@ -65,6 +64,13 @@
 					<div style="margin-left:5%;">
 						<p>This is the name of your game.</p>
 						<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value" onchange="onChangeInSection()">
+					</div>
+				</div>
+				<div>
+					<h3>Game Description</h3>
+					<div style="margin-left:5%;">
+						<p>A brief description about your game</p>
+						<textarea name="gameDescription" id="gameDescription" cols="20" rows="2" style="width:100%;" placeholder="Enter description" class="edit_game_value" onchange="onChangeInSection()"></textarea>
 					</div>
 				</div>
 				<div>
@@ -166,6 +172,13 @@
 				</div>
 			</div>			
 		</div>
+		<div class="center_section_70 centered hidden">
+			<p id="loading_results_section"></p>
+		</div>
+	</div>
+	<div id="load_game_section" style="text-align:center;">
+		<img id="loading_gif" src="../../src/img/loading1.gif" class="">
+		<div id="loading_results_section"></div>
 	</div>
 
 </body>
