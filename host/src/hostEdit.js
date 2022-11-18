@@ -306,10 +306,10 @@ var TestListID = undefined;
 				option["customValue"] = savedConfig["value"] ?? "";
 			});
 
-			MyTemplates.getTemplate("../../templates/host/ruleOption.html",ruleObj.Options,(template)=>{
+			MyTemplates.getTemplate("host/templates/ruleOption.html",ruleObj.Options,(template)=>{
 				ruleObj["FormattedOptions"] = template;
 
-				MyTemplates.getTemplate("../../templates/host/ruleRow.html",ruleObj,(template)=>{
+				MyTemplates.getTemplate("host/templates/ruleRow.html",ruleObj,(template)=>{
 					
 					rulesHTML += template;
 
@@ -345,12 +345,12 @@ var TestListID = undefined;
 			// First, loop through the questions in this category
 			questions = category.Questions;
 
-			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
 
 				// Take the formatted questions & set the section
 				let categorylabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
 				let sectionJSON = {"categoryLabel":categorylabel, "categoryName":category.Name, "categorySectionBody":template}
-				MyTemplates.getTemplate("../../templates/host/categorySection.html", sectionJSON, (template) =>{
+				MyTemplates.getTemplate("host/templates/categorySection.html", sectionJSON, (template) =>{
 
 					// Add to the category HTML
 					categoryHTML += template;
@@ -392,7 +392,7 @@ var TestListID = undefined;
 				if(media.Type == "Image"){ allAudioSet = true; }
 				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
 				media["MediaHTML"] = media.getMediaHTML();
-				MyTemplates.getTemplate("../../templates/host/mediaItem.html", media, (template)=>{
+				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
 					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
 				});
 				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
@@ -686,7 +686,7 @@ var TestListID = undefined;
 	{
 
 		let formName = identifier.replace("#","");
-		let templateName = `../../templates/host/${formName}.html`;
+		let templateName = `host/templates/${formName}.html`;
 
 		// Get the media object for the question form
 		let audioOptions = JeopardyGame.getMediaOptions("Audio");
@@ -778,7 +778,7 @@ var TestListID = undefined;
 
 			// Reload the questions after swapping
 			let questions = category.getQuestions();
-			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
 				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
 			});
 
@@ -865,7 +865,7 @@ var TestListID = undefined;
 		let category = JeopardyGame.getCategory(categoryName);
 		let questions = category.Questions;
 		
-		MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+		MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
 			mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
 		});
 
@@ -892,7 +892,7 @@ var TestListID = undefined;
 			let questions = category.Questions;
 
 			// Reload category section
-			MyTemplates.getTemplate("../../templates/host/categoryQuestionRow.html", questions, (template)=>{
+			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
 				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
 			});
 			

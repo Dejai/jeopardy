@@ -6,8 +6,11 @@
 	<!-- jQuery library -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="../../src/game.css">
-    <link rel="stylesheet" type="text/css" href="../../src/board/board.css">
+	<!-- Base of the path -->
+	<base href="../../" target="_blank">
+
+    <link rel="stylesheet" type="text/css" href="src/game.css">
+    <link rel="stylesheet" type="text/css" href="board/src/board.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
@@ -40,22 +43,22 @@
 	<!-- Loading section -->
 	<div id="main_section">
 		<div id="load_game_section">
-			<img id="loading_gif" src="../../assets/img/loading1.gif" class="hidden">
+			<img id="loading_gif" src="assets/img/loading1.gif" class="hidden">
 			<div id="loading_results_section"></div>
 		</div>
 	</div>
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
-	<script src="../../src/rules.js"></script>
-	<script src="../../src/settings.js"></script>
+	<script src="shared/rules.js"></script>
+	<script src="shared/settings.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<!-- My Google Drive code -->
-	<script src="../../src/googledrive.js"></script>
+	<script src="shared/googledrive.js"></script>
 	<!-- My Source JS -->
-	<script src="../../src/timer.js"></script>
-	<script src="../../src/templates.js"></script>
-	<script src="../../src/jeopardy.js"></script>
-	<script src="../../src/board/boardHost2.js"></script>
+	<script src="shared/timer.js"></script>
+	<script src="shared/templates.js"></script>
+	<script src="shared/jeopardy.js"></script>
+	<script src="board/src/boardHost2.js"></script>
 </html>

@@ -47,7 +47,7 @@
                     });
 
                     // Load game templates;
-                    MyTemplates.getTemplate("../../templates/host/gameItem.html", gameList,(template)=>{
+                    MyTemplates.getTemplate("host/templates/gameItem.html", gameList,(template)=>{
                         mydoc.setContent("#listOfGames", {"innerHTML": template});
                     });
 				});

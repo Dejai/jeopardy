@@ -517,7 +517,7 @@
 	/* Subsection: The Game Board */
 		
 		// Get/Set the game board
-		getGameBoard2(callback)
+		getGameBoard(callback)
 		{
 			// Loop through categories to build board
 			this.getCategories()?.forEach( (category, idx, array)=> {
@@ -540,7 +540,7 @@
 				});
 	
 				// Set the question templates
-				MyTemplates.getTemplate("../../templates/board/boardQuestion.html", questions, (questionsTemplate)=>{
+				MyTemplates.getTemplate("board/templates/boardQuestion.html", questions, (questionsTemplate)=>{
 					
 					// The category template object
 					let categoryObj = {
@@ -550,87 +550,13 @@
 							"Questions":questionsTemplate,
 						}
 					// Set the category templates;
-					MyTemplates.getTemplate("../../templates/board/boardCategory.html", categoryObj, (categoriesTemplate)=>{
+					MyTemplates.getTemplate("board/templates/boardCategory.html", categoryObj, (categoriesTemplate)=>{
 						callback(categoriesTemplate,isFinalJeopardyCategory);
 					});
 				});
 			});
 		}
 
-		// Get the game board
-		getGameBoard()
-		{
-			// Two "boards" - regular round and final jeopardy
-			var main_board = "<tr id=\"round_1_row\" class=\"hidden\">";
-			var final_board = "<tr id=\"final_jeopardy_row\" class=\"hidden\">";
-
-			// Get categories;
-			let categories = this.getCategories();
-			let categoriesLength = categories.length-1;
-			let categoryCount = 0;
-
-			categories.forEach(function(category){
-
-				categoryCount++;
-
-				isFinalJeopardy = category.isFinalJeopardy();
-
-				// Properties for the table rows
-				colspan 		= (isFinalJeopardy) ? 3 : 1;
-				dynamic_width 	= (isFinalJeopardy) ? 100 : (1 / categoriesLength);
-
-				category_name 	= category.getName();
-				let preFilledCategoryName = (isFinalJeopardy) ? category_name : "";
-
-				// Values for the "how to play" tooltip
-				let howToPlayClass = categoryCount == 3 ? "howtoplay_tooltip" : "";
-				let howToPlaySpan = categoryCount == 3 ? "<span class='tooltiptext tooltiphidden tooltipvisible tooltipabove'>Click to reveal the category names.</span>" : "";
-
-				// Set the header for the category
-				category_name_row 		= `<tr><th class='category category_title ${howToPlayClass}' data-jpd-category-name='${category_name}'>${howToPlaySpan}${preFilledCategoryName}</th></tr>`;
-				
-				// Set the questions 
-				category_questions_row	= "";
-				questions = category.getQuestions();
-				questions.forEach(function(question){
-					
-
-					quest = question.getQuestion();
-					ans   = question.getAnswer();
-					key = (isFinalJeopardy) ? category_name : (category_name + " - " + quest["value"]);
-
-					JEOPARDY_QA_MAP[key] = {
-						"question": quest,
-						"answer"  : ans
-					}
-					
-					category_questions_row += `<tr><td class='category category_option' data-jpd-quest-key=\"${key}\">${quest["value"]}</tr></td>`;
-				});
-				
-				// The column
-				let column = `<td colspan=\"colspan\" style='width:${dynamic_width}%;'><table class='category_column'>${category_name_row} ${category_questions_row}</table></td>`;
-
-				if(isFinalJeopardy)
-				{
-					final_board += column;
-				}
-				else
-				{
-					// Add column for category to Game Board
-					main_board += column;
-				}
-					
-				// }
-			});
-
-			// Close both rows;
-			main_board += "</tr>";
-			final_board += "</tr>";
-			
-			let game_board = main_board + final_board;
-
-			return game_board;			
-		}
 
 	/* Subsection: Attachments */
 		// Set/Get: Attachment ID

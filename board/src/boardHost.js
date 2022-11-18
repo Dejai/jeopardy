@@ -1,8 +1,5 @@
 // The instance of this jeopardy game
 var JeopardyGame = undefined;
-var GameCard = undefined; // Used to store the game card from Trello
-var CurrentSection = ""; 
-var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -199,7 +196,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     function onSetGameMenu()
     {
         let gameObj = {"GameName":JeopardyGame.getGameName() };
-        MyTemplates.getTemplate("../../templates/board/menu.html",gameObj,(template)=>{
+        MyTemplates.getTemplate(".board/templates/menu.html",gameObj,(template)=>{
             mydoc.setContent("#homemade_jeopardy_title", {"innerHTML":template});
         });
     }
@@ -236,7 +233,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			});
 
             // Set the template for the rules
-            MyTemplates.getTemplate("../../templates/board/ruleItem.html",newRuleObj,(template)=>{
+            MyTemplates.getTemplate(".board/templates/ruleItem.html",newRuleObj,(template)=>{
 				rulesHTML += template; 
 
 				if(idx == array.length-1)
@@ -253,7 +250,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSetGameQuestions()
 	{
 		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard2((categoryTemplate, isFinalJeopardyCategory)=>{
+        JeopardyGame.getGameBoard((categoryTemplate, isFinalJeopardyCategory)=>{
             var x = (isFinalJeopardyCategory) ?
                         mydoc.setContent("#final_jeopardy_row", {"innerHTML":categoryTemplate}, true) :
                         mydoc.setContent("#round_1_row", {"innerHTML":categoryTemplate}, true);
@@ -287,7 +284,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				if(media.Type == "Image"){ allAudioSet = true; }
 				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
 				media["MediaHTML"] = media.getMediaHTML();
-				MyTemplates.getTemplate("../../templates/host/mediaItem.html", media, (template)=>{
+				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
 					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
 				});
 				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
@@ -303,13 +300,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
             "ID": "_dailyDoubleAudio", 
             "Name": "_dailyDoubleAudio", 
             "Type": "Audio",
-            "Src": "../../assets/audio/daily_double.m4a"
+            "Src": "assets/audio/daily_double.m4a"
         }
         let dailyDoubleImage = { 
             "ID": "_dailyDoubleImage", 
             "Name": "_dailyDoubleImage", 
             "Type": "Image",
-            "Src": "../../assets/img/daily_double.jpeg"
+            "Src": "assets/img/daily_double.jpeg"
         }
 
         // Add the daily double media
@@ -404,7 +401,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     function onSetQuestionPopup()
     {
         // Setting the parts of the question
-        MyTemplates.getTemplate("../../templates/board/questionPopupHost.html", {},(template)=>{
+        MyTemplates.getTemplate(".board/templates/questionPopupHost.html", {},(template)=>{
             mydoc.setContent("#show_question_section",{"innerHTML":template});
         });
     }

@@ -95,7 +95,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     function onSetGameMenu()
     {
         let gameObj = {"GameName":JeopardyGame.getGameName() };
-        MyTemplates.getTemplate("../../../templates/board/menu.html",gameObj,(template)=>{
+        MyTemplates.getTemplate("board/templates/menu.html",gameObj,(template)=>{
             mydoc.setContent("#homemade_jeopardy_title", {"innerHTML":template});
         });
     }

@@ -5,19 +5,24 @@
 	<title>Homemade Jeopardy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-	<link rel="stylesheet" type="text/css" href="../src/game.css">
+	<!-- Base of the path -->
+	<base href="../" target="_blank">
+	
+	<link rel="stylesheet" type="text/css" href="shared/game.css">
+    <link rel="stylesheet" type="text/css" href="host/src/host.css">
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy<br/>Host View</h1>
+		<h1 id="homemade_jeopardy_title">
+			<a href="/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/>Host View</h1>
 		<hr/>
 	</div>
 	<div style="text-align:center; ">
 		<h2>What would you like to do?</h2>
-		<a href="./load/" class="identify_yourself dlf_button_round_corners dlf_button_xxlarge dlf_button_limegreen dlf_href_notextdec">
+		<a href="host/load/" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_xxlarge dlf_button_limegreen dlf_href_notextdec">
 			LOAD EXISTING GAME
 		</a>
-		<a href="./create/" class="identify_yourself dlf_button_round_corners dlf_button_xxlarge dlf_button_blue dlf_href_notextdec">
+		<a href="host/create/" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_xxlarge dlf_button_blue dlf_href_notextdec">
 			CREATE A NEW GAME
 		</a>
 	</div>
