@@ -43,7 +43,9 @@
 /* QUESTION: Control transition visibility of question/answer & who got it right */
     .quest_answ_block { margin:auto; transition: all 1s ease-out; margin-bottom:2%; border-bottom:4px solid #F5F5F5; }
     .quest_answ_block.hiddenBlock { font-size:0px; width:0px; padding:0%; border:none; }
+    .quest_answ_block.hiddenBlock audio { opacity:0; }
     .quest_answ_block.visibleBlock { font-size:45px; width:75%; padding-top:7%; padding-bottom:7%;   }
+    .quest_answ_block.visibleBlock audio { opacity:100; }
 
     .whoGotItRight { margin:auto; transition:all 3s ease-out; }
     .whoGotItRight.hiddenBlock {opacity: 0; }

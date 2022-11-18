@@ -1,3 +1,7 @@
 NEXT:
 
-    Also make sure we are saving the GAME_CARD id for adding commentary when a new question is asked
+    Full test of the game 
+
+    Fix the Audio for Answers showing too early. 
+
+    

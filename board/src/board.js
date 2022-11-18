@@ -777,8 +777,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		// Show the sections
 		mydoc.showContent("#answer_block");
-		mydoc.hideContent("#reveal_answer_block")
-		mydoc.hideContent("#question_block audio")
+		mydoc.hideContent("#reveal_answer_block");
+		mydoc.hideContent("#question_block audio");
 
 		// The transition to question to be hidden
 		mydoc.addClass("#question_block", "hiddenBlock");
