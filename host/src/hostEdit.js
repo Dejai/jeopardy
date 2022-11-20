@@ -16,6 +16,9 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		// Loading up this page based on pathname;
 		onKeyboardKeyup();
 
+		// Make sure the page doesn't close once the game starts
+		window.addEventListener("beforeunload", onClosePage);
+
 		let gameID = mydoc.get_query_param("gameid");
 		if(gameID != undefined)
 		{
@@ -40,6 +43,16 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			location.assign("/host/load/");
 		}
 	});
+
+	// Prevent the page accidentally closing
+	function onClosePage(event)
+	{
+		if(SectionsToBeSaved.length > 0)
+		{
+			event.preventDefault();
+			event.returnValue='';
+		}
+	}
 
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
 
@@ -122,15 +135,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		document.querySelector(tabSelector)?.click();
 	}
 
-	// Prevent the page accidentally closing
-	function onClosePage(event)
-	{
-		if(SectionsToBeSaved.length > 0)
-		{
-			event.preventDefault();
-			event.returnValue='';
-		}
-	}
 
 	// Create or return an instance of the Jeopardy game
 	function onCreateJeopardyGame(gameID, gameName, gameDesc="")

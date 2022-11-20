@@ -14,6 +14,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Loading up this page based on pathname;
 		onKeyboardKeyup();
 
+		// Make sure the page doesn't close once the game starts
+		window.addEventListener("beforeunload", onClosePage);
+
         // Check for test run
         if( mydoc.get_query_param("test") != undefined){ mydoc.addTestBanner(); }
 
@@ -29,6 +32,16 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
             
         }
 	});
+
+	// Prevent the page accidentally closing
+	function onClosePage(event)
+	{
+		if( (JeopardyGame?.Game?.Asked?.length ?? 0) > 0)
+		{
+			event.preventDefault();
+			event.returnValue='';
+		}
+	}
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
 

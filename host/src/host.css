@@ -33,3 +33,7 @@
     /* For questions that use an audio file */
     .HasAudioNo { display:none !important; }
     .HasAudioYes { color:orange; }
+
+    /* For questions that use an audio file */
+    .HasURLNo { display:none !important; }
+    .HasURLYes { color:blue; }
