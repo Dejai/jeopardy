@@ -16,9 +16,7 @@ You can run this site locally using the following steps:
 * Open commandline terminal 
 * Navigate to folder containing this code
 * Run one of the following commands: 
-	* **Using Python:** `python -m SimpleHTTPServer 7000`
-	 OR
-	* **Using Python:** `python2 -m http.server 7000`
+	* **Using Python:** `python3 -m http.server 7000`
 	 OR
 	* **Using Docker:** `docker-compose up -d --build`
 

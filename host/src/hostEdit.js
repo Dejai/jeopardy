@@ -4,6 +4,7 @@ var GameCard = undefined; // Used to store the game card from Trello
 var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 var TestListID = undefined;
+var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll position
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -694,6 +695,8 @@ var TestListID = undefined;
 	{
 		if(state == "show")
 		{
+			onSaveScroll(); // save the scroll position;
+			onAlignForm() // Make sure top section is aligned
 			mydoc.showContent(formIdentifier);
 			mydoc.hideContent("#listOfCategories");
 			mydoc.hideContent(".addCategoriesSection");
@@ -701,10 +704,12 @@ var TestListID = undefined;
 		}
 		else if (state == "hide")
 		{
+
 			mydoc.hideContent(formIdentifier);
 			mydoc.showContent("#listOfCategories");
 			mydoc.showContent(".addCategoriesSection");
 			mydoc.showContent("#save_game_details");
+			onReScroll() // go back to scroll position
 		}
 	}
 
@@ -737,6 +742,29 @@ var TestListID = undefined;
 
 		});
 	}
+
+	// Aligning the top of the form to be visible when opened
+	function onAlignForm()
+	{
+		document.getElementById("edit_game_section")?.scrollIntoView();
+	}
+
+	// Save the current scroll location
+	function onSaveScroll()
+	{
+		WindowScroll.X = window.scrollX;
+		WindowScroll.Y = window.scrollY;
+		console.log("Saved scroll: ");
+		console.log(WindowScroll);
+	}
+
+	// Ensure the page is scrolled back to the place it was at.
+	function onReScroll()
+	{
+		window.scrollTo(WindowScroll.X, WindowScroll.Y);	
+	}
+
+
 
 /***** QUESTION FORM ACTIONS: Actions that involve the question form */
 
@@ -819,7 +847,6 @@ var TestListID = undefined;
 	{
 		// Control visibility of the sections
 		onToggleForm("hide", "#questionForm");
-
 	}  
 
 	// Set the values of the form
@@ -929,6 +956,7 @@ var TestListID = undefined;
 			onChangeInSection();
 		}
 	}
+
 
 /***** CATEGORY FORM ACTIONS: Actions that involve the question form */
 

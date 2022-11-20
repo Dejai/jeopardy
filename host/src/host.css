@@ -5,7 +5,7 @@
 
 
 /* LOAD: */
-    .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; margin:3%; }
+    .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; height:150px; overflow-y:scroll; margin:3%; }
     .gameItem:hover { color:black; background-color: lightblue; }
     .searchBar { border:1px solid gray; background-color:white; padding:1%; width:90%; margin:auto; font-size:35px; }
     .searchBar.searchPlaceholder { color:gray; }
