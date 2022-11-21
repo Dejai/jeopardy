@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team</title>
+<html>
+<head>
+	<!-- Base of the path -->
+	<base href="../../" target="_blank">
+	
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="teams/src/teams.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+	<div id="homemade_jeopardy_title" class="centered">
+		<h1 id="homemade_jeopardy_title" style="font-size:25px; margin-bottom:0px;">
+			Homemade Jeopardy<br/>
+			Team: <span id="team_code" class="highlight_team_value"></span>
+		</h1>
+		<button id="show_wager_link" style="float:right;margin-bottom:1%;" class="dlf_button_round_corners dlf_button_medium dlf_button_red hidden"  onclick="onShowFinalJeopardy()">
+			Final Jeopardy!
+		</button>
+		<hr style="clear:both;"/>
+		<br/>
+	</div>
+
+	<div id="main_section" class="centered">
+	
+		<!-- Submitted Answer -->
+		<div id="submittedAnswerSection" class="teamPageSection hidden">
+			<h4 style="margin:0px;">
+				<span class="submitted_answer">Last Answer:</span>
+				<span id="submitted_answer_value"></span>
+				<br/>
+				<span class="submitted_answer">Submitted Time:</span>
+				<span id="submitted_answer_time" class="answer_timestamp"></span>
+			</h4>
+		</div>
+
+		<!-- Submitted Wager -->
+		<div id="submitted_wager_section" class="teamPageSection hidden">
+			<h4>
+				<span class="submitted_answer">Your wager:</span>
+				<span id="submitted_wager_value" style="color:red;" ></span>
+			</h4>
+		</div>
+
+		<!-- All things WAGER -->
+		<div id="wagerSection" class="hidden">
+
+			<!-- The instructions -->
+			<div id="wagerInstructinos">
+				<p id="wager_instruction" class="wagerInputSubsections" style="color:red;" >
+					Submit your wager BEFORE the final question is revealed.
+				</p>
+				<div id="wagerConfirmationMessages" class="hidden">
+					<h4 id="wager_warning" style="color:red; margin-bottom:0px;">
+						CONFIRM YOUR WAGER:
+					</h4>
+					<p style="margin:0px;">
+						Are you sure you would like to submit the following wager? 
+					</p>
+				</div>
+				<div id="wagerAlertSection" style="color:red;"></div>
+				
+			</div>
+
+			<!-- The details -->
+			<div id="wagerValueSubsection" class="teamPageSection hidden">
+				<div id="scoresForWagerSection" class="teamPageSection">
+					<h4 style="border:2px dashed white; width:50%; margin:auto; padding:1%; ">				
+						<span>
+							Highest Score: 
+							<span id="highest_score" class="highlight_team_value">
+								<img src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:10px;height:10px;">
+							</span>
+						</span>
+						<br/><br/>
+						<span>
+							Your Score: 
+							<span id="team_score" class="highlight_team_value">
+								<img src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:10px;height:10px;">
+							</span>
+						</span>
+						<br/><br/>
+						<span id="maxWager">
+							Max Wager: 
+							<span id="maxWagerPreview" class="highlight_team_value">
+								<img src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:10px;height:10px;">
+							</span>
+						</span>
+						<br/><br/>
+						<span id="yourWager" class="hidden">
+							Your Wager: 
+							<span id="wager_input_preview" style="color:red;">0</span>
+						</span>
+					</h4>
+				</div>
+			</div>
+
+			<!-- The Input section -->
+			<div id="wagerInputSubsection" class="teamPageSection wagerInputSubsections">
+				<input id="wagerInput" style="width:90%;font-size:34px;"  type="number" placeholder="Enter wager here." name="wager" min="0" autocomplete="off"><br/>
+				<p id="wager_warning_section" style="color:red;"></p>
+				<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onConfirmWager()">
+					SUBMIT WAGER
+				</button>
+			</div>
+
+			<!-- Wager confirmation buttons -->
+			<div id="wagerConfirmationButtons" class="teamPageSection wagerInputSubsections hidden">
+				<img id="wagerSubmittingIcon" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:20px;height:20px;">
+				<br/>
+				<button id="cancel_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_red" onclick="onCancelWager()">
+					CANCEL
+				</button>
+				<button id="confirm_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_limegreen" onclick="onSubmitWager()">
+					SUBMIT
+				</button>
+			</div>
+		</div>
+
+
+
+		<!-- Answer things! -->
+		<div id="answer_input_section" class="hidden">
+			<!-- <h3 style="margin:20px 0px 0px 0px;"><label for="answer">Enter Answer:</label></h3> -->
+			<input id="answer" style="width:90%;font-size:34px;" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
+			<br/><br/>
+			<button id="submitAnswer" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onSubmitAnswer()">
+				SUBMIT ANSWER
+			</button>
+		</div>
+
+		<div id="finalJeopardySection" class="teamPageSection hidden" style="margin-top:1%; padding-top:2%;">
+			<h3 style='color:orange'>
+				Ready for Final Jeopardy section?
+			</h3>
+			<button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onContinueFJ()">CONTINUE</button> &nbsp; 
+			<button class="dlf_button dlf_button_round_corners dlf_button_red" onclick="onCancelFJ()">CANCEL</button>
+		</div>
+
+
+
+		<!-- <div id="enter_answers_section" class="hidden" >
+			<!-- <h2 style="margin-bottom:0px;">Team: <span id="team_code" class="highlight_team_value"></span></h2> -->
+			
+			<!-- <div style="text-align:left;"> -->
+				<button class="dlf_button_round_corners dlf_button_medium dlf_button_green" style="color:white;float:left;display:none; " onclick="onGetLatestScores()">
+					<span id="refresh_scores" class="fa fa-refresh pointer" style="color:white;">
+						&nbsp; Refresh Scores
+					</span>
+				</button>							
+			<!-- </div> -->
+		<!-- </div> -->
+	</div>
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<script src="src/js/rules.js"></script>
+	<script src="src/js/settings.js"></script>
+	<script src="src/js/jeopardy.js"></script>
+	<script src="teams/src/teams.js"></script>
+</html>

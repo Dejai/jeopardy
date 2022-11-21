@@ -4,7 +4,7 @@
 <html>
 <head>
 	<!-- Base of the path -->
-	<base href="../" target="_blank">
+	<base href="../../" target="_blank">
 	
     <link rel="stylesheet" type="text/css" href="src/css/game.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -21,38 +21,35 @@
 		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Team View</h1>
 		<hr/>
 	</div>
-	<div id="main_section">
+	<div id="main_section" class="centered">
 
-		<div id="enter_team_code_section" class="hidden">
-			<h2>Enter Rejoin Code</h2>
-			<p>Ask the Host to give you this code.</p>
-			<input id="player_game_and_team_code" type="text" name="player_game_and_team_code">
-			<br/><br/>
-			<button type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="lookupCard()">
-				Enter
-			</button>
-		</div>
+		<div id="notification_section"></div>
 
-		<div id="enter_game_code_section" class="hidden">
+		<div id="enter_game_code_section">
 			<h2>Step 1: Enter Game Code</h2>
 			<input id="player_game_code" type="text" name="player_game_code">
-			<br/><br/>
-			<button type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="lookupGame()">
+			<!-- <br/><br/>
+			<button type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onLookupGameCode()">
 				Enter
-			</button>
+			</button> -->
 		</div>
 
 		<div id="enter_team_name_section" class="hidden">
 			<h2>Step 2: Enter Team Name</h2>
 			<input id="team_name" type="text" name="team_name">
-			<br/><br/>
-			<button id="create_team_button" type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="create_team()">
-				Create/Load
-			</button><br/>
-			<img id="loading_gif" class="hidden" src="../src/img/loading1.gif" class="hidden">
 		</div>
 
-		<div id="notification_section"></div>
+		<div id="buttonsSection">
+			<img id="loading_gif" src="src/img/loading1.gif"  style="width:5%;height:5%;" class="hidden">
+			<br/>
+			<button id="lookupGameButton" type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onLookupGameCode()">
+				ENTER
+			</button>
+			<button id="createTeamButton" type="submit" value="Enter" class="hidden dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onCreateTeam()">
+				CREATE
+			</button>
+		</div>
+
 
 	</div>
 </body>
@@ -60,6 +57,6 @@
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
-	<script src="teams/src/teams.js"></script>
+	<script src="teams/src/teamsJoin.js"></script>
 
 </html>

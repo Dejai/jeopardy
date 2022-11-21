@@ -477,7 +477,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                 {
                     // Setup short name
                     let teamPartialID = teamID.substring(teamID.length-4).toUpperCase();
-                    let shortCode = JeopardyGame.Game.getCode() + teamPartialID
+                    let shortCode = JeopardyGame.Game.getCode() + "-" + teamPartialID;
 
                     let teamObj = {
                         "Name":teamName,
@@ -1320,7 +1320,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			{
 				document.getElementById("submitted_wager_value").innerText = custom_value;
 				mydoc.showContent("#submitted_wager_section");
-				mydoc.hideContent("#wager_input_section");
+				mydoc.hideContent("#wagerSection");
 				mydoc.hideContent("#show_wager_link");
 			}		
 		});

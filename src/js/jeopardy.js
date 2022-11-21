@@ -743,6 +743,50 @@
 		}
 	}
 
+
+/****** CLASS: "Team" ; This stores details specific for a single team playing jeopardy ********/
+
+	class Team
+	{
+		constructor(name, teamID, listID)
+		{
+			this.Name = name ?? "";
+			this.TeamID = teamID ?? "";
+			this.ListID = listID ?? "";
+			this.Score = 0;
+			this.HasWager = false;
+
+			// Keeping track of things for the game
+			this.Game = {};
+			this.Settings = {};
+			this.HighestScore = 0;
+			this.Oponents = {};
+		}
+
+		// Set the game settings
+		setSettings(jsonObj)
+		{
+			console.log("The Settings");
+			console.log(jsonObj);
+			let settingsObj = jsonObj[0] ?? {};
+			Object.keys(settingsObj)?.forEach( (key)=>{
+				this.Settings[key] = settingsObj[key];
+			});
+		}
+
+		// Set team scores
+		setTeamScore(teamID, score)
+		{
+			if(teamID == this.TeamID)
+			{
+				this.Score = score;
+			}
+
+			// Set the highest score
+			this.HighestScore = (score > this.HighestScore) ? score : this.HighestScore;
+		}
+
+	}
 	
 
 /****** CONST: "JeopardyHelper" ; For general helper methods used by multiple classes ********/

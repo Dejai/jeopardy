@@ -1490,7 +1490,7 @@
 			{
 				document.getElementById("submitted_wager_value").innerText = custom_value;
 				mydoc.showContent("#submitted_wager_section");
-				mydoc.hideContent("#wager_input_section");
+				mydoc.hideContent("#wagerSection");
 				mydoc.hideContent("#show_wager_link");
 			}		
 		});
