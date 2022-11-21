@@ -188,7 +188,7 @@
 	.host_edit_tab.selected_tab { background-color:blue; }
 	.host_edit_tab_disabled { color: gray;}
 	
-	#edit_section_game_details table tbody tr td { padding-bottom:3%; }
+	#generalDetails table tbody tr td { padding-bottom:3%; }
 
 	.edit_section_question_category { border: 2px solid white; }
 

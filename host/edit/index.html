@@ -28,11 +28,11 @@
 				<h2>Login</h2>
 			</div>
 			<div id="host_edit_tab_section" class="hidden" style="font-size:14px;margin:none;">
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_details">General <br/> Details</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_questions">Questions/<br>Answers</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_settings">Settings/<br/>Rules</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_game_media">Game Media</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="edit_section_play">Test/Play<br/> Game</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="generalDetails">General <br/> Details</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/<br>Answers</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/<br/>Rules</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="testAndPlay">Test/Play<br/> Game</h2>
 				<h2 id="saveButton" class="host_edit_tab dlf_button_round_corners dlf_button_gray" onclick="onSaveGame()">SAVE</h2>
 			</div>
 		</div>
@@ -58,7 +58,7 @@
 				</div>
 			</div>
 
-			<div id="edit_section_game_details" class="edit_section hidden" style="text-align:left;">
+			<div id="generalDetails" class="edit_section hidden" style="text-align:left;">
 				<div>
 					<h3>Game Name</h3>
 					<div style="margin-left:5%;">
@@ -82,7 +82,7 @@
 				</div>
 			</div>
 
-			<div id="edit_section_game_questions" class="edit_section hidden">
+			<div id="questionsAnswers" class="edit_section hidden">
 				<p>Enter the categories & questions for your game.</p>
 
 				<div id="listOfCategories"></div>
@@ -95,7 +95,7 @@
 				<div id="categoryForm" class="hidden"></div>
 			</div>
 
-			<div id="edit_section_game_settings" class="centered edit_section hidden">
+			<div id="gameSettings" class="centered edit_section hidden">
 				<p class="section_description" style="margin:0px;">
 					Configure the settings that you want to use for your game.
 				</p>
@@ -108,7 +108,7 @@
 				</table>
 			</div>
 
-			<div id="edit_section_game_media" class="edit_section hidden">
+			<div id="gameMedia" class="edit_section hidden">
 
 				<p class="section_description centered">
 					OPTIONAL: Upload any images or audio you want to use in your game.
@@ -129,7 +129,7 @@
 				</div>
 			</div>
 
-			<div id="edit_section_play" class="edit_section hidden">
+			<div id="testAndPlay" class="edit_section hidden">
 				<div class="center_section_702">
 					<h2>Test the Game</h2>
 					<div style="padding-left:5%;">

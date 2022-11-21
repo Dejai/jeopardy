@@ -121,7 +121,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		// If provided use the section parameter
 		if(sectionParam != undefined)
 		{
-			section = `edit_section_${sectionParam}`;
+			section = `${sectionParam}`;
 		}
 		else 
 		{
@@ -484,7 +484,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 		switch(section)
 		{
-			case "edit_section_game_details":
+			case "generalDetails":
 				// Get the name of the game
 				let savedName = JeopardyGame.getGameName();
 				let newName =  mydoc.getContent("#game_name_value")?.value ?? savedName;
@@ -500,13 +500,13 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 				// Save the details
 				onSaveGameDetails(newName, newDesc, newPass);
 				break;
-			case "edit_section_game_settings":
+			case "gameSettings":
 				onSaveGameFile(JSON.stringify(JeopardyGame.Config), "config.json");
 				break;
-			case "edit_section_game_questions":
+			case "questionsAnswers":
 				onSaveGameFile(JSON.stringify(JeopardyGame.Categories), "categories.json");
 				break;
-			case "edit_section_game_media":
+			case "gameMedia":
 				onSaveGameFile(JSON.stringify(JeopardyGame.Media), "media.json");
 				break;
 			default:
@@ -595,13 +595,20 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		mydoc.showContent(`#${targetSection}`);
 
 		// Conditional action for syncing media
-		var syncMedia = (targetSection == "edit_section_game_media") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
+		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
 
 		// Setting if the game can be played
-		var canPlay = (targetSection == "edit_section_play") ? onSetCanPlay() : undefined; 
+		var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
 
 		// Set the current section
 		CurrentSection = targetSection;
+
+		// Update window history state to allow for easy refresh
+		let newSearch = mydoc.getNewSearch({"section":targetSection});
+		let newPath = location.pathname + newSearch;
+		mydoc.addWindowHistory({"path":newPath}, true); //use replace to avoid confusion with Back button not changing page
+
+		console.log("Switching Section to: " + targetSection);
 	}
 
 	// Toggle visibility of sections related to selected rule option
