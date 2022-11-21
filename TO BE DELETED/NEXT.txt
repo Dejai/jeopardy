@@ -1,7 +1,0 @@
-NEXT:
-
-    Full test of the game 
-
-    Fix the Audio for Answers showing too early. 
-
-    Add the rules of a game to teh TEST RUN card? That way something is pulled in to the ticket
