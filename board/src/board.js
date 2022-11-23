@@ -507,8 +507,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			// Set the first player if it is not already set
 			if(!JeopardyGame.Game.PlayerSelected && !JeopardyGame.Game.IsFinalJeopardy)
             {
-				console.log("Updating turn");
 				// Set the current player based on mode
+				Logger.log("Updating turn");
 				onUpdateTurn();
 			}
 
