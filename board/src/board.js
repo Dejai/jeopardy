@@ -670,6 +670,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Get the question key from the clicked cell
 		let key = cell.getAttribute("data-jpd-quest-key");
 
+		console.log(key);
+
 		// Determing if the question can be opened;
 		let proceed = (JeopardyGame.Game.IsFinalJeopardy) ? canOpenFJ() : canOpenQuestion(key);
 		if(!proceed){ return; }

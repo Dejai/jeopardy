@@ -11,7 +11,7 @@
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
-			this.CategoryID = "CategoryIdx"+categoryObject.Order;
+			this.CategoryID = "CategoryId"+categoryObject.Order;
 			this.Name = categoryObject.Name;
 			this.Order = categoryObject.Order;
 			this.FinalJeopardy = categoryObject.FinalJeopardy;
@@ -415,8 +415,6 @@
 		updateCategoryQuestion(categoryName, questionObject)
 		{
 			let category = this.getCategory(categoryName);
-			console.log("Got category?" )
-			console.log(category);
 			let pass = category.updateCategoryQuestion(questionObject);
 			return pass;
 		}
@@ -549,7 +547,7 @@
 				// Loop through the questions in this category; Set key
 				let questions = category.Questions;
 				questions.forEach((q)=>{
-					let key = `${category.Name}-${q.Value}`;
+					let key = `${category.CategoryID}-${q.Value}`;
 					q.Key = key;
 					q.Value = (isFinalJeopardyCategory) ? category.Name : q.Value;
 					// Add question to the game
@@ -683,7 +681,6 @@
 			{
 				question = questObj;
 				this.Asked.push(key);
-				console.log("Process all the question; Including audio/images");
 			}
 			return question;
 		}
@@ -769,8 +766,6 @@
 		// Set the game settings
 		setSettings(jsonObj)
 		{
-			console.log("The Settings");
-			console.log(jsonObj);
 			let settingsObj = jsonObj[0] ?? {};
 			Object.keys(settingsObj)?.forEach( (key)=>{
 				this.Settings[key] = settingsObj[key];
