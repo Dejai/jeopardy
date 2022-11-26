@@ -22,7 +22,11 @@
 		</h1>
 		<hr/>
 	</div>
-	<div id="searchBar" class="searchBar searchPlaceholder" data-jpd-placeholder="Filter games ..." contenteditable="true" onkeyup="onFilterGames()" onfocus="onSearchFocus()" onblur="onSearchBlur()"></div>
+	<div id="searchBarSection">
+		<div id="searchBar" class="searchBar searchPlaceholder" data-jpd-placeholder="Search games ..." contenteditable="true" onkeyup="onFilterGames()" onfocus="onSearchFocus()" onblur="onSearchBlur()"></div>
+		<i id="searchClearIcon" class="fa fa-times-circle pointer hidden" aria-hidden="true" style="color:red;" onclick="onClearSearch()"></i>
+	</div>
+	<!-- <div id="searchBar" class="searchBar searchPlaceholder" data-jpd-placeholder="Filter games ..." contenteditable="true" onkeyup="onFilterGames()" onfocus="onSearchFocus()" onblur="onSearchBlur()"></div> -->
 	<div id="listOfGames"></div>
 </body>
 	<!-- Common Code -->

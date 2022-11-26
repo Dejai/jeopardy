@@ -90,6 +90,10 @@
     function onFilterGames()
     {
         let search = onGetSearchValues();
+
+        // Show option to clear search;
+		if(search.Filter != " "){ mydoc.showContent("#searchClearIcon"); }
+
         document.querySelectorAll(".gameItem")?.forEach( (item)=>{
     
 
@@ -128,7 +132,15 @@
         {
             mydoc.addClass("#searchBar", "searchPlaceholder");
             mydoc.removeClass("#searchBar", "searchText");
-            
             mydoc.setContent("#searchBar", {"innerText":search.Placeholder});
+            mydoc.hideContent("#searchClearIcon")
         }        
     }
+
+	// Clear the search
+	function onClearSearch()
+	{
+        mydoc.setContent("#searchBar" ,{"innerText":""});
+		onFilterGames();
+		onSearchBlur();
+	}
