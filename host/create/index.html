@@ -19,13 +19,12 @@
 <body>
 
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy:<br/>Create Game</h1>
+		<h1 id="homemade_jeopardy_title"><a href="/host/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/>Create Game</h1>
 		<hr/>
 	</div>
 
 	<div id="newGameSection">
 		<div class="center_section_70 centered">
-			<img id="loadingGIF" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:20px;height:20px;">
 			<div class="createFieldSection">
 				<h2>Game Name:</h2>
 				<p>Enter a name for your game</p>
@@ -43,7 +42,8 @@
 			</div>
 			<div class="createFieldSection">
 				<div class="notificationSection"></div>
-				<button onclick="onCreateNewGame()" class="dlf_button_large dlf_button_blue dlf_button_round_corners">Create Game</button>
+				<img id="loadingGIF" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:25px;height:25px;">
+				<button id="createGameButton" onclick="onCreateNewGame()" class="dlf_button_large dlf_button_blue dlf_button_round_corners">Create Game</button>
 
 			</div>
 		</div>
@@ -55,6 +55,7 @@
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<!-- My Source JS -->
+	<script src="src/js/rules.js"></script>
 	<script src="src/js/jeopardy.js"></script>
 	<script src="host/src/hostCreate.js"></script>
 </html>

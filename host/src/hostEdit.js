@@ -1189,6 +1189,9 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		
 		if(!checkGame.IsValid)
 		{
+			mydoc.setContent("#testGameLoading", {"innerHTML":""});
+
+
 			let messages ="";
 			checkGame.Messages.forEach( (message)=>{
 				messages+= `<li>${message}</li>`;

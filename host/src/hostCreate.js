@@ -11,6 +11,8 @@ var GamesListID = undefined;
 
         // Get the game list ID;
         onGetGameListID();
+
+        onGetDefaultRules();
     });
 
 /******* KEY FUNCTIONS *************/
@@ -24,13 +26,14 @@ var GamesListID = undefined;
         });
     }
 
-
     // Create a new game
     function onCreateNewGame()
     {
 
         // Show loading
         mydoc.showContent("#loadingGIF");
+        mydoc.hideContent("#createGameButton");
+
         mydoc.setContent(".notificationSection", {"innerHTML": ""});
 
         // Get the pieces of the game
@@ -43,6 +46,7 @@ var GamesListID = undefined;
             let message = "Please enter a value for all fields!";
             mydoc.setContent(".notificationSection", {"innerHTML": message});
             mydoc.hideContent("#loadingGIF");
+            mydoc.showContent("#createGameButton");
             return;
         }
 
@@ -51,6 +55,7 @@ var GamesListID = undefined;
             let message = "The Games List ID is not set! ";
             mydoc.setContent(".notificationSection", {"innerHTML": message});
             mydoc.hideContent("#loadingGIF");
+            mydoc.showContent("#createGameButton");
             return 
         }
 
@@ -72,10 +77,34 @@ var GamesListID = undefined;
                 if(updateData.status == 200)
                 {
                     console.log("Updated custom field == Pass Phrase");
+                }
+            });		
+            
+            // Set the default rules
+            let rulesJson = onGetDefaultRules();
+            // Save the config file
+            MyTrello.create_card_attachment(gameID, "config.json", rulesJson, (data)=>{
+            	if(data.status >= 200 && data.status < 300)
+            	{
                     let newPath = location.href.replaceAll("/create", "/edit");
                     newPath = newPath + `?gameid=${gameID}`;
                     location.href = newPath;
-                }
-            });			
+            	}
+            }, (err)=>{ console.error(err);});
         });
+    }
+
+    // Get the default set of rules
+    function onGetDefaultRules()
+    {
+
+        let defaultRules = {};
+        Rules?.forEach( (rule)=>{
+            let name = rule.Name;
+            let keyName = JeopardyHelper.getKeyName(name);
+            defaultRules[keyName] = {"option":"1"};
+        });
+        return JSON.stringify(defaultRules);
+        
+        
     }
