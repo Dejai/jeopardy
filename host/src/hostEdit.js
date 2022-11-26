@@ -368,12 +368,18 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 			// First, loop through the questions in this category
 			questions = category.Questions;
+			let categoryID = category.CategoryID;
 
 			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
 
 				// Take the formatted questions & set the section
 				let categorylabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
-				let sectionJSON = {"categoryLabel":categorylabel, "categoryName":category.Name, "categorySectionBody":template}
+				let sectionJSON = {
+					"categoryLabel":categorylabel, 
+					"categoryName":category.Name, 
+					"categorySectionBody":template,
+					"categoryID":categoryID
+				}
 				MyTemplates.getTemplate("host/templates/categorySection.html", sectionJSON, (template) =>{
 
 					// Add to the category HTML
@@ -480,7 +486,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	// Save the details based on section
 	function onSaveBySection(section)
 	{
-		console.log("Saving section = " + section);
+		Logger.log("Saving section = " + section);
 
 		switch(section)
 		{
@@ -557,9 +563,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		var gameID = JeopardyGame.getGameID();
 		var currAttachmentID = JeopardyGame.getAttachmentID(fileName);
 
-		console.log("Attachment ID: " + currAttachmentID);
-		console.log(JSON.parse(jsonString));
-
 		// Save the config file
 		MyTrello.create_card_attachment(gameID,fileName,jsonString,(data)=>{
 			if(data.status >= 200 && data.status < 300)
@@ -608,7 +611,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		let newPath = location.pathname + newSearch;
 		mydoc.addWindowHistory({"path":newPath}, true); //use replace to avoid confusion with Back button not changing page
 
-		console.log("Switching Section to: " + targetSection);
+		Logger.log("Switching Section to: " + targetSection);
 	}
 
 	// Toggle visibility of sections related to selected rule option
@@ -765,8 +768,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	{
 		WindowScroll.X = window.scrollX;
 		WindowScroll.Y = window.scrollY;
-		console.log("Saved scroll: ");
-		console.log(WindowScroll);
 	}
 
 	// Ensure the page is scrolled back to the place it was at.
@@ -844,8 +845,9 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 			// Reload the questions after swapping
 			let questions = category.getQuestions();
+			let categoryID = category.CategoryID;
 			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
-				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
+				mydoc.setContent(`[data-jpd-category-section='${categoryID}'] .categorySectionBody`,{"innerHTML":template} )
 			});
 
 			// Indicate a change is needed
@@ -922,16 +924,16 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			"Answer": { "Text": answerText, "Image": answerImage, "Audio": answerAudio, "URL": answerURL }
 		}
 		
-
 		// Update the saved category question
 		let results = JeopardyGame.updateCategoryQuestion(categoryName, newCategoryQuestion);
 
 		// Reload the question row -- so the page shows latest results
 		let category = JeopardyGame.getCategory(categoryName);
 		let questions = category.Questions;
-		
+		let categoryID = category.CategoryID;
+
 		MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
-			mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
+			mydoc.setContent(`[data-jpd-category-section='${categoryID}'] .categorySectionBody`,{"innerHTML":template} )
 		});
 
 		onToggleForm("hide", "#questionForm");
@@ -955,10 +957,11 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			category.deleteQuestion(questionValue);
 
 			let questions = category.Questions;
+			let categoryID = category.CategoryID;
 
 			// Reload category section
 			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
-				mydoc.setContent(`[data-jpd-category-section='${categoryName}'] .categorySectionBody`,{"innerHTML":template} )
+				mydoc.setContent(`[data-jpd-category-section='${categoryID}'] .categorySectionBody`,{"innerHTML":template} )
 			});
 			
 			onToggleForm("hide", "#questionForm");
@@ -1208,7 +1211,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 		// If we get to this point, actually play the game
 		let newURL = `/board/?gameid=${gameID}&gamecode=TEST&test=1`;
-		console.log(newURL);
 		window.open(newURL, "_blank");
 
 		// Set a cookie to indicate game has been tested; Expires in 60 minutes;
@@ -1254,7 +1256,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	// Action to play a real game
 	function onPlayGame()
 	{
-		console.log("Checking if we can play this game"); 
+		Logger.log("Checking if we can play this game"); 
 		mydoc.setContent("#playGameLoading", {"innerHTML": loadingGIF2});
 
 
@@ -1292,7 +1294,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 						MyTrello.update_card_description(gameCardID, gameSettings, (cardData)=>{
 
 							// Finally - navigate to the new game page
-							console.log("Create list and play a new game");
+							Logger.log("Create list and play a new game");
 							let gameID = JeopardyGame.getGameID();
 
 							let newURL = `/board/?gameid=${gameID}&gamecode=${newGameCode}`;
@@ -1324,7 +1326,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		let gameID = JeopardyGame.getGameID();
 		// If we get to this point, actually play the game
 		let newURL = `/board/host/code.html?gameid=${gameID}`;
-		console.log(newURL);
 		window.open(newURL, "_blank");
 
 		mydoc.setContent("#hostGameLoading", {"innerHTML": ""});

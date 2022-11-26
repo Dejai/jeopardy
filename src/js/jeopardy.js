@@ -11,6 +11,7 @@
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
+			this.CategoryID = "CategoryIdx"+categoryObject.Order;
 			this.Name = categoryObject.Name;
 			this.Order = categoryObject.Order;
 			this.FinalJeopardy = categoryObject.FinalJeopardy;
@@ -414,6 +415,8 @@
 		updateCategoryQuestion(categoryName, questionObject)
 		{
 			let category = this.getCategory(categoryName);
+			console.log("Got category?" )
+			console.log(category);
 			let pass = category.updateCategoryQuestion(questionObject);
 			return pass;
 		}
