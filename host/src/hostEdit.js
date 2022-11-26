@@ -1233,23 +1233,26 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 		if(JeopardyGame.Tested)
 		{
+			mydoc.hideContent(".playWarning");
+
 			// Set the Play button
-			mydoc.removeClass("#playGameButton", "dlf_button_gray");
-			mydoc.addClass("#playGameButton", "dlf_button_limegreen");
+			// mydoc.removeClass("#playGameButton", "dlf_button_gray");
+			// mydoc.addClass("#playGameButton", "dlf_button_limegreen");
 
 			// Set the host button
-			mydoc.removeClass("#hostGameButton", "dlf_button_gray");
-			mydoc.addClass("#hostGameButton", "dlf_button_blue");
+			// mydoc.removeClass("#hostGameButton", "dlf_button_gray");
+			// mydoc.addClass("#hostGameButton", "dlf_button_blue");
 		}
 		else
 		{
+			mydoc.showContent(".playWarning");
 			// Unset the Play button
-			mydoc.addClass("#playGameButton", "dlf_button_gray");
-			mydoc.removeClass("#playGameButton", "dlf_button_limegreen");
+			// mydoc.addClass("#playGameButton", "dlf_button_gray");
+			// mydoc.removeClass("#playGameButton", "dlf_button_limegreen");
 
-			// Unset the host button
-			mydoc.addClass("#hostGameButton", "dlf_button_gray");
-			mydoc.removeClass("#hostGameButton", "dlf_button_blue");
+			// // Unset the host button
+			// mydoc.addClass("#hostGameButton", "dlf_button_gray");
+			// mydoc.removeClass("#hostGameButton", "dlf_button_blue");
 		}
 	}
 	
@@ -1260,14 +1263,15 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		mydoc.setContent("#playGameLoading", {"innerHTML": loadingGIF2});
 
 
-		// If the game has not been tested, then exit
-		if(!JeopardyGame.Tested)
+		// Confirm if the game should be Played
+		let confirmMessage = "This game has not been tested recently.\n\nAre you sure you want to Play it?"
+		var proceed = (JeopardyGame.Tested) ? true : confirm(confirmMessage);
+
+		// If no confirmation, exit; 
+		if (!proceed)
 		{
-			setTimeout(()=>{
-				mydoc.setContent("#playGameLoading", {"innerHTML": ""});
-				mydoc.setContent("#playGameValidation", {"innerHTML": "Can't Play game without testing first"});
-			}, 1000);
-			return;
+			mydoc.setContent("#playGameLoading", {"innerHTML": ""});
+			return
 		}
 
 		// Create the list and appropriate Game Card
@@ -1314,19 +1318,18 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	{
 		mydoc.setContent("#hostGameLoading", {"innerHTML": loadingGIF2});
 
-		if(!JeopardyGame.Tested)
-		{
-			setTimeout(()=>{
-				mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
-				mydoc.setContent("#hostGameValidation", {"innerHTML": "Can't Host game without testing first"});
-			}, 1000);
-			return;
-		}
+		// Confirm if the game should be Played
+		let confirmMessage = "This game has not been tested recently.\n\nAre you sure you want to Host it?"
+		var proceed = (JeopardyGame.Tested) ? true : confirm(confirmMessage);
 
-		let gameID = JeopardyGame.getGameID();
-		// If we get to this point, actually play the game
-		let newURL = `/board/host/code.html?gameid=${gameID}`;
-		window.open(newURL, "_blank");
+		// Only proceed if confirmation
+		if (proceed)
+		{
+			let gameID = JeopardyGame.getGameID();
+			// If we get to this point, actually play the game
+			let newURL = `/board/host/code.html?gameid=${gameID}`;
+			window.open(newURL, "_blank");
+		}
 
 		mydoc.setContent("#hostGameLoading", {"innerHTML": ""});
 	}

@@ -43,6 +43,10 @@
     .HasURLNo { display:none !important; }
     .HasURLYes { color:blue; }
 
+/* Play/Game */
+    .playWarning { padding-left:3%; flex-basis:50%; color:red !important; }
+    /* .playWarning strong { color:orange !important;} */
+
 /**************************************************** 
 	MEDIA SCREENS
 *****************************************************/

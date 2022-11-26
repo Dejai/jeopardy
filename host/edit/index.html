@@ -149,10 +149,14 @@
 						<p>Play the real game with a real game code (to be shared with players).</p>
 						<p>This can only be done if you have tested the game within the last hour.</p>
 						<div class="actionButtonSection">
-							<button id="playGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_gray" onclick="onPlayGame()">
+							<button id="playGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPlayGame()">
 								PLAY GAME
 							</button>
 							<span id="playGameLoading" style="margin-top:2%;"></span>
+							<span class="playWarning">
+								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
+								Be sure to <strong>TEST GAME</strong> before playing a game.
+							</span>
 						</div>
 						<p id="playGameValidation" style="color:red;"></p>
 					</div>
@@ -166,6 +170,10 @@
 								HOST GAME
 							</button>
 							<span id="hostGameLoading" style="margin-top:2%;"></span>
+							<span class="playWarning">
+								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
+								Be sure to <strong>TEST GAME</strong> before hosting a game.
+							</span>
 						</div>
 						<p id="hostGameValidation" style="color:red;"></p>
 					</div>

@@ -196,7 +196,7 @@ var JeopardyGame = undefined;
     function onSetGameMenu()
     {
         let gameObj = {"GameName":JeopardyGame.getGameName() };
-        MyTemplates.getTemplate(".board/templates/menu.html",gameObj,(template)=>{
+        MyTemplates.getTemplate("board/templates/menu.html",gameObj,(template)=>{
             mydoc.setContent("#homemade_jeopardy_title", {"innerHTML":template});
         });
     }
@@ -233,7 +233,7 @@ var JeopardyGame = undefined;
 			});
 
             // Set the template for the rules
-            MyTemplates.getTemplate(".board/templates/ruleItem.html",newRuleObj,(template)=>{
+            MyTemplates.getTemplate("board/templates/ruleItem.html",newRuleObj,(template)=>{
 				rulesHTML += template; 
 
 				if(idx == array.length-1)
@@ -401,7 +401,7 @@ var JeopardyGame = undefined;
     function onSetQuestionPopup()
     {
         // Setting the parts of the question
-        MyTemplates.getTemplate(".board/templates/questionPopupHost.html", {},(template)=>{
+        MyTemplates.getTemplate("board/templates/questionPopupHost.html", {},(template)=>{
             mydoc.setContent("#show_question_section",{"innerHTML":template});
         });
     }
