@@ -88,6 +88,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				let gameCodeSearch = `&gamecode=${gameCode}`;
 				location.href = location.href.replace("code.html","") + gameCodeSearch;
 			}
+			else
+			{
+				mydoc.setContent("#codeValidationMessage", {"innerHTML":"Invalid code. Could not find game with that code."});
+			}
 		});
     }
 

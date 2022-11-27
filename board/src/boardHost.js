@@ -20,10 +20,14 @@ var JeopardyGame = undefined;
 		{
 			// Get the game (i.e. card)
 			onGetGame(gameID);
+			mydoc.setContent("#gameValidationMesssage", {"innerHTML":""});
+
 		}
         else
         {
             console.log("ERROR: Could not load the game; Missing the Game ID");
+			loading_results_section
+			mydoc.setContent("#gameValidationMesssage", {"innerHTML":"Invalid Game ID. Game not loaded."});
         }
 	});
 
