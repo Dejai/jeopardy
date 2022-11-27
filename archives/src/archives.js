@@ -17,42 +17,22 @@
 
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
-
-		if (path.includes("/game"))
-		{
-			let query_map = mydoc.get_query_map();
-			if(query_map.hasOwnProperty("gameID"))
-			{
-
-				GAME_LIST_ID = query_map["gameID"];
-				let gameDate = query_map["gameDate"];
-				let gameCode = query_map["gameCode"];
-				let gameName = query_map["gameName"];
-
-				// Get the game details
-				setGameDetails(gameDate, gameCode, gameName);
-
-				// Pull up the existing teams
-				onGetTeams(GAME_LIST_ID);
-			}
-		}
-		else 
-		{
-			// Get the list of archived games
-			onGetArchivedGames();
-		}
+		
+		// Get the list of archived games
+		onGetArchivedGames();
 	});
-
-/************* SECTION VISIBILITY ***************************************/ 
-
 
 /*************** ACTIONS *******************************************/ 
 
 	// Get the list of archived games
 	function onGetArchivedGames()
 	{
+
+		console.log("Getting games");
 		MyTrello.get_lists("closed", (data)=> {
 			let response = JSON.parse(data.responseText);
+
+			console.log(response);
 
 			response.forEach( (obj) =>{
 
@@ -75,91 +55,9 @@
 	// Open a particular game
 	function onOpenGame(gameID, gameDate, gameCode,gameName)
 	{
-		let newURL = `./game.html?gameID=${gameID}&gameDate=${gameDate}&gameCode=${gameCode}&gameName=${gameName}`;
+		let newURL = `/archives/game.html?gameID=${gameID}&gameDate=${gameDate}&gameCode=${gameCode}&gameName=${gameName}`;
 		window.open(newURL, "_top");
 	}
-
-	// Get the teams that are in this archived game
-	function onGetTeams(listID)
-	{
-		MyTrello.get_cards(listID, (data)=>{
-			response = JSON.parse(data.responseText);
-
-			THE_TEAMS["total"] = response.length;
-			THE_TEAMS["set"] = 0;
-
-			response.forEach( (obj) => {
-
-				let teamName = obj["name"];
-				let teamCode = obj["id"]
-				THE_TEAMS[teamCode] = {"name":teamName, "score":undefined, "wager":undefined };
-
-				getTeamScoreAndWager(teamCode, "Wager");
-				getTeamScoreAndWager(teamCode, "Score");
-			});
-
-		});
-	}
-
-	function getTeamScoreAndWager(teamCode,fieldName)
-	{
-
-		MyTrello.get_card_custom_field_by_name(teamCode,fieldName, (data)=> {
-	
-			let response = JSON.parse(data.responseText);
-
-			if(response.length == 1)
-			{
-				let value = response[0]?.value?.text ?? "n/a";
-				value = (value != "n/a") ? Number(value) : value;
-				THE_TEAMS[teamCode][fieldName.toLowerCase()] = value;
-
-				// Add the score before wager
-				let score = THE_TEAMS[teamCode]["score"];
-				let wager = THE_TEAMS[teamCode]["wager"];
-
-				if(Number.isInteger(score) && Number.isInteger(wager))
-				{
-					THE_TEAMS[teamCode]["preWagerScore"] = (score > wager) ? (score - wager) : (score + wager)
-				}
-				else
-				{
-					THE_TEAMS[teamCode]["preWagerScore"] = THE_TEAMS[teamCode]["score"]
-				}
-			}
-			else
-			{
-				THE_TEAMS[teamCode][fieldName.toLowerCase()] = "n/a";
-				THE_TEAMS[teamCode]["preWagerScore"] = 0;
-			}
-
-			// Check if all the scores have been set now;
-			checkIfScoresSet(teamCode);
-
-		});
-	}
-
-	function checkIfScoresSet(teamCode)
-	{
-		let hasScore = THE_TEAMS[teamCode]["score"] != undefined
-		let hasWager = THE_TEAMS[teamCode]["wager"] != undefined
-
-		// If this team is set, increment the set total
-		if(hasScore && hasWager)
-		{
-			THE_TEAMS["set"] += 1
-			TEAM_SCORES.push(THE_TEAMS[teamCode]);
-		}
-
-		// If all teams are set, then run the show list
-		if(THE_TEAMS["set"] == THE_TEAMS["total"])
-		{
-			showList(TEAM_SCORES, "score");
-			mydoc.showContent("#archive_section")
-			mydoc.hideContent("#loading_gif")
-		}
-	}
-
 
 /************************ HELPERS **************************/
 
@@ -238,13 +136,4 @@
 			toggleButton.innerText = "Show Score Before Wager";
 
 		}
-	}
-
-
-	// Get the list of archived games
-	function setGameDetails(gameDate, gameCode, gameName)
-	{
-		document.getElementById("archived_game_name").innerText = decodeURI(gameName);
-		document.getElementById("archived_game_code").innerText = `(${gameCode})`;
-		document.getElementById("archived_game_date").innerText = gameDate;
 	}

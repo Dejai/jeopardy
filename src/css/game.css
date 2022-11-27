@@ -140,30 +140,6 @@
 
 	.answer_timestamp { color:red; font-size:smaller; }
 
-
-/* Archive section */
-	.archive_section { width:90%; margin:auto; text-align:center; }
-	@media screen and (min-width: 768px ){ 
-		.archive_section { width:50%; }
-	}
-	.openGameButton{ background-color:inherit; color:inherit; border-color:black !important;}
-	#archive_table { width:100%; border-spacing:0px; }
-	#archive_table_body tr td { padding-top:3%; padding-bottom:3%; }
-	#archive_table_body tr:nth-child(even) { background-color:goldenrod; color:black; }
-	#archive_table_body tr:nth-child(odd) { background-color:blue; color:yellow; }
-	#archive_table button {cursor: pointer; }
-	#archived_game_table { width:100%;}
-	#toggleScores { cursor:pointer; }
-	#archived_game_date { font-style:italic; font-size:smaller; }
-	#archived_game_code { font-size:smaller; }
-	.gameCodeSmaller { font-size:smaller; }
-
-/* HOME PAGE */
-	/* #main_section { width:80%; margin:auto; text-align:center; font-size:120%; } */
-	/* #main_section input {width:80%; font-size:140%; text-align:center; } */
-	/* .identify_yourself { display:block; text-align:center; padding:2%; width:40%; margin:auto; cursor:pointer; */
-							 /* background-color:lightgray; margin-bottom:2%; } */
-
 /* ANSWERS PAGE*/
 	.highlight_team_value { color:orange; }
 	#team_code { color:orange; }
