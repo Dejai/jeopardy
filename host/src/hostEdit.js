@@ -1183,23 +1183,29 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
 
 	// Setting message for attempting to test/play game
-	function onShowErrorMessage(identifier, messages)
+	function onSetErrorMessages(identifier, messages)
 	{
 		// Build the list of errrs;
-		let mesageListItems ="";
+		let messageListItems ="";
 		messages.forEach( (message)=> {
-			mesageListItems+= `<li>${message}</li>`;
+			messageListItems+= `<li>${message}</li>`;
 		});
 
+		console.log(messageListItems);
+
 		// Let the message list;
-		let messageList = `<ul>${messages}</ul>`;
-		mydoc.setContent(identifier, {"innerHTML": ("This game is not valid for the following reasons" + messageList) })
+		let messageList = `<ul>${messageListItems}</ul>`;
+		mydoc.setContent(".gameValidationMessage", {"innerHTML": ("This game is not valid for the following reasons" + messageList) })
 		
 		// Set the test cookie to zero; So the game is no longer test worthy
+		let gameID = JeopardyGame.getGameID();
 		mydoc.setCookie(gameID+"Tested", "0", 60);
 		onSetCanPlay();
-
 	}
+
+	// Clear the error messages
+	function onClearErrorMessages(){ mydoc.setContent(".gameValidationMessage", {"innerHTML": ""}); }
+
 	// To test the game
 	function onTestGame()
 	{
@@ -1208,10 +1214,13 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 		mydoc.setContent("#testGameLoading", {"innerHTML": loadingGIF2});
 		
+		console.log("Testing game");
+		console.log(checkGame);
+
 		if(!checkGame.IsValid)
 		{
 			mydoc.setContent("#testGameLoading", {"innerHTML":""});
-			onShowErrorMessage("#testGameValidation", checkGame.Messages);
+			onSetErrorMessages("#testGameValidation", checkGame.Messages);
 			return;
 		}
 
@@ -1240,11 +1249,18 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		if(JeopardyGame.Tested)
 		{
 			mydoc.hideContent(".playWarning");
+			
+			// Clear any error messages
+			onClearErrorMessages();
+
 		}
 		else
 		{
 			mydoc.showContent(".playWarning");
 		}
+
+
+
 	}
 	
 	// Action to play a real game
@@ -1257,7 +1273,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		if(!checkGame.IsValid)
 		{
 			mydoc.setContent("#playGameLoading", {"innerHTML":""});
-			onShowErrorMessage("#playGameValidation", checkGame.Messages);
+			onSetErrorMessages("#playGameValidation", checkGame.Messages);
 			return;
 		}
 
@@ -1320,7 +1336,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		if(!checkGame.IsValid)
 		{
 			mydoc.setContent("#hostGameLoading", {"innerHTML":""});
-			onShowErrorMessage("#hostGameValidation", checkGame.Messages);
+			onSetErrorMessages("#hostGameValidation", checkGame.Messages);
 			return;
 		}
 
