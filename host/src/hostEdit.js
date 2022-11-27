@@ -1182,6 +1182,24 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
 
+	// Setting message for attempting to test/play game
+	function onShowErrorMessage(identifier, messages)
+	{
+		// Build the list of errrs;
+		let mesageListItems ="";
+		messages.forEach( (message)=> {
+			mesageListItems+= `<li>${message}</li>`;
+		});
+
+		// Let the message list;
+		let messageList = `<ul>${messages}</ul>`;
+		mydoc.setContent(identifier, {"innerHTML": ("This game is not valid for the following reasons" + messageList) })
+		
+		// Set the test cookie to zero; So the game is no longer test worthy
+		mydoc.setCookie(gameID+"Tested", "0", 60);
+		onSetCanPlay();
+
+	}
 	// To test the game
 	function onTestGame()
 	{
@@ -1193,19 +1211,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		if(!checkGame.IsValid)
 		{
 			mydoc.setContent("#testGameLoading", {"innerHTML":""});
-
-
-			let messages ="";
-			checkGame.Messages.forEach( (message)=>{
-				messages+= `<li>${message}</li>`;
-			});
-			let messageList = `<ul>${messages}</ul>`;
-			mydoc.setContent("#testGameValidation", {"innerHTML": ("This game is not valid for the following reasons" + messageList) })
-
-			// Set a cookie to indicate game has been tested; Expires in 60 minutes;
-			mydoc.setCookie(gameID+"Tested", "0", 60);
-			onSetCanPlay();
-
+			onShowErrorMessage("#testGameValidation", checkGame.Messages);
 			return;
 		}
 
@@ -1234,25 +1240,10 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		if(JeopardyGame.Tested)
 		{
 			mydoc.hideContent(".playWarning");
-
-			// Set the Play button
-			// mydoc.removeClass("#playGameButton", "dlf_button_gray");
-			// mydoc.addClass("#playGameButton", "dlf_button_limegreen");
-
-			// Set the host button
-			// mydoc.removeClass("#hostGameButton", "dlf_button_gray");
-			// mydoc.addClass("#hostGameButton", "dlf_button_blue");
 		}
 		else
 		{
 			mydoc.showContent(".playWarning");
-			// Unset the Play button
-			// mydoc.addClass("#playGameButton", "dlf_button_gray");
-			// mydoc.removeClass("#playGameButton", "dlf_button_limegreen");
-
-			// // Unset the host button
-			// mydoc.addClass("#hostGameButton", "dlf_button_gray");
-			// mydoc.removeClass("#hostGameButton", "dlf_button_blue");
 		}
 	}
 	
@@ -1261,7 +1252,14 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	{
 		Logger.log("Checking if we can play this game"); 
 		mydoc.setContent("#playGameLoading", {"innerHTML": loadingGIF2});
-
+	
+		let checkGame = JeopardyGame.isValidGame();
+		if(!checkGame.IsValid)
+		{
+			mydoc.setContent("#playGameLoading", {"innerHTML":""});
+			onShowErrorMessage("#playGameValidation", checkGame.Messages);
+			return;
+		}
 
 		// Confirm if the game should be Played
 		let confirmMessage = "This game has not been tested recently.\n\nAre you sure you want to Play it?"
@@ -1317,6 +1315,14 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	function onHostGame()
 	{
 		mydoc.setContent("#hostGameLoading", {"innerHTML": loadingGIF2});
+
+		let checkGame = JeopardyGame.isValidGame();
+		if(!checkGame.IsValid)
+		{
+			mydoc.setContent("#hostGameLoading", {"innerHTML":""});
+			onShowErrorMessage("#hostGameValidation", checkGame.Messages);
+			return;
+		}
 
 		// Confirm if the game should be Played
 		let confirmMessage = "This game has not been tested recently.\n\nAre you sure you want to Host it?"
