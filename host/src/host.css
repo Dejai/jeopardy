@@ -1,8 +1,12 @@
 /* General */
     .hostHomeLink { text-decoration: none; color:inherit;}
-
     .actionButtonSection { display:flex; align-items: center;}
 
+    .categoryQuestionsTable { width:100%;text-align:left; border-collapse: collapse !important;}
+    .questionRow td { padding: 2%; }
+    .questionRow:hover { background-color: lightblue; color:black;}
+    .questionRow:hover .fa-picture-o { color:black; }
+    /* .questionRow td:hover { background-color: lightblue; } */
 
 /* LOAD: */
     .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; height:150px; overflow-y:scroll; margin:3%; }
