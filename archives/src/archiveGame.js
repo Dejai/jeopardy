@@ -54,7 +54,7 @@ function onGetTeams(listID)
 
         teamCards.forEach( (obj) => {
             let teamName = obj["name"];
-            let teamCode = obj["id"]
+            let teamCode = obj["id"];
             THE_TEAMS[teamCode] = {"name":teamName, "score":undefined, "wager":undefined };
         });
 

@@ -4,6 +4,7 @@
 *****************************************************/
 
 /* General purpose */
+	.homeLink { text-decoration: none; color:inherit;}
 	.hidden { display:none; }
 	.centered { text-align: center; }
 	.pointer { cursor:pointer; }
