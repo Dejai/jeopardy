@@ -6,49 +6,113 @@
 	<!-- jQuery library -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="../src/game.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<!-- Base of the path -->
+	<base href="../" target="_blank">
 
-	<link rel="stylesheet" type="text/css" href="../src/game.css">
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="board/src/board.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
 
-	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/>Game Board</h1>
-		<hr/>
+	<div id="homemade_jeopardy_title" class="centered"></div>
+
+	<!-- The rules section -->
+	<div id="rules_section" style="width:60%;margin:auto;" class="centered hidden">
+		<h2>The Rules:</h2>
+		<div style="padding-left:17%;">
+			<ol id="rules_list"></ol>
+		</div>
 	</div>
+
+	<!-- The subsection for the start game button -->
+	<div id="startGameSection" class="centered hidden">
+		<button id="startGameButton" class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onStartGame()"">
+			START GAME
+		</button>
+	</div>
+
+	<!-- The section that shows the game board -->
+	<div id="game_board_section">
+		<table id="game_board" class="hidden">
+			<colgroup>
+				<col style="width:auto;"/>
+			</colgroup>
+			<tbody id="game_board_body">
+				<tr id="round_1_row" class="hidden"></tr>
+				<tr id="final_jeopardy_row" class="hidden"></tr>
+			</tbody>
+		</table>
+	</div>
+
+	<!-- The section to show the teams -->
+	<div id="teams_section">
+		<div id="current_turn_section" class="hidden pre_team_block">
+			<h2 id="current_turn_label">
+				<span class="howtoplay_tooltip">
+					Current Turn:
+					<span class="tooltiptext tooltiphidden tooltipright">This section shows whose turn it is</span>
+				</span>
+			</h2>
+			<h2>
+				<span id="current_turn" class="pre_team_block_value" ></span>
+			</h2>
+		</div>
+		<hr/>
+		<div id="teams_sync_section" class="hidden">
+			<div style="width:40%;">
+				<h3 style="display:inline-block;">
+					<span id="team_sync_message" class="fa fa-refresh teams_icons syncIcon" onclick="onSyncTeams()">&nbsp;Sync Teams</span>
+					<span class="howtoplay_tooltip">
+						<span class="tooltiptext tooltiphidden tooltipright">Sync the teams to table below.</span>
+					</span>
+				</h3>
+			</div>
+		</div>
+		<table id="teams_table" class="hidden">
+			<colgroup>
+				<col style="width:50%">
+			</colgroup>
+			<thead>
+				<tr>
+					<th><h1>Team Name</h1></th>
+					<th><h1>Score</h1></th>
+					<th><h1 class="wager_row hidden">Wager</h1></th>
+				</tr>
+			</thead>
+			<tbody id="teams_block"></tbody>
+		</table>
+	</div>
+
+	<!-- The loading section -->
 	<div id="main_section">
 		<div id="load_game_section">
-			<img id="loading_gif" src="../assets/img/loading1.gif" class="hidden">
+			<img id="loading_gif" src="../src/img/loading1.gif" class="hidden">
 			<div id="loading_results_section"></div>
 		</div>
-	</div>	
-	
-	<!-- Game Board Sections -->
-	<div id="game_section" class="hidden">
-		<div id="menu_section"></div>
-		<div id="rules_section" class="center_section_80"></div>
-		<div id="main_view_section">
-			<div id="game_board_section"></div>
-			<div id="teams_section"></div>
-		</div>
-		<div id="question_view" class="hidden">
-			<div id="timer_section"></div>
-			<div id="show_question_section"></div>
-		</div>
 	</div>
+
+
+	<!-- The magic question/answer section that displays -->
+	<div id="question_view" class="hidden">
+		<div id="timer_section"></div>
+		<div id="show_question_section"></div>
+	</div>
+
+	<!-- Game Board Sections -->
+	<div id="game_section" class="hidden2"></div>
 
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
-	<script src="../src/rules.js"></script>
-	<script src="../src/settings.js"></script>
+	<script src="src/js/rules.js"></script>
+	<script src="src/js/settings.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
 	<!-- My Google Drive code -->
-	<script src="../src/googledrive.js"></script>
+	<script src="src/js/googledrive.js"></script>
 	<!-- My Source JS -->
-	<script src="../src/timer.js"></script>
-	<script src="../src/jeopardy.js"></script>
-	<script src="../src/board.js"></script>
+	<script src="src/js/timer.js"></script>
+	<script src="src/js/jeopardy.js"></script>
+	<script src="board/src/board.js"></script>
 </html>

@@ -3,7 +3,13 @@
 <title>Archive</title>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="../src/game.css">
+
+	<!-- Base of the path -->
+	<base href="../" target="_blank">
+
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="archives/src/archives.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- jQuery library -->
@@ -11,19 +17,16 @@
 	<!-- Latest compiled JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-	<link rel="stylesheet" type="text/css" href="../src/game.css">
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Archived Game</h1>
+		<h1 id="homemade_jeopardy_title"><a href="/archives/" target="_self" class="homeLink">Homemade Jeopardy:</a> <br/> Archived Game</h1>
 		<hr/>
 	</div>
 	<div class="centered">
-		<img id="loading_gif" src="../assets/img/loading1.gif" style="width:100px;height:100px;">
+		<img id="loading_gif" src="../src/img/loading1.gif" style="width:100px;height:100px;">
 	</div>
 	<div id="archive_section" class="archive_section hidden">
-
-
 		<h2>
 			<span class="notify_orange">
 				<span id="archived_game_name"></span>
@@ -60,6 +63,6 @@
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
-	<script src="../src/archives.js"></script>
+	<script src="archives/src/archiveGame.js"></script>
 
 </html>

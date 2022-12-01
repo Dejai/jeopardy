@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home-made Jeopardy - Create Game</title>
+<html>
+<head>
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+	<!-- Base of the path -->
+	<base href="../../" target="_blank">
+	
+	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="host/src/host.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+</head>
+<body>
+
+	<div id="homemade_jeopardy_title" class="centered">
+		<h1 id="homemade_jeopardy_title"><a href="/host/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/>Create Game</h1>
+		<hr/>
+	</div>
+
+	<div id="newGameSection">
+		<div class="center_section_70 centered">
+			<div class="createFieldSection">
+				<h2>Game Name:</h2>
+				<p>Enter a name for your game</p>
+				<input id="gameName" type="text" name="gameName" placeholder="Enter name" class="input_mash">
+			</div>
+			<div class="createFieldSection">
+				<h2>Description:</h2>
+				<p>Enter a brief description about your game</p>
+				<textarea name="gameDescription" id="gameDescription" cols="20" rows="2" style="width:100%;" placeholder="Enter description" class="input_mash"></textarea>
+			</div>
+			<div class="createFieldSection">
+				<h2>Pass Phrase:</h2>
+				<p>Enter a pass phrase that will be used to access the admin view of your game.</p>
+				<input id="passPhrase" type="text" name="passPhrase" placeholder="Enter a pass phrase" class="input_mash">
+			</div>
+			<div class="createFieldSection">
+				<div class="notificationSection"></div>
+				<img id="loadingGIF" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:25px;height:25px;">
+				<button id="createGameButton" onclick="onCreateNewGame()" class="dlf_button_large dlf_button_blue dlf_button_round_corners">Create Game</button>
+
+			</div>
+		</div>
+	</div>
+	
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<!-- My Source JS -->
+	<script src="src/js/rules.js"></script>
+	<script src="src/js/jeopardy.js"></script>
+	<script src="host/src/hostCreate.js"></script>
+</html>

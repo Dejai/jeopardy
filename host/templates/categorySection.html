@@ -1,0 +1,37 @@
+<hr/>
+<div class="categorySection" data-jpd-category-section="{{categoryID}}">
+    <h2 style="text-align:left;" class="categoryTitle">
+        {{categoryLabel}}:
+        <span class="categoryName">{{categoryName}}</span>
+        &nbsp;&nbsp;
+        <span class="fa fa-edit pointer" style="font-size:80%;" onclick="onEditCategory(event)"> Edit</span>
+    </h2>
+    <div class="listOfCategoryQuestions" style="padding-left:5%; padding-bottom:1%;">
+        <table class="categoryQuestionsTable">
+            <colgroup>
+                <col style="width:10%">
+                <col style="width:30%">
+                <col style="width:30%">
+                <col style="width:10%">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Value</th>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th>Daily Double?</th>
+                    <th>Order</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody class="categorySectionBody">{{categorySectionBody}}</tbody>
+            <tbody>
+                <tr>
+                    <td colspan="5" style="text-align:left;padding-top:2%;">
+                        <span class="pointer dlf_button dlf_button_blue dlf_button_round_corners" style="padding:1%" onclick="onAddQuestion(event)">Add Question</span>
+                    </td>
+                </tr>
+            </tbody>            
+        </table>
+    </div>
+</div>

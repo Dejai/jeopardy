@@ -1,0 +1,70 @@
+/* RULES: The rule   */
+    #rules_section h1 { text-align: center; }
+    #rules_section .rule_item { margin-bottom:5%; font-size:120%;}
+    #rules_section .rule { color:darkorange;  }
+    #rules_list { text-align: left; text-align-last:left; }
+    #rules_section blockquote { border-left: 3px solid white; }
+    .subRule { display:block; margin-left:3%; text-align-last:left; }
+
+/* TEAMS: Icons to show the syncing state of Teams  */
+    .syncIcon { text-decoration:none !important; }
+    .syncIcon.main { color:white !important }
+    .syncIcon.syncing { color:red !important }
+    .syncIcon.synced { color:limegreen !important; }
+
+/* TEAMS: Showing the "Select Team" buttons based on option*/
+    .setTeamDirectly.option1 { display:none; }
+    .setTeamDirectly.option2 { display:block; }
+    .setTeamDirectly.option3 { display:none; }
+    
+    .teams_icons { cursor:pointer; }
+	#teams_sync_section { width:50%;margin:auto; }
+	#teams_table { width:60%; margin:auto; border-spacing:0px; text-align:left; }
+	#teams_table tr th { background-color:#060CE9; color:#F5F5F5; }
+	#teams_table tbody tr td{ border-bottom:2px solid white; border-top:2px solid white; }
+	.team_score { padding:1% }
+	.team_name { border-bottom:2px solid black; }
+
+	.hiddenShortCode { padding-left: 2%; color:orange; font-weight:bolder; }
+
+	.setTeamDirectly { cursor: pointer; }
+    
+    .wager_hidden { color:black; }
+	.wager_hidden::before { content:"*"; color:limegreen; }
+
+/* QUESTION: The question popup  */
+    #question_view { z-index:100; width:100%; position:fixed; bottom:0; top:0; background-color:#060CE9; color:#F5F5F5; text-align:center; overflow-y: scroll; }
+    #value_header { position:fixed; top:7px; right:7px; font-size:22px; width:20%; font-weight:bolder;}
+    #revealAnswerButton { font-size:15px; cursor:pointer; }
+    .answer_link { color:white; font-size:50%; }
+    #assign_scores_block { padding:1%; text-align:right; }
+    #close_question_view { position:fixed; z-index:1000; top:0; left:0; width:10%; padding:1%; text-align:left; cursor:pointer; }
+
+/* QUESTION: Control transition visibility of question/answer & who got it right */
+    .quest_answ_block { margin:auto; transition: all 1s ease-out; margin-bottom:2%; border-bottom:4px solid #F5F5F5; }
+    .quest_answ_block.hiddenBlock { font-size:0px; width:0px; padding:0%; border:none; }
+    .quest_answ_block.hiddenBlock audio { opacity:0; }
+    .quest_answ_block.visibleBlock { font-size:45px; width:75%; padding-top:7%; padding-bottom:7%;   }
+    .quest_answ_block.visibleBlock audio { opacity:100; }
+
+    .whoGotItRight { margin:auto; transition:all 3s ease-out; }
+    .whoGotItRight.hiddenBlock {opacity: 0; }
+    .whoGotItRight.visibleBlock { opacity: 100; }
+
+    #correct_block { padding-top:1%; width: 55%; margin:auto; }
+    #correct_block table { width:100%; text-align:center; border-collapse: collapse; }
+    #correct_block table thead th { border-bottom: 5px double navy;}
+    #correct_block table input { font-size:140%; cursor:pointer; }
+    #correct_block table > tbody > tr:last-child > td { border-bottom: 5px double navy;}
+
+    #who_got_it_right_table tbody tr:hover { background-color:navy; cursor:pointer; }
+    #who_got_it_right_table tbody tr label { cursor:pointer; }
+
+
+/* TIMER: The key pieces of the timer*/
+
+    #time_view { width:45%; text-align:center; margin:auto; }
+    #time_view table {width: 100%;}
+    #timer_second { margin-right:2%; }
+    .timer_value { font-size:45px; }
+    .timer_buttons {  cursor:pointer; font-size:45px; }

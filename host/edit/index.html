@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home-made Jeopardy - Edit Game</title>
+<html>
+<head>
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	
+	<!-- Base of the path -->
+	<base href="../../" target="_blank">
+
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="host/src/host.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+</head>
+<body>
+	<div style="border-bottom: 2px solid white;">
+		<div class="homeIconSection" style="border-right:2px solid white;width:16%;display: inline-block;margin:none;">
+			<h1 style="font-size:20px;">
+				<span><a href="/host/load/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/></span>
+				<span id="edit_game_name"></span>
+			</h1>
+		</div>
+		<div style="width: 75%; display:inline-block;">
+			<div id="hostEditLoginSection" class="hidden">
+				<h2>Login</h2>
+			</div>
+			<div id="host_edit_tab_section" class="hidden" style="font-size:14px;margin:none;">
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="generalDetails">General <br/> Details</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/<br>Answers</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/<br/>Rules</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</h2>
+				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="testAndPlay">Test/Play<br/> Game</h2>
+				<h2 id="saveButton" class="host_edit_tab dlf_button_round_corners dlf_button_gray" onclick="onSaveGame()">SAVE</h2>
+			</div>
+		</div>
+	</div>
+	<div id="edit_game_section" style="margin-top:3%;" class="hidden">
+		<div class="dlf_centered_block_medium centered">
+			<span id="generalNotificationBar"></span>
+		</div>
+		<div class="center_section_70">
+			<div id="edit_section_game_login" class="edit_section2 hidden2">
+				<div id="loginForm">
+					<h2>Game Passphrase</h2>
+					<p>
+						<input id="loginPassPhrase" style="font-size:20px; width:40%;" type="text" placeholder="Enter game pass phrase ..">
+					</p>
+					<div class="actionButtonSection">
+						<button class="dlf_button dlf_button_round_corners dlf_button_blue" onclick="onValidatePassword()">
+							SUBMIT
+						</button>
+						<span id="loginLoading" style="margin-top:2%;"></span>
+					</div>
+					<p id="loginMessage" style="color:red;"></p>
+				</div>
+			</div>
+
+			<div id="generalDetails" class="edit_section hidden" style="text-align:left;">
+				<div>
+					<h3>Game Name</h3>
+					<div style="margin-left:5%;">
+						<p>This is the name of your game.</p>
+						<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value" onchange="onChangeInSection()">
+					</div>
+				</div>
+				<div>
+					<h3>Game Description</h3>
+					<div style="margin-left:5%;">
+						<p>A brief description about your game</p>
+						<textarea name="gameDescription" id="gameDescription" cols="20" rows="2" style="width:100%;" placeholder="Enter description" class="edit_game_value" onchange="onChangeInSection()"></textarea>
+					</div>
+				</div>
+				<div>
+					<h3>Pass Phrase</h3>
+					<div style="margin-left:5%;">
+						<p>This pass phrase is used to access this edit page.</p>
+						<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password" onchange="onChangeInSection()">
+					</div>
+				</div>
+			</div>
+
+			<div id="questionsAnswers" class="edit_section hidden">
+				<p>Enter the categories & questions for your game.</p>
+
+				<div id="listOfCategories"></div>
+
+				<div class="addCategoriesSection" style="margin-top:5%; text-align:left; border-top:2px solid white; padding:2%;">
+					<button class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onAddCategory(event)">Add Category</button>
+					<button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy!</button>
+				</div>
+				<div id="questionForm" class="hidden"></div>
+				<div id="categoryForm" class="hidden"></div>
+			</div>
+
+			<div id="gameSettings" class="centered edit_section hidden">
+				<p class="section_description" style="margin:0px;">
+					Configure the settings that you want to use for your game.
+				</p>
+				<table id="settings_table" class="edit_game_section_table" style="width:100%;">
+					<colgroup>
+						<col style="width:20%; text-align:left;"/>
+						<col style="width:65%; text-align:left;"/>
+					</colgroup>
+					<tbody id="settings_table_body"></tbody>
+				</table>
+			</div>
+
+			<div id="gameMedia" class="edit_section hidden">
+
+				<p class="section_description centered">
+					OPTIONAL: Upload any images or audio you want to use in your game.
+				</p>
+				<div class="centered">
+					<h3>
+						<a id="gameFormURL" class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
+							Upload Game Media Here
+						</a>
+					</h3>
+					<p>If asked for a <strong>Game ID</strong>, use this value: </p>
+					<p><span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span> </p>
+				</div>
+				<hr/>
+				<h3>Current Game Media: &nbsp; <span id="syncNotifier"></span></h3>
+				<div id="game_media">
+					<p>N/A</p>
+				</div>
+			</div>
+
+			<div id="testAndPlay" class="edit_section hidden">
+				<div class="center_section_702">
+					<h2>Test the Game</h2>
+					<div style="padding-left:5%;">
+						<p>Run a test of the game to ensure everything works as expected.</p>
+						<p>This should not be used for the real game.</p>
+						<div class="actionButtonSection">
+							<button id="testGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
+								TEST GAME
+							</button>
+							<span id="testGameLoading" style="margin-top:2%;"></span>
+						</div>
+						<p id="testGameValidation" class="gameValidationMessage" style="color:red;"></p>
+					</div>
+					<hr/>
+					<h2>Play the Game</h2>
+					<div style="padding-left:5%;">
+						<p>Play the real game with a real game code (to be shared with players).</p>
+						<p>This can only be done if you have tested the game within the last hour.</p>
+						<div class="actionButtonSection">
+							<button id="playGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPlayGame()">
+								PLAY GAME
+							</button>
+							<span id="playGameLoading" style="margin-top:2%;"></span>
+							<span class="playWarning">
+								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
+								Be sure to <strong>TEST GAME</strong> before playing a game.
+							</span>
+						</div>
+						<p id="playGameValidation" class="gameValidationMessage" style="color:red;"></p>
+					</div>
+					<hr/>
+					<h2>Host-only View</h2>
+					<div style="padding-left:5%;">
+						<p>Use this option to view the questions & answers at the same time. </p>
+						<p>This should only be seen by the Host of the game.</p>
+						<div class="actionButtonSection">
+							<button id="hostGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_blue" onclick="onHostGame()">
+								HOST GAME
+							</button>
+							<span id="hostGameLoading" style="margin-top:2%;"></span>
+							<span class="playWarning">
+								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
+								Be sure to <strong>TEST GAME</strong> before hosting a game.
+							</span>
+						</div>
+						<p id="hostGameValidation" class="gameValidationMessage" style="color:red;"></p>
+					</div>
+				</div>
+			</div>			
+		</div>
+		<div class="center_section_70 centered hidden">
+			<p id="loading_results_section"></p>
+		</div>
+	</div>
+	<div id="load_game_section" style="text-align:center;">
+		<img id="loading_gif" src="../../src/img/loading1.gif" class="">
+		<div id="loading_results_section"></div>
+	</div>
+
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<script src="src/js/rules.js"></script>
+	<script src="src/js/settings.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<!-- My Google Drive code -->
+	<script src="src/js/googledrive.js"></script>
+	<!-- My Source JS -->
+	<script src="src/js/jeopardy.js"></script>
+	<script src="host/src/hostEdit.js"></script>
+</html>

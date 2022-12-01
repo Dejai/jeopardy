@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Archive</title>
+<title>Team</title>
 <html>
 <head>
 	<!-- Base of the path -->
-	<base href="../" target="_blank">
-
+	<base href="../../" target="_blank">
+	
     <link rel="stylesheet" type="text/css" href="src/css/game.css">
-    <link rel="stylesheet" type="text/css" href="archives/src/archives.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- jQuery library -->
@@ -19,30 +18,28 @@
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title"><a href="/" target="_self" class="homeLink">Homemade Jeopardy:</a><br/> Archives</h1>
+		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Team View</h1>
 		<hr/>
 	</div>
-	<div class="archive_section">
-		<div id="archive_table_section" class="archive_table_section" class="hidden">
-			<table id="archive_table">
-				<thead>
-					<tr>
-						<th><h3>Game <br class="newliner"/> Date</th>
-						<th><h3>Game <br class="newliner" />Name</h3></th>
-						<th>&nbsp;</th>
-					</tr>
-				</thead>
-				<tbody id="archive_table_body">
-				</tbody>
-			</table>
-		</div>
+	<div id="main_section" class="centered">
 
+		<div id="notification_section"></div>
+
+		<div id="enter_team_code_section">
+			<h2>Enter Rejoin Code</h2>
+			<p>Ask the host to provide you with this code.</p>
+			<input id="player_game_and_team_code" style="width:60%;font-size:24px;" placeholder="Enter rejoin code" type="text" name="player_game_and_team_code">
+			<br/><br/>
+			<button type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onRejoinGame()">
+				REJOIN
+			</button>
+		</div>
 	</div>
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
-	<script src="archives/src/archives.js"></script>
+	<script src="teams/src/teamsJoin.js"></script>
 
 </html>

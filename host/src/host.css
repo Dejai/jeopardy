@@ -1,0 +1,61 @@
+/* General */
+    .hostHomeLink { text-decoration: none; color:inherit;}
+    .actionButtonSection { display:flex; align-items: center;}
+
+    .categoryQuestionsTable { width:100%;text-align:left; border-collapse: collapse !important;}
+    .questionRow td { padding: 2%; }
+    .questionRow:hover { background-color: lightblue; color:black;}
+    .questionRow:hover .fa-picture-o { color:black; }
+    /* .questionRow td:hover { background-color: lightblue; } */
+
+/* LOAD: */
+    .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; height:150px; overflow-y:scroll; margin:3%; }
+    .gameItem:hover { color:black; background-color: lightblue; }
+    #searchBarSection { text-align:left; border-radius:77px; border:1px solid gray; background-color:white; padding:1%; width:90%; margin:auto; font-size:20px; }
+    .searchBar { text-align:left; width:85%; display:inline-block; }
+    .searchBar:focus { border: none; outline: none; }
+    #searchClearIcon { float:right; color: red !important; }
+
+    /* .searchBar { border:1px solid gray; background-color:white; padding:1%; width:90%; margin:auto; font-size:35px; } */
+    .searchBar.searchPlaceholder { color:gray; }
+    .searchBar.searchText { color: black; }
+
+/* CREATE: */
+    .notificationSection { color:red;font-style:bolder;font-size:120%; }
+    .createFieldSection{ margin-top:5%;}
+    #newGameSection h2 {margin:0px; }
+    #newGameSection p  {margin:3px; }
+
+/* EDIT: Tab for Questions/Answers */
+
+    /* Control visibility of order buttons */
+    .categorySectionBody tr.questionRow:nth-child(1) td span.fa-arrow-up { display:none; }
+    .categorySectionBody tr.questionRow:last-child td span.fa-arrow-down { display:none; } 
+
+    /* Highlighting the ones that are indeed daily double */
+    .IsDailyDoubleYes { color:limegreen !important; font-weight:bolder; }
+
+    /* For questions that use an image */
+    .HasImageNo { display:none !important; }
+    .HasImageYes { color:lightblue; }
+
+    /* For questions that use an audio file */
+    .HasAudioNo { display:none !important; }
+    .HasAudioYes { color:orange; }
+
+    /* For questions that use an audio file */
+    .HasURLNo { display:none !important; }
+    .HasURLYes { color:blue; }
+
+/* Play/Game */
+    .playWarning { padding-left:3%; flex-basis:50%; color:red !important; }
+    /* .playWarning strong { color:orange !important;} */
+
+/**************************************************** 
+	MEDIA SCREENS
+*****************************************************/
+
+@media only screen and (min-device-width:1200px)
+{
+	#searchBarSection { width:40%;}
+}

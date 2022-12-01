@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homemade Jeopardy - Play Game</title>
+<html>
+<head>
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+	<!-- Base of the path -->
+	<base href="../../" target="_blank">
+	
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="host/src/host.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+</head>
+<body>
+
+	<div id="homemade_jeopardy_title" class="centered">
+		<h1 id="homemade_jeopardy_title">
+			<a href="/host/" target="_self" class="hostHomeLink">Homemade Jeopardy</a><br/>Load Game
+		</h1>
+		<hr/>
+	</div>
+	<div id="searchBarSection">
+		<div id="searchBar" class="searchBar searchPlaceholder" data-jpd-placeholder="Search games ..." contenteditable="true" onkeyup="onFilterGames()" onfocus="onSearchFocus()" onblur="onSearchBlur()"></div>
+		<i id="searchClearIcon" class="fa fa-times-circle pointer hidden" aria-hidden="true" style="color:red;" onclick="onClearSearch()"></i>
+	</div>
+	<!-- <div id="searchBar" class="searchBar searchPlaceholder" data-jpd-placeholder="Filter games ..." contenteditable="true" onkeyup="onFilterGames()" onfocus="onSearchFocus()" onblur="onSearchBlur()"></div> -->
+	<div id="listOfGames"></div>
+</body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<!-- My Source JS -->
+	<script src="src/js/jeopardy.js"></script>
+	<script src="host/src/hostLoad.js"></script>
+</html>

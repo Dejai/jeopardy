@@ -1,0 +1,42 @@
+<div>
+	<span id="close_question_view" onclick="onCloseQuestion()">CLOSE</span>
+	
+    <div id="question_block" class="quest_answ_block visibleBlock"></div>
+	
+    <span id="value_header">Value: <span id="value_block"></span></span>
+	
+    <p id="reveal_answer_block">
+		<button id="revealAnswerButton" onclick="onRevealAnswer();">Reveal Answer</button>
+	</p>
+	
+    <div id="answer_block" class="quest_answ_block hiddenBlock"></div>
+
+	<div id="correct_block" class="whoGotItRight hiddenBlock">
+		<div>
+			<h3>
+				<span class="howtoplay_tooltip"> 
+					Who got it right?
+					<span class='tooltiptext tooltiphidden tooltipright'>
+						Select who got the answer right.
+					</span>
+				</span>
+			</h3>
+			<p>Revealed: <span id="answer_revealed_time" class="answer_timestamp"></span></p>
+			<table id="who_got_it_right_table"></table>
+			<div id="assign_scores_block">
+					<p style="width:15%;float:left;">
+						<span  class="howtoplay_tooltip"> 
+							<span class='tooltiptext tooltiphidden tooltipleft'>
+								Assign points to teams (or not).
+							</span>
+						</span>
+					</p>
+					<button id="assignScoresButton" class="pointer" onclick="onAssignPoints()" disabled>Assign Points</button>
+					<br/>
+					<button id="nobodyGotItRightButton" class="pointer" onclick="onNobodyCorrect()">Nobody got it correct.</button>
+					<button id="finalJeopardyAssign" class="hidden pointer" onclick="onAssignPoints()">Assign Final Scores!</button>
+					<br style="clear:both;"/>
+			</div>
+		</div>	
+	</div>		
+</div>
