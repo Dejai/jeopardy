@@ -714,6 +714,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
 	}
 
+
     // Set question as "asked"
     function onSetQuestionAsAsked(key)
     {
@@ -966,9 +967,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if(JeopardyGame.Game.IsFinalJeopardy)
 			return 
 
-		
-		
-
         // Set the team name
         mydoc.setContent("#current_turn", {"innerHTML":value});
 
@@ -1048,7 +1046,14 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			// Get a random question from pool left;
 			let randIdx = Math.floor(Math.random()*limit);
 			let cell = availableQuestions[randIdx];
-			nextQuestion = cell?.getAttribute("data-jpd-quest-key")?.replace("-", " - ");
+			let questionKey = cell?.getAttribute("data-jpd-quest-key");
+			let nextQuestionObj = JeopardyGame.Game.getQuestion(questionKey);
+			if(nextQuestionObj != undefined)
+			{
+				let name = nextQuestionObj.CategoryName;
+				let value = nextQuestionObj.Value;
+				nextQuestion = `${name} - ${value}`;
+			}
 		}
 		return nextQuestion;
 	}

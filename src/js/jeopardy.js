@@ -549,6 +549,7 @@
 				questions.forEach((q)=>{
 					let key = `${category.CategoryID}-${q.Value}`;
 					q.Key = key;
+					q.CategoryName = category.Name;
 					q.Value = (isFinalJeopardyCategory) ? category.Name : q.Value;
 					// Add question to the game
 					this.Game.addQuestion(key,q);
