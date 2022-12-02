@@ -57,6 +57,14 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		}
 	}
 
+	// Setting a message based on loading 
+	function onSetLoadingMessage(value)
+	{
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {"innerHTML":value});
+	}
+
+
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
 
     // Create or return an instance of the Jeopardy game
@@ -1357,46 +1365,4 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				mydoc.hideContent("#show_wager_link");
 			}		
 		});
-	}
-
-
-/****** OLD Game Actions ****************************/ 
-
-
-	function onSetLoadingMessage(value)
-	{
-		onToggleLoading("hide");
-		mydoc.setContent("#loading_results_section", {"innerHTML":value});
-	}
-
-	// Toggle the loading GIF
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Saving gif;
-	function toggle_saving_gif(forceHide=false)
-	{
-		let section = document.getElementById("saving_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#saving_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#saving_gif");	
-		}
 	}

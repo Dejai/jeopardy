@@ -28,7 +28,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			// Validate Access; Show section if no password;
 			onValidateAccess(()=>{
 				// Ensure the sections are visible for password (or beyond);
-				set_loading_results("");
+				onSetLoadingMessage("");
 				mydoc.showContent("#hostEditLoginSection");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_section_game_login");
@@ -52,6 +52,29 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			event.preventDefault();
 			event.returnValue='';
 		}
+	}
+
+	// Show/hide the loading GIF
+	function onToggleLoading(state)
+	{
+		switch(state)
+		{
+			case "show":
+				mydoc.showContent("#loading_gif");		
+				break;
+		
+			// in all else situation, just hie
+			default:
+				mydoc.hideContent("#loading_gif");		
+
+		}
+	}
+
+	// Setting a message based on loading 
+	function onSetLoadingMessage(value)
+	{
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {"innerHTML":value});
 	}
 
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
@@ -202,12 +225,12 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
+				onSetLoadingMessage(result);
 			});
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -233,12 +256,12 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
-				set_loading_results("");
+				onSetLoadingMessage("");
 			},1000);
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -339,11 +362,12 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 					if(idx == array.length-1)
 					{
-						mydoc.setContent("#settings_table_body", {"innerHTML": rulesHTML});
-						// Run the option details immediately
-						document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-							onToggleRuleOptionDetails(ruleOpt);
-						});
+						setTimeout(()=>{
+							mydoc.setContent("#settings_table_body", {"innerHTML": rulesHTML});
+							document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+								onToggleRuleOptionDetails(ruleOpt);
+							});
+						},1000);
 					}
 					
 				});
@@ -388,10 +412,13 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 					// If last one in set, then show all on the page;
 					if(idx === array.length-1)
 					{
-						mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
-						var action = (missingFinalJeopardy) ?
+						setTimeout(()=>{
+							mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
+							var action = (missingFinalJeopardy) ?
 										mydoc.removeClass(".addFinalJeopardyCategory","hidden")
 										: mydoc.addClass(".addFinalJeopardyCategory", "hidden")
+						},1001);
+						
 					}
 				});
 			});
@@ -597,11 +624,34 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		mydoc.addClass(`#${targetSection}`, "selected_section");
 		mydoc.showContent(`#${targetSection}`);
 
-		// Conditional action for syncing media
-		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
+		// Always stop the interval for media syncing
+		onSyncMediaInterval("stop"); 
 
-		// Setting if the game can be played
-		var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
+		// Conditional action based on target section
+		switch(targetSection)
+		{
+			case "gameMedia":	
+				onSyncMediaInterval("start")
+				break;
+			case "testAndPlay":
+				onSetCanPlay();
+				break;
+			case "gameSettings":
+				// console.log(JeopardyGame.Tabs.SettingsRules);
+				mydoc.setContent("#settings_table_body", {"innerHTML": JeopardyGame.Tabs.SettingsRules});
+				document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+					onToggleRuleOptionDetails(ruleOpt);
+				});
+				break;
+			default:
+				console.log("No default tab action");
+		}
+
+		// // Conditional action for syncing media
+		// var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") :;
+
+		// // Setting if the game can be played
+		// var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
 
 		// Set the current section
 		CurrentSection = targetSection;
@@ -1400,48 +1450,5 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			let parent = sourceEle.parentElement;
 			let sibling = parent.querySelector(`${siblingSelector}`);
 			return sibling;
-		}
-	}
-
-
-
-	function set_loading_results(value)
-	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.parentElement.classList.remove("hidden");
-		section.innerHTML = value;
-	}
-
-
-	// Loading view
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Saving gif;
-	function toggle_saving_gif(forceHide=false)
-	{
-		let section = document.getElementById("saving_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#saving_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#saving_gif");	
 		}
 	}

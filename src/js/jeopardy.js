@@ -368,15 +368,12 @@
 
 			// Keep track of the game being tested
 			this.Tested = false;
-
-			// Keep a map of questions/answers (used for board)
-			this.QAMap = {}
 		}
 
-	/* Subsection: Game * */
+		/* Subsection: Game * */
 		newGame(code){ this.Game = new Game(code) }
 	
-	/* Subsection: Categories * */
+		/* Subsection: Categories * */
 		// Get the list of categories
 		getCategories()
 		{ 
@@ -444,7 +441,7 @@
 		}
 
 
-	/* Subsection: Media * */
+		/* Subsection: Media * */
 		getMediaHTML(mediaID, autoPlay=false)
 		{
 			let filtered = this.Media?.filter((media)=>{
@@ -514,7 +511,7 @@
 		}
 
 		
-	/* Subsection: Game Name & Password & Descriptoin */
+		/* Subsection: Game Name & Password & Descriptoin */
 		// Set a new Game Name
 		setGameName(name){ this.gameName = name; }
 		// Get the name of the game
@@ -529,7 +526,7 @@
 		setGameDesc(desc) { this.gameDesc = desc; }
 		getGameDesc() { return this.gameDesc;}
 
-	/* Subsection: The Game Board */
+		/* Subsection: The Game Board */
 		
 		// Get/Set the game board
 		getGameBoard(callback)
@@ -574,7 +571,7 @@
 		}
 
 
-	/* Subsection: Attachments */
+		/* Subsection: Attachments */
 		// Set/Get: Attachment ID
 		setAttachments(jsonObj)
 		{
@@ -591,7 +588,7 @@
 		// Get the attachment id
 		getAttachmentID(name){ return this.Attachments[name] ?? ""; }
 	
-	/* Subsection: Game validation */
+		/* Subsection: Game validation */
 		// Checks if the game is valid & returns messages accordingly
 		isValidGame()
 		{
@@ -653,6 +650,8 @@
 			this.CurrentTeamIdx = -1;
 			this.PlayerSelected = false;
 			this.LastTeamCorrect = undefined;
+
+			// Keep track of 
 
 			// Keep track of game state
 			this.AllHeadersVisible = false;
@@ -744,7 +743,6 @@
 			return teamName; 
 		}
 	}
-
 
 /****** CLASS: "Team" ; This stores details specific for a single team playing jeopardy ********/
 
@@ -851,9 +849,4 @@
 			return formatted;
 		}
 
-	}
-
-	function formatURL(value)
-	{
-		
 	}
