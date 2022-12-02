@@ -625,7 +625,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		mydoc.showContent(`#${targetSection}`);
 
 		// Conditional action for syncing media
-		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") :;
+		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
 
 		// Setting if the game can be played
 		var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
