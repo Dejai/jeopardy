@@ -11,6 +11,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 
+		// Show loading state
+		onToggleLoading("show");
+
 		// Loading up this page based on pathname;
 		onKeyboardKeyup();
 
@@ -22,15 +25,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		let gameID = mydoc.get_query_param("gameid");
 
-		if(gameID != undefined)
-		{
-			// Get the game (i.e. card)
-			onGetGame(gameID);
-		}
-        else
-        {
-            
-        }
+		// Determine if we can load the game
+		if(gameID != undefined){ onGetGame(gameID); }
+        else{ onSetLoadingMessage("Could not load game. Invalid Game ID"); }
+		
 	});
 
 	// Prevent the page accidentally closing
@@ -40,6 +38,22 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		{
 			event.preventDefault();
 			event.returnValue='';
+		}
+	}
+
+	// Show/hide the loading GIF
+	function onToggleLoading(state)
+	{
+		switch(state)
+		{
+			case "show":
+				mydoc.showContent("#loading_gif");		
+				break;
+		
+			// in all else situation, just hie
+			default:
+				mydoc.hideContent("#loading_gif");		
+
 		}
 	}
 
@@ -88,12 +102,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
+				onSetLoadingMessage(result);
 			});
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -154,12 +168,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
-				set_loading_results("");
 			},1000);
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -226,6 +239,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSetGameRules()
 	{
 		var rulesHTML = "";
+
         // Format the rules for hte board
 		Rules.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
@@ -259,8 +273,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 				if(idx == array.length-1)
 				{
-					mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
-					mydoc.showContent("#rules_section");
+					setTimeout(()=>{
+						mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
+						mydoc.showContent("#rules_section");
+						JeopardyGame.Game.IsRulesShown = true;
+						onSetLoadingMessage("") // Clear the loading message
+					}, 1500);
 				}
 			});	
 		});
@@ -395,7 +413,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     // Show the start button
     function onShowStartButton()
     {
-        mydoc.showContent("#startGameSection");
+		// Set interval to show the button (after the rules)
+		let canShowStartButton = setInterval(()=>{
+			// console.log(document.querySelector("#rules_section"));
+			if(JeopardyGame.Game.IsRulesShown)
+			{
+				mydoc.showContent("#startGameSection");
+				clearInterval(canShowStartButton);
+			}
+		}, 500);
     }
 
     // Reveal the game board & set initial team
@@ -1337,14 +1363,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 /****** OLD Game Actions ****************************/ 
 
 
-	function set_loading_results(value)
+	function onSetLoadingMessage(value)
 	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.parentElement.classList.remove("hidden");
-		section.innerHTML = value;
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {"innerHTML":value});
 	}
 
+	// Toggle the loading GIF
 	function toggle_loading_gif(forceHide=false)
 	{
 		let section = document.getElementById("loading_gif");

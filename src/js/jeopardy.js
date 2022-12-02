@@ -660,6 +660,7 @@
 			this.IsFinalJeopardy = false;
 			this.IsTestRun = false;
 			this.IsOver = false;
+			this.IsRulesShown = false; 
 		}
 
 		// Add the list ID
