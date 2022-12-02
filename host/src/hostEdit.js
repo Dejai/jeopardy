@@ -624,34 +624,11 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		mydoc.addClass(`#${targetSection}`, "selected_section");
 		mydoc.showContent(`#${targetSection}`);
 
-		// Always stop the interval for media syncing
-		onSyncMediaInterval("stop"); 
+		// Conditional action for syncing media
+		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") :;
 
-		// Conditional action based on target section
-		switch(targetSection)
-		{
-			case "gameMedia":	
-				onSyncMediaInterval("start")
-				break;
-			case "testAndPlay":
-				onSetCanPlay();
-				break;
-			case "gameSettings":
-				// console.log(JeopardyGame.Tabs.SettingsRules);
-				mydoc.setContent("#settings_table_body", {"innerHTML": JeopardyGame.Tabs.SettingsRules});
-				document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-					onToggleRuleOptionDetails(ruleOpt);
-				});
-				break;
-			default:
-				console.log("No default tab action");
-		}
-
-		// // Conditional action for syncing media
-		// var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") :;
-
-		// // Setting if the game can be played
-		// var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
+		// Setting if the game can be played
+		var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
 
 		// Set the current section
 		CurrentSection = targetSection;
