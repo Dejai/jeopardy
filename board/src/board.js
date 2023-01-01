@@ -61,7 +61,16 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSetLoadingMessage(value)
 	{
 		onToggleLoading("hide");
-		mydoc.setContent("#loading_results_section", {"innerHTML":value});
+		mydoc.setContent("#loading_results_section", {innerHTML:value});
+		mydoc.removeClass("#loading_results_section", "hidden");
+		if(value != "")
+		{
+			mydoc.addClass("#loading_results_section", "loadingMessage");
+		}
+		else
+		{
+			mydoc.removeClass("#loading_results_section", "loadingMessage");
+		}
 	}
 
 
@@ -246,7 +255,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Set the game Config/Rules
 	function onSetGameRules()
 	{
-		var rulesHTML = "";
+		var rulesHTML = [];
+
+		onToggleLoading("show");
 
         // Format the rules for hte board
 		Rules.forEach( (ruleObj, idx, array)=>{
@@ -254,7 +265,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
            
 			// The rule object that gets displayed on the page;
-            newRuleObj = {"Rule": "", "SubRules":"" }
+            let newRuleObj = {"Rule": "", "SubRules":"" }
 
 			// Set the current rule based on saved option
 			ruleObj.Options?.forEach((option)=>{
@@ -266,7 +277,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     // Set any subrules;
                     if(option["subRules"]?.length > 0)
                     {
-                        subRulesHTML = ""
+                        let subRulesHTML = ""
                         option["subRules"].forEach( (subRule)=>{
                             subRulesHTML += `<span class="subRule">${subRule}</span>`;
                         });
@@ -277,12 +288,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
             // Set the template for the rules
             MyTemplates.getTemplate("board/templates/ruleItem.html",newRuleObj,(template)=>{
-				rulesHTML += template; 
+				rulesHTML.push(template);
 
-				if(idx == array.length-1)
+				if(rulesHTML.length == array.length)
 				{
 					setTimeout(()=>{
-						mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
+						var formattedHTML = rulesHTML.join("");
+						mydoc.setContent("#rules_list", {"innerHTML":formattedHTML});
 						mydoc.showContent("#rules_section");
 						JeopardyGame.Game.IsRulesShown = true;
 						onSetLoadingMessage("") // Clear the loading message
@@ -305,12 +317,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 	// Set the game media
 	function onSetGameMedia()
-	{
-		// Load the game-specific form URL
-		// let formURL = MyGoogleDrive.getFormURL(JeopardyGame.getGameID());
-		// let aHref =	document.getElementById("gameFormURL");
-		// if (aHref != undefined){ aHref.href = formURL; }
-		
+	{		
 		// Get the list of media files
 		var mediaFiles = JeopardyGame.getListOfMedia();
 		if(mediaFiles?.length > 0)

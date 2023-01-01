@@ -230,7 +230,7 @@
 
 /* MAIN VIEW */
 	#main_view_section { padding-left:1%; padding-right:1%; display:relative; }
-	#loading_results_section {padding:2%; font-size:200%; color:red;}
+	.loadingMessage { padding:2%; font-size:200%; color:red; }
 
 /* GAME BOARD */
 	#game_board { width:100%;margin-bottom:3%; }
