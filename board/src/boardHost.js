@@ -76,12 +76,12 @@ var JeopardyGame = undefined;
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
+				onSetLoadingMessage(result);
 			});
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -137,12 +137,12 @@ var JeopardyGame = undefined;
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
-				set_loading_results("");
+				onSetLoadingMessage("");
 			},1000);
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -578,13 +578,19 @@ var JeopardyGame = undefined;
 
 /****** OLD Game Actions ****************************/ 
 
-
-	function set_loading_results(value)
+	function onSetLoadingMessage(value)
 	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.parentElement.classList.remove("hidden");
-		section.innerHTML = value;
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {innerHTML:value});
+		mydoc.removeClass("#loading_results_section", "hidden");
+		if(value != "")
+		{
+			mydoc.addClass("#loading_results_section", "loadingMessage");
+		}
+		else
+		{
+			mydoc.removeClass("#loading_results_section", "loadingMessage");
+		}
 	}
 
 	function toggle_loading_gif(forceHide=false)

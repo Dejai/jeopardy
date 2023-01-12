@@ -368,15 +368,12 @@
 
 			// Keep track of the game being tested
 			this.Tested = false;
-
-			// Keep a map of questions/answers (used for board)
-			this.QAMap = {}
 		}
 
-	/* Subsection: Game * */
+		/* Subsection: Game * */
 		newGame(code){ this.Game = new Game(code) }
 	
-	/* Subsection: Categories * */
+		/* Subsection: Categories * */
 		// Get the list of categories
 		getCategories()
 		{ 
@@ -444,7 +441,7 @@
 		}
 
 
-	/* Subsection: Media * */
+		/* Subsection: Media * */
 		getMediaHTML(mediaID, autoPlay=false)
 		{
 			let filtered = this.Media?.filter((media)=>{
@@ -514,7 +511,7 @@
 		}
 
 		
-	/* Subsection: Game Name & Password & Descriptoin */
+		/* Subsection: Game Name & Password & Descriptoin */
 		// Set a new Game Name
 		setGameName(name){ this.gameName = name; }
 		// Get the name of the game
@@ -529,13 +526,19 @@
 		setGameDesc(desc) { this.gameDesc = desc; }
 		getGameDesc() { return this.gameDesc;}
 
-	/* Subsection: The Game Board */
+		/* Subsection: The Game Board */
 		
-		// Get/Set the game board
+		// Get the game board HTML pieces
 		getGameBoard(callback)
 		{
+
+			let theCategories = this.getCategories();
+
+			let mainCategories = [];
+			let finalCategory = [];
+
 			// Loop through categories to build board
-			this.getCategories()?.forEach( (category, idx, array)=> {
+			theCategories?.forEach( (category, idx, array)=> {
 
 				// Is this the final Jeopardy category;
 				let isFinalJeopardyCategory = category.isFinalJeopardy();
@@ -549,6 +552,7 @@
 				questions.forEach((q)=>{
 					let key = `${category.CategoryID}-${q.Value}`;
 					q.Key = key;
+					q.CategoryName = category.Name;
 					q.Value = (isFinalJeopardyCategory) ? category.Name : q.Value;
 					// Add question to the game
 					this.Game.addQuestion(key,q);
@@ -566,14 +570,21 @@
 						}
 					// Set the category templates;
 					MyTemplates.getTemplate("board/templates/boardCategory.html", categoryObj, (categoriesTemplate)=>{
-						callback(categoriesTemplate,isFinalJeopardyCategory);
+						
+						var _push = (isFinalJeopardyCategory) ? finalCategory.push(categoriesTemplate) : mainCategories.push(categoriesTemplate);
+						// When all categories are formatted, callback with the joined content
+						if( (mainCategories.length + finalCategory.length) == theCategories.length)
+						{
+							callback(mainCategories.join(""), finalCategory.join(""));
+						}
+
 					});
 				});
 			});
 		}
 
 
-	/* Subsection: Attachments */
+		/* Subsection: Attachments */
 		// Set/Get: Attachment ID
 		setAttachments(jsonObj)
 		{
@@ -590,7 +601,7 @@
 		// Get the attachment id
 		getAttachmentID(name){ return this.Attachments[name] ?? ""; }
 	
-	/* Subsection: Game validation */
+		/* Subsection: Game validation */
 		// Checks if the game is valid & returns messages accordingly
 		isValidGame()
 		{
@@ -653,12 +664,15 @@
 			this.PlayerSelected = false;
 			this.LastTeamCorrect = undefined;
 
+			// Keep track of 
+
 			// Keep track of game state
 			this.AllHeadersVisible = false;
 			this.HeadersVisible = 0;
 			this.IsFinalJeopardy = false;
 			this.IsTestRun = false;
 			this.IsOver = false;
+			this.IsRulesShown = false; 
 		}
 
 		// Add the list ID
@@ -742,7 +756,6 @@
 			return teamName; 
 		}
 	}
-
 
 /****** CLASS: "Team" ; This stores details specific for a single team playing jeopardy ********/
 
@@ -849,9 +862,4 @@
 			return formatted;
 		}
 
-	}
-
-	function formatURL(value)
-	{
-		
 	}

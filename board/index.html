@@ -17,11 +17,19 @@
 
 	<div id="homemade_jeopardy_title" class="centered"></div>
 
+	<!-- The loading section -->
+	<div id="load_game_section" class="centered">
+		<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:35px;height:35px;" class="hidden">
+		<div id="loading_results_section"></div>
+	</div>
+
 	<!-- The rules section -->
 	<div id="rules_section" style="width:60%;margin:auto;" class="centered hidden">
 		<h2>The Rules:</h2>
 		<div style="padding-left:17%;">
-			<ol id="rules_list"></ol>
+			<ol id="rules_list">
+				<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:35px;height:35px;" class="hidden">
+			</ol>
 		</div>
 	</div>
 
@@ -31,6 +39,8 @@
 			START GAME
 		</button>
 	</div>
+
+
 
 	<!-- The section that shows the game board -->
 	<div id="game_board_section">
@@ -84,13 +94,7 @@
 		</table>
 	</div>
 
-	<!-- The loading section -->
-	<div id="main_section">
-		<div id="load_game_section">
-			<img id="loading_gif" src="../src/img/loading1.gif" class="hidden">
-			<div id="loading_results_section"></div>
-		</div>
-	</div>
+
 
 
 	<!-- The magic question/answer section that displays -->

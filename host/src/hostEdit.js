@@ -5,6 +5,8 @@ var CurrentSection = "";
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 var TestListID = undefined;
 var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll position
+var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
+
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -28,7 +30,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			// Validate Access; Show section if no password;
 			onValidateAccess(()=>{
 				// Ensure the sections are visible for password (or beyond);
-				set_loading_results("");
+				onSetLoadingMessage("");
 				mydoc.showContent("#hostEditLoginSection");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_section_game_login");
@@ -54,13 +56,42 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		}
 	}
 
+	// Show/hide the loading GIF
+	function onToggleLoading(state)
+	{
+		switch(state)
+		{
+			case "show":
+				mydoc.showContent("#loading_gif");		
+				break;
+		
+			// in all else situation, just hie
+			default:
+				mydoc.hideContent("#loading_gif");		
+
+		}
+	}
+
+	// Setting a message based on loading 
+	function onSetLoadingMessage(value)
+	{
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {"innerHTML":value});
+	}
+
+	// Get the loading GIF
+    function getLoadingGif(width="5%", height="5%")
+	{
+        return 
+    }
+
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
 
 	// Validate the user entered password
 	function onValidatePassword()
 	{
 		// Loading gif
-		mydoc.setContent("#loginLoading", {innerHTML:loadingGIF2});
+		mydoc.setContent("#loginLoading", {innerHTML:LoadingGIF});
 
 		onValidateAccess(()=>{
 			mydoc.setContent("#loginLoading", {innerHTML:""});
@@ -202,12 +233,12 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
+				onSetLoadingMessage(result);
 			});
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -233,12 +264,12 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
-				set_loading_results("");
+				onSetLoadingMessage("");
 			},1000);
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -318,7 +349,11 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	// Set the game Config/Rules
 	function onSetGameRules()
 	{
-		rulesHTML = "";
+		var rulesHTML = [];
+
+
+		mydoc.setContent("#settings_table_body", {"innerHTML": getLoadingGif() });
+
 
 		Rules.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
@@ -335,15 +370,17 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 				MyTemplates.getTemplate("host/templates/ruleRow.html",ruleObj,(template)=>{
 					
-					rulesHTML += template;
+					rulesHTML.push(template);
 
-					if(idx == array.length-1)
+					if(rulesHTML.length == array.length)
 					{
-						mydoc.setContent("#settings_table_body", {"innerHTML": rulesHTML});
-						// Run the option details immediately
-						document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-							onToggleRuleOptionDetails(ruleOpt);
-						});
+						setTimeout(()=>{
+							let formattedHTML = rulesHTML.join("");
+							mydoc.setContent("#settings_table_body", {"innerHTML": formattedHTML});
+							document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+								onToggleRuleOptionDetails(ruleOpt);
+							});
+						},1000);
 					}
 					
 				});
@@ -388,10 +425,13 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 					// If last one in set, then show all on the page;
 					if(idx === array.length-1)
 					{
-						mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
-						var action = (missingFinalJeopardy) ?
+						setTimeout(()=>{
+							mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
+							var action = (missingFinalJeopardy) ?
 										mydoc.removeClass(".addFinalJeopardyCategory","hidden")
 										: mydoc.addClass(".addFinalJeopardyCategory", "hidden")
+						},1001);
+						
 					}
 				});
 			});
@@ -406,6 +446,9 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		let aHref =	document.getElementById("gameFormURL");
 		if (aHref != undefined){ aHref.href = formURL; }
 		
+		// Media HTML list
+		var mediaHTML = [];
+
 		// Get the list of media files
 		var mediaFiles = JeopardyGame.getListOfMedia();
 		if(mediaFiles?.length > 0)
@@ -421,11 +464,24 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			mediaFiles.forEach( (media)=>{
 				if(media.Type == "Image"){ allAudioSet = true; }
 				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
-				media["MediaHTML"] = media.getMediaHTML();
-				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
-					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
-				});
 				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
+				
+				// Get the media's HTML in order to load on page
+				media["MediaHTML"] = media.getMediaHTML();
+
+				// Get template
+				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
+					// Push template to list
+					mediaHTML.push(breakLine + template);
+
+					if(mediaHTML.length == mediaFiles.length)
+					{
+						setTimeout(()=>{
+							var formattedHTML = mediaHTML.join("");
+							mydoc.setContent("#game_media", {"innerHTML": formattedHTML });
+						}, 1500);
+					}
+				});
 			});
 		}
 	}
@@ -455,7 +511,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 		if(SectionsToBeSaved.length > 0)
 		{
-			let loadingGIF = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:5%;height:5%;">`
 			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
 			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
 			mydoc.addClass("#saveButton", "dlf_button_blue");
@@ -1180,8 +1235,6 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 
 /****** TEST/PLAY Game ****************************/ 
 
-	let loadingGIF2 = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
-
 	// Setting message for attempting to test/play game
 	function onSetErrorMessages(identifier, messages)
 	{
@@ -1212,7 +1265,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 		let checkGame = JeopardyGame.isValidGame();
 		let gameID = JeopardyGame.getGameID();
 
-		mydoc.setContent("#testGameLoading", {"innerHTML": loadingGIF2});
+		mydoc.setContent("#testGameLoading", {"innerHTML": LoadingGIF});
 		
 		console.log("Testing game");
 		console.log(checkGame);
@@ -1267,7 +1320,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	function onPlayGame()
 	{
 		Logger.log("Checking if we can play this game"); 
-		mydoc.setContent("#playGameLoading", {"innerHTML": loadingGIF2});
+		mydoc.setContent("#playGameLoading", {"innerHTML": LoadingGIF});
 	
 		let checkGame = JeopardyGame.isValidGame();
 		if(!checkGame.IsValid)
@@ -1330,7 +1383,7 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 	// Hosting the game
 	function onHostGame()
 	{
-		mydoc.setContent("#hostGameLoading", {"innerHTML": loadingGIF2});
+		mydoc.setContent("#hostGameLoading", {"innerHTML": LoadingGIF});
 
 		let checkGame = JeopardyGame.isValidGame();
 		if(!checkGame.IsValid)
@@ -1400,48 +1453,5 @@ var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll posi
 			let parent = sourceEle.parentElement;
 			let sibling = parent.querySelector(`${siblingSelector}`);
 			return sibling;
-		}
-	}
-
-
-
-	function set_loading_results(value)
-	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.parentElement.classList.remove("hidden");
-		section.innerHTML = value;
-	}
-
-
-	// Loading view
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Saving gif;
-	function toggle_saving_gif(forceHide=false)
-	{
-		let section = document.getElementById("saving_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#saving_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#saving_gif");	
 		}
 	}

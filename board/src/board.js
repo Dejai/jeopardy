@@ -11,6 +11,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 
+		// Show loading state
+		onToggleLoading("show");
+
 		// Loading up this page based on pathname;
 		onKeyboardKeyup();
 
@@ -22,15 +25,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		let gameID = mydoc.get_query_param("gameid");
 
-		if(gameID != undefined)
-		{
-			// Get the game (i.e. card)
-			onGetGame(gameID);
-		}
-        else
-        {
-            
-        }
+		// Determine if we can load the game
+		if(gameID != undefined){ onGetGame(gameID); }
+        else{ onSetLoadingMessage("Could not load game. Invalid Game ID"); }
+		
 	});
 
 	// Prevent the page accidentally closing
@@ -42,6 +40,39 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			event.returnValue='';
 		}
 	}
+
+	// Show/hide the loading GIF
+	function onToggleLoading(state)
+	{
+		switch(state)
+		{
+			case "show":
+				mydoc.showContent("#loading_gif");		
+				break;
+		
+			// in all else situation, just hie
+			default:
+				mydoc.hideContent("#loading_gif");		
+
+		}
+	}
+
+	// Setting a message based on loading 
+	function onSetLoadingMessage(value)
+	{
+		onToggleLoading("hide");
+		mydoc.setContent("#loading_results_section", {innerHTML:value});
+		mydoc.removeClass("#loading_results_section", "hidden");
+		if(value != "")
+		{
+			mydoc.addClass("#loading_results_section", "loadingMessage");
+		}
+		else
+		{
+			mydoc.removeClass("#loading_results_section", "loadingMessage");
+		}
+	}
+
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
 
@@ -88,12 +119,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
-				set_loading_results(result);
+				onSetLoadingMessage(result);
 			});
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGame: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -154,12 +185,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
-				set_loading_results("");
 			},1000);
 		}
 		catch(error)
 		{
-			set_loading_results("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -225,14 +255,17 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Set the game Config/Rules
 	function onSetGameRules()
 	{
-		var rulesHTML = "";
+		var rulesHTML = [];
+
+		onToggleLoading("show");
+
         // Format the rules for hte board
 		Rules.forEach( (ruleObj, idx, array)=>{
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
 			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
            
 			// The rule object that gets displayed on the page;
-            newRuleObj = {"Rule": "", "SubRules":"" }
+            let newRuleObj = {"Rule": "", "SubRules":"" }
 
 			// Set the current rule based on saved option
 			ruleObj.Options?.forEach((option)=>{
@@ -244,7 +277,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     // Set any subrules;
                     if(option["subRules"]?.length > 0)
                     {
-                        subRulesHTML = ""
+                        let subRulesHTML = ""
                         option["subRules"].forEach( (subRule)=>{
                             subRulesHTML += `<span class="subRule">${subRule}</span>`;
                         });
@@ -255,12 +288,17 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
             // Set the template for the rules
             MyTemplates.getTemplate("board/templates/ruleItem.html",newRuleObj,(template)=>{
-				rulesHTML += template; 
+				rulesHTML.push(template);
 
-				if(idx == array.length-1)
+				if(rulesHTML.length == array.length)
 				{
-					mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
-					mydoc.showContent("#rules_section");
+					setTimeout(()=>{
+						var formattedHTML = rulesHTML.join("");
+						mydoc.setContent("#rules_list", {"innerHTML":formattedHTML});
+						mydoc.showContent("#rules_section");
+						JeopardyGame.Game.IsRulesShown = true;
+						onSetLoadingMessage("") // Clear the loading message
+					}, 1500);
 				}
 			});	
 		});
@@ -270,23 +308,22 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSetGameQuestions()
 	{
 		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard((categoryTemplate, isFinalJeopardyCategory)=>{
-            var x = (isFinalJeopardyCategory) ?
-                        mydoc.setContent("#final_jeopardy_row", {"innerHTML":categoryTemplate}, true) :
-                        mydoc.setContent("#round_1_row", {"innerHTML":categoryTemplate}, true);
+        JeopardyGame.getGameBoard(( mainCategories, finalCategory)=>{
+			mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
+			mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
         });
 	}
 
 	// Set the game media
 	function onSetGameMedia()
-	{
-		// Load the game-specific form URL
-		// let formURL = MyGoogleDrive.getFormURL(JeopardyGame.getGameID());
-		// let aHref =	document.getElementById("gameFormURL");
-		// if (aHref != undefined){ aHref.href = formURL; }
-		
+	{		
 		// Get the list of media files
 		var mediaFiles = JeopardyGame.getListOfMedia();
+
+		// Media HTML list
+		var mediaHTML = [];
+
+
 		if(mediaFiles?.length > 0)
 		{
 			// Clear out the N/A before setting media
@@ -300,11 +337,25 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			mediaFiles.forEach( (media)=>{
 				if(media.Type == "Image"){ allAudioSet = true; }
 				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
-				media["MediaHTML"] = media.getMediaHTML();
-				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
-					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
-				});
 				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
+				
+				// Get the media's HTML in order to load on page
+				media["MediaHTML"] = media.getMediaHTML();
+
+				// Get template
+				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
+
+					// Push template to list
+					mediaHTML.push(breakLine + template);
+
+					if(mediaHTML.length == mediaFiles.length)
+					{
+						setTimeout(()=>{
+							var formattedHTML = mediaHTML.join("");
+							mydoc.setContent("#game_media", {"innerHTML": formattedHTML });
+						}, 1500);
+					}
+				});
 			});
 		}
 	}
@@ -395,7 +446,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     // Show the start button
     function onShowStartButton()
     {
-        mydoc.showContent("#startGameSection");
+		// Set interval to show the button (after the rules)
+		let canShowStartButton = setInterval(()=>{
+			// console.log(document.querySelector("#rules_section"));
+			if(JeopardyGame.Game.IsRulesShown)
+			{
+				mydoc.showContent("#startGameSection");
+				clearInterval(canShowStartButton);
+			}
+		}, 500);
     }
 
     // Reveal the game board & set initial team
@@ -714,6 +773,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
 	}
 
+
     // Set question as "asked"
     function onSetQuestionAsAsked(key)
     {
@@ -966,9 +1026,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if(JeopardyGame.Game.IsFinalJeopardy)
 			return 
 
-		
-		
-
         // Set the team name
         mydoc.setContent("#current_turn", {"innerHTML":value});
 
@@ -1048,7 +1105,14 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			// Get a random question from pool left;
 			let randIdx = Math.floor(Math.random()*limit);
 			let cell = availableQuestions[randIdx];
-			nextQuestion = cell?.getAttribute("data-jpd-quest-key")?.replace("-", " - ");
+			let questionKey = cell?.getAttribute("data-jpd-quest-key");
+			let nextQuestionObj = JeopardyGame.Game.getQuestion(questionKey);
+			if(nextQuestionObj != undefined)
+			{
+				let name = nextQuestionObj.CategoryName;
+				let value = nextQuestionObj.Value;
+				nextQuestion = `${name} - ${value}`;
+			}
 		}
 		return nextQuestion;
 	}
@@ -1326,47 +1390,4 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				mydoc.hideContent("#show_wager_link");
 			}		
 		});
-	}
-
-
-/****** OLD Game Actions ****************************/ 
-
-
-	function set_loading_results(value)
-	{
-		toggle_loading_gif(true);
-		let section = document.getElementById("loading_results_section");
-		section.parentElement.classList.remove("hidden");
-		section.innerHTML = value;
-	}
-
-	function toggle_loading_gif(forceHide=false)
-	{
-		let section = document.getElementById("loading_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#loading_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#loading_gif");	
-		}
-	}
-
-	// Saving gif;
-	function toggle_saving_gif(forceHide=false)
-	{
-		let section = document.getElementById("saving_gif");
-		let isHidden = section.classList.contains("hidden")
-
-		if(isHidden)
-		{
-			mydoc.showContent("#saving_gif");		
-		}
-		if(!isHidden || forceHide)
-		{
-			mydoc.hideContent("#saving_gif");	
-		}
 	}
