@@ -392,7 +392,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	function onSetGameQuestions()
 	{
 		// The category HTML to load
-		categoryHTML = "";
+		categoryHTML = [];
 
 		// Assume final jeopardy category is missing
 		let missingFinalJeopardy = true;
@@ -420,18 +420,18 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				MyTemplates.getTemplate("host/templates/categorySection.html", sectionJSON, (template) =>{
 
 					// Add to the category HTML
-					categoryHTML += template;
+					categoryHTML.push(template);
 
 					// If last one in set, then show all on the page;
-					if(idx === array.length-1)
+					if(categoryHTML.length === array.length)
 					{
 						setTimeout(()=>{
-							mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
+							var formattedHTML = categoryHTML.join("");
+							mydoc.setContent("#listOfCategories", {"innerHTML":formattedHTML});
 							var action = (missingFinalJeopardy) ?
 										mydoc.removeClass(".addFinalJeopardyCategory","hidden")
 										: mydoc.addClass(".addFinalJeopardyCategory", "hidden")
-						},1001);
-						
+						},1100);
 					}
 				});
 			});
