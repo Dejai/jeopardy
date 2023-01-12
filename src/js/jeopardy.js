@@ -528,11 +528,17 @@
 
 		/* Subsection: The Game Board */
 		
-		// Get/Set the game board
+		// Get the game board HTML pieces
 		getGameBoard(callback)
 		{
+
+			let theCategories = this.getCategories();
+
+			let mainCategories = [];
+			let finalCategory = [];
+
 			// Loop through categories to build board
-			this.getCategories()?.forEach( (category, idx, array)=> {
+			theCategories?.forEach( (category, idx, array)=> {
 
 				// Is this the final Jeopardy category;
 				let isFinalJeopardyCategory = category.isFinalJeopardy();
@@ -564,7 +570,14 @@
 						}
 					// Set the category templates;
 					MyTemplates.getTemplate("board/templates/boardCategory.html", categoryObj, (categoriesTemplate)=>{
-						callback(categoriesTemplate,isFinalJeopardyCategory);
+						
+						var _push = (isFinalJeopardyCategory) ? finalCategory.push(categoriesTemplate) : mainCategories.push(categoriesTemplate);
+						// When all categories are formatted, callback with the joined content
+						if( (mainCategories.length + finalCategory.length) == theCategories.length)
+						{
+							callback(mainCategories.join(""), finalCategory.join(""));
+						}
+
 					});
 				});
 			});

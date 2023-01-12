@@ -308,10 +308,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	function onSetGameQuestions()
 	{
 		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard((categoryTemplate, isFinalJeopardyCategory)=>{
-            var x = (isFinalJeopardyCategory) ?
-                        mydoc.setContent("#final_jeopardy_row", {"innerHTML":categoryTemplate}, true) :
-                        mydoc.setContent("#round_1_row", {"innerHTML":categoryTemplate}, true);
+        JeopardyGame.getGameBoard(( mainCategories, finalCategory)=>{
+			mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
+			mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
         });
 	}
 
@@ -320,6 +319,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	{		
 		// Get the list of media files
 		var mediaFiles = JeopardyGame.getListOfMedia();
+
+		// Media HTML list
+		var mediaHTML = [];
+
+
 		if(mediaFiles?.length > 0)
 		{
 			// Clear out the N/A before setting media
@@ -333,11 +337,25 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			mediaFiles.forEach( (media)=>{
 				if(media.Type == "Image"){ allAudioSet = true; }
 				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
-				media["MediaHTML"] = media.getMediaHTML();
-				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
-					mydoc.setContent("#game_media", {"innerHTML": (breakLine + template) }, true);
-				});
 				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
+				
+				// Get the media's HTML in order to load on page
+				media["MediaHTML"] = media.getMediaHTML();
+
+				// Get template
+				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
+
+					// Push template to list
+					mediaHTML.push(breakLine + template);
+
+					if(mediaHTML.length == mediaFiles.length)
+					{
+						setTimeout(()=>{
+							var formattedHTML = mediaHTML.join("");
+							mydoc.setContent("#game_media", {"innerHTML": formattedHTML });
+						}, 1500);
+					}
+				});
 			});
 		}
 	}
