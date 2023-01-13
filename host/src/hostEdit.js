@@ -141,6 +141,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Hide the login form
 			onHideLoginForm();
 
+			// Show the menu while the files load
+			mydoc.showContent("#host_edit_tab_section");
+
 			// Get the game details (await)
 			await onGetGameDetailsAsync();
 
@@ -284,10 +287,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 			return new Promise( resolve =>{
 				// Adjust visibility of tabs
-				mydoc.showContent("#host_edit_tab_section");
-				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
-				mydoc.showContent("#edit_game_details_table");
 				onSetLoadingMessage("");
 				resolve("Got all game details");
 			});
