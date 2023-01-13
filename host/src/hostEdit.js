@@ -1092,6 +1092,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				mydoc.setContent("#categoryFormMessage", {"innerHTML": "This order is already being used. Please use a different one" });
 				return; 
 			}
+
+			console.log(newCategory);
 			// Update the category
 			JeopardyGame.updateCategory(newCategory);
 		}
@@ -1107,9 +1109,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				mydoc.setContent("#categoryFormMessage", {"innerHTML": "This order is already being used. Please use a different one" });
 				return; 
 			}
-
-			console.log("New category");
-
 			// Add the new category
 			JeopardyGame.addCategory(newCategory);
 		}		
