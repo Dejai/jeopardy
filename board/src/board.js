@@ -304,7 +304,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Set the game questions
 	async function onSetGameQuestions()
 	{
-
 		// The HTML to build
 		var mainCategories = "";
 		var finalCategory = "";
@@ -329,11 +328,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
 		mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
-
-		// // Get the game board & apply to the page
-        // JeopardyGame.getGameBoard(( mainCategories, finalCategory)=>{
-			
-        // });
 	}
 
 
@@ -425,7 +419,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     {
 		// Set interval to show the button (after the rules)
 		let canShowStartButton = setInterval(()=>{
-			// console.log(document.querySelector("#rules_section"));
 			if(JeopardyGame.Game.IsRulesShown)
 			{
 				mydoc.showContent("#startGameSection");

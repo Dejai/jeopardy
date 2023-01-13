@@ -251,17 +251,32 @@ var JeopardyGame = undefined;
 	}
 
 	// Set the game questions
-	function onSetGameQuestions()
+	async function onSetGameQuestions()
 	{
-		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard((categoryTemplate, isFinalJeopardyCategory)=>{
-            var x = (isFinalJeopardyCategory) ?
-                        mydoc.setContent("#final_jeopardy_row", {"innerHTML":categoryTemplate}, true) :
-                        mydoc.setContent("#round_1_row", {"innerHTML":categoryTemplate}, true);
-			
-			// Click through all the categories by default;
-			onCategoryClickAuto();
-        });
+		// The HTML to build
+		var mainCategories = "";
+		var finalCategory = "";
+
+		// The categories
+		var theCategories = JeopardyGame.getCategories();
+
+		// Loop through categories
+		for(var idx in theCategories)
+		{
+			let category = theCategories[idx];
+
+			// Set the game questions map
+			JeopardyGame.Game.addCategoryQuestions(category);
+
+			// Get the HTML
+			let html = await Promises.GetCategoryColumnHTML(category, theCategories);
+
+			// Adding html to appropiate category
+			let _action = (category.isFinalJeopardy()) ? (finalCategory += html) : (mainCategories += html)
+		}
+
+		mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
+		mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
 	}
 
 	// Set the game media
