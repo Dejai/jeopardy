@@ -371,7 +371,7 @@
 		}
 
 		/* Subsection: Game * */
-		newGame(code){ this.Game = new Game(code) }
+		newGame(code){  this.Game = new Game(code); }
 	
 		/* Subsection: Categories * */
 		// Get the list of categories
@@ -682,6 +682,20 @@
 
 		// Get the game code
 		getCode(){ return this.Code; }
+
+		// Add category questions for mapping
+		addCategoryQuestions(category)
+		{
+			let questions = category.Questions;
+			questions.forEach((q)=>{
+				let key = `${category.CategoryID}-${q.Value}`;
+				q.Key = key;
+				q.CategoryName = category.Name;
+				q.Value = (category.isFinalJeopardy()) ? category.Name : q.Value;
+				// Add question to the game
+				this.addQuestion(key,q);
+			});
+		}
 
 		// Add a question for the game
 		addQuestion(key, question){ this.QAMap[key] = question; }

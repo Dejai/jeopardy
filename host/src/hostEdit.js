@@ -22,19 +22,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		window.addEventListener("beforeunload", onClosePage);
 
 		let gameID = mydoc.get_query_param("gameid");
+
 		if(gameID != undefined)
 		{
-			// Get the game
+			// Get the game & load the basic things
 			onGetGame(gameID);
 
-			// Validate Access; Show section if no password;
-			onValidateAccess(()=>{
-				// Ensure the sections are visible for password (or beyond);
-				onSetLoadingMessage("");
-				mydoc.showContent("#hostEditLoginSection");
-				mydoc.showContent("#edit_game_section");
-				mydoc.showContent("#edit_section_game_login");
-			});
+			// Validate the access
+			onValidateAccess(gameID);
 
 			// Always get the test list ID
 			onGetTestListID();
@@ -45,6 +40,13 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			location.assign("/host/load/");
 		}
 	});
+
+	// Create or return an instance of the Jeopardy game
+	function onCreateJeopardyGame(gameID, gameName, gameDesc="")
+	{
+		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName, gameDesc) : JeopardyGame;
+		return JeopardyGame
+	}
 
 	// Prevent the page accidentally closing
 	function onClosePage(event)
@@ -79,68 +81,102 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		mydoc.setContent("#loading_results_section", {"innerHTML":value});
 	}
 
-	// Get the loading GIF
-    function getLoadingGif(width="5%", height="5%")
-	{
-        return 
-    }
-
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
+
+	// Check if a valid password has been entered or saved
+	function onValidPasswordAsync(gameID)
+	{
+		return new Promise( resolve =>{
+			// Get the password details
+			let gamePasswordCookie = mydoc.getCookie(gameID) ?? ""
+			let gamePasswordForm = mydoc.getContent("#loginForm #loginPassPhrase")?.value ?? "";
+			let password = (gamePasswordCookie != "") ? gamePasswordCookie : gamePasswordForm;
+
+			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
+				let response = JSON.parse(data.responseText);
+				let customFieldValue = response[0]?.value?.text ?? ""
+				
+				// Return if the password is what is expected
+				let isValidPassword = (customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase());
+				
+				// Set the password in the Jeopardy object
+				if (isValidPassword){ 
+
+					JeopardyGame.setGamePass(customFieldValue); 
+
+					// If cookie not already set, then set it;
+					if(gamePasswordCookie == ""){ 
+						mydoc.setCookie(gameID,customFieldValue,30); 
+					}
+				}
+
+				resolve( isValidPassword );
+			});
+		});
+	}
 
 	// Validate the user entered password
 	function onValidatePassword()
 	{
 		// Loading gif
 		mydoc.setContent("#loginLoading", {innerHTML:LoadingGIF});
-
-		onValidateAccess(()=>{
-			mydoc.setContent("#loginLoading", {innerHTML:""});
-			mydoc.setContent("#loginMessage", {innerHTML:"Incorrect password"});
-		});
-
+		let gameID = JeopardyGame.getGameID();
+		onValidateAccess(gameID, true);
 	}
 
-	// Allowing access to the page
-	function onValidateAccess(callback)
+	// Validate the access
+	async function onValidateAccess(gameID, viaForm=false)
 	{
-		// Get the game ID; Do it again so that form submission can use same form;
-		let gameID = mydoc.get_query_param("gameid");
+		// Check if it is a valid password (await)
+		let isValidPassword = await onValidPasswordAsync(gameID);
 
-		if(gameID != undefined)
+		if(isValidPassword)
 		{
-			
-			// Get the password details
-			let gamePasswordCookie = mydoc.getCookie(gameID) ?? ""
-			let gamePasswordForm = mydoc.getContent("#loginForm #loginPassPhrase")?.value ?? "";
-			let password = (gamePasswordCookie != "") ? gamePasswordCookie : gamePasswordForm;
-			
+			// Get the game pass
+			let gamePass = JeopardyGame.getGamePass(); 
 
-			// Check the field vs the given password or edit URL;
-			MyTrello.get_card_custom_field_by_name(gameID, "Pass Phrase", (data) => {
-				let response = JSON.parse(data.responseText);
-				let customFieldValue = response[0]?.value?.text ?? ""
-				
-				// Only load if valid;
-				if(customFieldValue != "" && customFieldValue.toUpperCase() == password.toUpperCase())
-				{
-					mydoc.hideContent("#edit_section_game_login");
+			// Set the field with the game pass
+			mydoc.setContent("#game_pass_phrase", {"value": gamePass });
 
-					// Set the password in the Jeopardy object
-					JeopardyGame.setGamePass(customFieldValue);
-					mydoc.setContent("#game_pass_phrase", {"value":customFieldValue});
+			// Hide the login form
+			onHideLoginForm();
 
-					// onGetGame(gameID);
-					onGetGameDetails();
+			// Get the game details (await)
+			await onGetGameDetailsAsync();
 
-					// Hide login tab
-					mydoc.hideContent("#hostEditLoginSection");
+			// Set the default section that is displayed
+			onSetDefaultSection();
 
-					// Set the cookie with 30 minute expiration
-					if(gamePasswordCookie == ""){ mydoc.setCookie(gameID,customFieldValue,30); }
-				}
-				else { callback(); }
-			});
+			return;
 		}
+
+		// Show the login form if not right
+		onShowLoginForm(viaForm);
+	}
+
+	// Show the login form
+	function onShowLoginForm(badPassword=false)
+	{
+		// If we get here, show the option to
+		onSetLoadingMessage("");
+		mydoc.showContent("#hostEditLoginSection");
+		mydoc.showContent("#edit_game_section");
+		mydoc.showContent("#edit_section_game_login");
+
+		// Show error message if we get here -- means, password was not correct
+		if(badPassword)
+		{
+			mydoc.setContent("#loginLoading", {innerHTML:""});
+			mydoc.setContent("#loginMessage", {innerHTML:"Incorrect password"});
+		}
+	}
+
+	// Hide the login form
+	function onHideLoginForm()
+	{
+		// Hide login tab & form
+		mydoc.hideContent("#hostEditLoginSection");
+		mydoc.hideContent("#edit_section_game_login");
 	}
 
 	// Set a default tab
@@ -167,13 +203,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 
-	// Create or return an instance of the Jeopardy game
-	function onCreateJeopardyGame(gameID, gameName, gameDesc="")
-	{
-		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName, gameDesc) : JeopardyGame;
-		return JeopardyGame
-	}
-
 	// Listener for keyboard event = keyup
 	function onKeyboardKeyup()
 	{
@@ -198,7 +227,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			TestListID = listsResp[0]?.id ?? undefined;
 		});
 	}
-
 
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
@@ -243,81 +271,82 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Get the key details of an existing game
-	function onGetGameDetails()
+	async function onGetGameDetailsAsync()
 	{
 		try
 		{
-			// Get the game files
 			let attachments = Object.keys(JeopardyGame.Attachments);
-			attachments.forEach( (fileName)=>{
-				onGetGameFile(JeopardyGame.getGameID(),fileName)
-			});
+			for(var idx in attachments)
+			{
+				fileName = attachments[idx];
+				await onGetGameFileAsync(JeopardyGame.getGameID(),fileName)
+			}
 
-			// Adjust visibility of tabs
-			mydoc.showContent("#host_edit_tab_section");
-
-			// Select the default section
-			onSetDefaultSection();
-
-			// See what sections can be shown after getting the diff components
-			setTimeout( ()=>{
+			return new Promise( resolve =>{
+				// Adjust visibility of tabs
+				mydoc.showContent("#host_edit_tab_section");
 				mydoc.showContent("#enter_game_name_section");
 				mydoc.showContent("#edit_game_section");
 				mydoc.showContent("#edit_game_details_table");
 				onSetLoadingMessage("");
-			},1000);
+				resolve("Got all game details");
+			});
 		}
 		catch(error)
 		{
-			onSetLoadingMessage("onGetGameDetails: Something went wrong:<br/>" + error);
+			onSetLoadingMessage("onGetGameDetailsAsync: Something went wrong:<br/>" + error);
 		}
 	}
 
 	// Get the attachment & do the corresponding callback
-	function onGetGameFile(cardID, fileName)
+	async function onGetGameFileAsync(cardID, fileName)
 	{
 		try 
 		{
-			// Get the attachment ID;
-			let attachmentID = JeopardyGame.getAttachmentID(fileName);
+			return new Promise(resolve =>{
+				
+				// Get the attachment ID;
+				let attachmentID = JeopardyGame.getAttachmentID(fileName);
 
-			// Get the corresponding attachment
-			MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+				// Get the corresponding attachment
+				MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+							
+					let response = myajax.GetJSON(data.responseText);
+
+					// The file with the game rules
+					if(fileName == "config.json")
+					{
+						JeopardyGame.Config.createConfiguration(response);
 						
-				let response = myajax.GetJSON(data.responseText);
+						// Set the game rules after the config is setup
+						resolve( onSetGameRules() );
+					}
 
-				// The file with the game rules
-				if(fileName == "config.json")
-				{
-					JeopardyGame.Config.createConfiguration(response);
-					
-					// Set the game rules after the config is setup
-					onSetGameRules();
-				}
+					// The file with images/audio
+					else if(fileName == "media.json")
+					{
+						// JeopardyGame.media.setMedia(response);
+						JeopardyGame.setMedia(response);
 
-				// The file with images/audio
-				else if(fileName == "media.json")
-				{
-					// JeopardyGame.media.setMedia(response);
-					JeopardyGame.setMedia(response);
+						// Set the media after loading
+						resolve( onSetGameMedia() );
+					}
 
-					// Set the media after loading
-					onSetGameMedia();
-				}
+					// The file with the categries/questions/answers
+					else if(fileName = "categories.json")
+					{
+						JeopardyGame.setCategories(response);
 
-				// The file with the categries/questions/answers
-				else if(fileName = "categories.json")
-				{
-					JeopardyGame.setCategories(response);
-
-					// Set the game rules
-					onSetGameQuestions()
-				}
+						// Set the game rules
+						resolve( onSetGameQuestions() );
+					}
 
 
-			}, (err) => {
-				console.error("Could not find config file");
-			});	
+				}, (err) => {
+					console.error("Could not find config file");
+				});	
+			});
+		
 		} catch (error) {
 			
 		}
@@ -347,99 +376,68 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Set the game Config/Rules
-	function onSetGameRules()
+	async function onSetGameRules()
 	{
-		var rulesHTML = [];
 
+		var rulesHTML = "";
 
-		mydoc.setContent("#settings_table_body", {"innerHTML": getLoadingGif() });
+		mydoc.setContent("#settings_table_body", {"innerHTML": LoadingGIF });
 
-
-		Rules.forEach( (ruleObj, idx, array)=>{
+		// Loop through the rules
+		for(var idx in Rules)
+		{
+			var ruleObj = Rules[idx];
+			
+			// Set related key & saved config;
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
-			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
-			ruleObj["Key"] = ruleKey;
-			// Update options based on saved configuration
-			ruleObj.Options?.forEach((option)=>{
-				option["isSelected"] = (option.id == savedConfig.option) ? "selected" : "";
-				option["customValue"] = savedConfig["value"] ?? "";
-			});
+			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey);
 
-			MyTemplates.getTemplate("host/templates/ruleOption.html",ruleObj.Options,(template)=>{
-				ruleObj["FormattedOptions"] = template;
+			// Get formatted HTML (await)
+			let html = await Promises.GetRulesFormHTML(ruleObj, ruleKey, savedConfig);
 
-				MyTemplates.getTemplate("host/templates/ruleRow.html",ruleObj,(template)=>{
-					
-					rulesHTML.push(template);
+			rulesHTML += html; 
+		}
 
-					if(rulesHTML.length == array.length)
-					{
-						setTimeout(()=>{
-							let formattedHTML = rulesHTML.join("");
-							mydoc.setContent("#settings_table_body", {"innerHTML": formattedHTML});
-							document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-								onToggleRuleOptionDetails(ruleOpt);
-							});
-						},1000);
-					}
-					
-				});
-			});
+		// Set HTML & trigger all the options
+		mydoc.setContent("#settings_table_body", {"innerHTML": rulesHTML});
+		document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+			onToggleRuleOptionDetails(ruleOpt);
 		});
 	}
 
 	// Set the game questions
-	function onSetGameQuestions()
+	async function onSetGameQuestions()
 	{
 		// The category HTML to load
-		categoryHTML = [];
+		var categoryHTML = "";
 
 		// Assume final jeopardy category is missing
 		let missingFinalJeopardy = true;
 
+		// The categories
+		var theCategories = JeopardyGame.getCategories();
+
 		// Loop through each category & build HTML templates;
-		JeopardyGame.getCategories()?.forEach( (category, idx, array)=> {
+		for(var idx in theCategories)
+		{
+			var category = theCategories[idx]; 
+			let theHTML = await Promises.GetCategoryEditHTML(category);
+			categoryHTML += theHTML;
 
 			// Confirm if final jeopardy content is set
 			if(category.isFinalJeopardy()){ missingFinalJeopardy = false; }
+		}
 
-			// First, loop through the questions in this category
-			questions = category.Questions;
-			let categoryID = category.CategoryID;
+		mydoc.setContent("#listOfCategories", {"innerHTML":categoryHTML});
+		var _action = (missingFinalJeopardy) ?
+					mydoc.removeClass(".addFinalJeopardyCategory","hidden")
+					: mydoc.addClass(".addFinalJeopardyCategory", "hidden");
 
-			MyTemplates.getTemplate("host/templates/categoryQuestionRow.html", questions, (template)=>{
-
-				// Take the formatted questions & set the section
-				let categorylabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
-				let sectionJSON = {
-					"categoryLabel":categorylabel, 
-					"categoryName":category.Name, 
-					"categorySectionBody":template,
-					"categoryID":categoryID
-				}
-				MyTemplates.getTemplate("host/templates/categorySection.html", sectionJSON, (template) =>{
-
-					// Add to the category HTML
-					categoryHTML.push(template);
-
-					// If last one in set, then show all on the page;
-					if(categoryHTML.length === array.length)
-					{
-						setTimeout(()=>{
-							var formattedHTML = categoryHTML.join("");
-							mydoc.setContent("#listOfCategories", {"innerHTML":formattedHTML});
-							var action = (missingFinalJeopardy) ?
-										mydoc.removeClass(".addFinalJeopardyCategory","hidden")
-										: mydoc.addClass(".addFinalJeopardyCategory", "hidden")
-						},1100);
-					}
-				});
-			});
-		});
+		return 1;
 	}
 
 	// Set the game media
-	function onSetGameMedia()
+	async function onSetGameMedia()
 	{
 		// Load the game-specific form URL
 		let formURL = MyGoogleDrive.getFormURL(JeopardyGame.getGameID());
@@ -447,43 +445,27 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		if (aHref != undefined){ aHref.href = formURL; }
 		
 		// Media HTML list
-		var mediaHTML = [];
+		var mediaHTML = "";
 
 		// Get the list of media files
-		var mediaFiles = JeopardyGame.getListOfMedia();
-		if(mediaFiles?.length > 0)
+		var mediaFiles = JeopardyGame.getListOfMedia() ?? [];
+		// Clear out the N/A before setting media
+		mydoc.setContent("#game_media", {"innerHTML": ""});
+
+		// Get the media HTML for each item
+		for (var idx in mediaFiles)
 		{
-			// Clear out the N/A before setting media
-			mydoc.setContent("#game_media", {"innerHTML": ""});
-
-			// Keep track if all images have been loaded
-			let allAudioSet = false;
-			let firstImageSet = false;
-
-			// Set the media (ordered by audio fist) 
-			mediaFiles.forEach( (media)=>{
-				if(media.Type == "Image"){ allAudioSet = true; }
-				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
-				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
-				
-				// Get the media's HTML in order to load on page
-				media["MediaHTML"] = media.getMediaHTML();
-
-				// Get template
-				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
-					// Push template to list
-					mediaHTML.push(breakLine + template);
-
-					if(mediaHTML.length == mediaFiles.length)
-					{
-						setTimeout(()=>{
-							var formattedHTML = mediaHTML.join("");
-							mydoc.setContent("#game_media", {"innerHTML": formattedHTML });
-						}, 1500);
-					}
-				});
-			});
+			let media = mediaFiles[idx];
+			let theHTML = await Promises.GetMediaEditHTML(media);
+			if (idx > 0 && (idx+1) % 3 == 0){ theHTML += "<br style='clear:both;'>"; }
+			mediaHTML += theHTML;
 		}
+
+		// Clear out anything before setting media
+		mydoc.setContent("#game_media", {"innerHTML": ""});
+
+		// Set the media content
+		mydoc.setContent("#game_media", {"innerHTML": mediaHTML });
 	}
 
 /*** SAVE ACTIONS: Saving the game details ********/
@@ -1171,8 +1153,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Get the data from the Spreadsheet  get the Spreadsheet values;
 		MyGoogleDrive.getSpreadsheetData(MyGoogleDrive.uploadedMediaURL, (data) =>{
 			
-			
-			
 			spreadSheetData = MyGoogleDrive.formatSpreadsheetData(data.responseText);
 			rows =  spreadSheetData["rows"];
 
@@ -1205,7 +1185,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			if(newMediaAdded)
 			{
 				onSetGameMedia(); //update page
-
 				onChangeInSection() // indicate need to save
 			}
 			MyNotification.clear("#syncNotifier", "notify_orange");

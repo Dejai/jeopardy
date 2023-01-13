@@ -47,6 +47,11 @@
     .HasURLNo { display:none !important; }
     .HasURLYes { color:blue; }
 
+/* MEDIA */
+    /* .mediaItem{ border: 2px dashed lightgray; padding:2%; float:left; text-align:center; margin-right:5%; margin-bottom:5%; } */
+    .mediaItem{ border: 2px dashed lightgray; text-align:center; margin-right:2%; margin-bottom:3%; width:30%; display:inline-block; }
+    .mediaItem .deleteMediaIcon { text-align:right; float:right; margin-top:1%; margin-right:1%; }
+
 /* Play/Game */
     .playWarning { padding-left:3%; flex-basis:50%; color:red !important; }
     /* .playWarning strong { color:orange !important;} */
