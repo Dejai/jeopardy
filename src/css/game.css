@@ -206,9 +206,6 @@
 	#game_media_details_table tr th { padding:3%; }
 	#game_media_details_table tr td { padding:3%; }
 
-
-	.mediaItem{ border: 2px dashed lightgray; padding:2%; float:left; text-align:center; margin-right:5%; margin-bottom:5%; }
-	.mediaItem .deleteMediaIcon { text-align:right; float:right; }
 /* HOST Views*/
 	#host_instructions { text-align:left; }
 	#host_instructions li { margin-bottom:3%; }

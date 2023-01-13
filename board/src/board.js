@@ -177,15 +177,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				onGetGameFile(JeopardyGame.getGameID(),fileName)
 			});
 
-			// Adjust visibility of tabs
-			mydoc.showContent("#host_edit_tab_section");
+			// // Adjust visibility of tabs
+			// mydoc.showContent("#host_edit_tab_section");
 
-			// See what sections can be shown after getting the diff components
-			setTimeout( ()=>{
-				mydoc.showContent("#enter_game_name_section");
-				mydoc.showContent("#edit_game_section");
-				mydoc.showContent("#edit_game_details_table");
-			},1000);
+			// // See what sections can be shown after getting the diff components
+			// setTimeout( ()=>{
+			// 	mydoc.showContent("#enter_game_name_section");
+			// 	mydoc.showContent("#edit_game_section");
+			// 	mydoc.showContent("#edit_game_details_table");
+			// },1000);
 		}
 		catch(error)
 		{
@@ -220,9 +220,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				{
 					// JeopardyGame.media.setMedia(response);
 					JeopardyGame.setMedia(response);
-
-					// Set the media after loading
-					onSetGameMedia();
 				}
 
 				// The file with the categries/questions/answers
@@ -305,60 +302,40 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	}
 
 	// Set the game questions
-	function onSetGameQuestions()
+	async function onSetGameQuestions()
 	{
-		// Get the game board & apply to the page
-        JeopardyGame.getGameBoard(( mainCategories, finalCategory)=>{
-			mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
-			mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
-        });
-	}
 
-	// Set the game media
-	function onSetGameMedia()
-	{		
-		// Get the list of media files
-		var mediaFiles = JeopardyGame.getListOfMedia();
+		// The HTML to build
+		var mainCategories = "";
+		var finalCategory = "";
 
-		// Media HTML list
-		var mediaHTML = [];
+		// The categories
+		var theCategories = JeopardyGame.getCategories();
 
-
-		if(mediaFiles?.length > 0)
+		// Loop through categories
+		for(var idx in theCategories)
 		{
-			// Clear out the N/A before setting media
-			mydoc.setContent("#game_media", {"innerHTML": ""});
+			let category = theCategories[idx];
 
-			// Keep track if all images have been loaded
-			let allAudioSet = false;
-			let firstImageSet = false;
+			// Set the game questions map
+			JeopardyGame.Game.addCategoryQuestions(category);
 
-			// Set the media (ordered by audio fist) 
-			mediaFiles.forEach( (media)=>{
-				if(media.Type == "Image"){ allAudioSet = true; }
-				let breakLine = (allAudioSet && !firstImageSet) ? "<br/ style='clear:both;'>" : "";
-				if(media.Type == "Image" && allAudioSet){ firstImageSet = true; }
-				
-				// Get the media's HTML in order to load on page
-				media["MediaHTML"] = media.getMediaHTML();
+			// Get the HTML
+			let html = await Promises.GetCategoryColumnHTML(category, theCategories);
 
-				// Get template
-				MyTemplates.getTemplate("host/templates/mediaItem.html", media, (template)=>{
-
-					// Push template to list
-					mediaHTML.push(breakLine + template);
-
-					if(mediaHTML.length == mediaFiles.length)
-					{
-						setTimeout(()=>{
-							var formattedHTML = mediaHTML.join("");
-							mydoc.setContent("#game_media", {"innerHTML": formattedHTML });
-						}, 1500);
-					}
-				});
-			});
+			// Adding html to appropiate category
+			let _action = (category.isFinalJeopardy()) ? (finalCategory += html) : (mainCategories += html)
 		}
+
+		mydoc.setContent("#round_1_row", {"innerHTML":mainCategories});
+		mydoc.setContent("#final_jeopardy_row", {"innerHTML":finalCategory});
+
+		// // Get the game board & apply to the page
+        // JeopardyGame.getGameBoard(( mainCategories, finalCategory)=>{
+			
+        // });
 	}
+
 
     // Set the common media
     function onSetCommonMedia()
