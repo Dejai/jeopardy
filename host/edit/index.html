@@ -10,6 +10,7 @@
 	<base href="../../" target="_blank">
 
     <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="board/src/board.css">
     <link rel="stylesheet" type="text/css" href="host/src/host.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
@@ -189,6 +190,11 @@
 		<div id="loading_results_section"></div>
 	</div>
 
+	<!-- The magic question/answer section that displays -->
+	<div id="question_view" class="hidden">
+		<div id="show_question_section"></div>
+	</div>
+
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
@@ -201,5 +207,6 @@
 	<script src="src/js/googledrive.js"></script>
 	<!-- My Source JS -->
 	<script src="src/js/jeopardy.js"></script>
+	<script src="host/src/hostPreview.js"></script>
 	<script src="host/src/hostEdit.js"></script>
 </html>

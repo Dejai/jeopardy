@@ -31,6 +31,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Validate the access
 			onValidateAccess(gameID);
 
+			// Set the question popup
+			onSetQuestionPopup();
+
 			// Always get the test list ID
 			onGetTestListID();
 		}
@@ -214,6 +217,12 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			{
 				case "Enter":
 					if(CurrentSection == ""){ onValidatePassword(); }
+					break;
+				case "Escape":
+					if( typeof(onCloseQuestion) == "function")
+					{
+						onCloseQuestion();
+					}
 					break;
 				default:
 					return;
