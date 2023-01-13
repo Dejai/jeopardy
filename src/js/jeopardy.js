@@ -11,16 +11,22 @@
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
-			this.CategoryID = "CategoryId"+categoryObject.Order;
 			this.Name = categoryObject.Name;
 			this.Order = categoryObject.Order;
 			this.FinalJeopardy = categoryObject.FinalJeopardy;
 			this.ValueCount = 100;
 
+			// Set category ID
+			this.setCategoryID();
+			// this.CategoryID = "CategoryId"+categoryObject.Order;
+
 			// Set the questions
 			this.Questions = [];
 			this.setQuestions(categoryObject.Questions ?? []);			
 		}
+
+		// Set the Category ID
+		setCategoryID() { this.CategoryID = "CategoryId"+this.Order; }
 
 		// Return if this category is the final jeopardy
 		isFinalJeopardy() { return (this.FinalJeopardy == "Yes"); }
@@ -408,6 +414,27 @@
 			});
 			return theCategory
 		}
+		// Get the next available category order
+		getNextCategoryOrder()
+		{
+			let categories = this.getCategories();
+			let idx = categories.length-1;
+
+			let nextOrder = categories.length; 
+			while(idx > 0)
+			{
+				let category = categories[idx];
+				if(!category.isFinalJeopardy())
+				{
+					nextOrder = Number(category.Order)+1;
+					break;
+				}
+				idx--;
+			}
+			return nextOrder;
+
+		}
+
 		// Update the CategoryQuestion object
 		updateCategoryQuestion(categoryName, questionObject)
 		{
@@ -422,7 +449,7 @@
 			let newCategoryObj = JeopardyHelper.getJSON(jsonObj);
 
 			// The existing category (if exists)
-			let existingCategory = this.getCategory(newCategoryObj?.ID ?? "")
+			let existingCategory = this.getCategory(newCategoryObj?.Name ?? "")
 
 			if(existingCategory != undefined)
 			{
@@ -430,6 +457,7 @@
 				existingCategory.Order = newCategoryObj?.Order ?? existingCategory.Order;
 				existingCategory.FinalJeopardy = newCategoryObj?.FinalJeopardy ?? existingCategory.FinalJeopardy;
 				existingCategory.ValueCount = newCategoryObj?.ValueCount ?? existingCategory.ValueCount;
+				existingCategory.setCategoryID();
 			}
 		}
 		// Delete a category
@@ -525,64 +553,6 @@
 		// Get Set description
 		setGameDesc(desc) { this.gameDesc = desc; }
 		getGameDesc() { return this.gameDesc;}
-
-		/* Subsection: The Game Board */
-		
-		// Get the game board HTML pieces
-		getGameBoard(callback)
-		{
-
-			let theCategories = this.getCategories();
-
-			let mainCategories = [];
-			let finalCategory = [];
-
-			// Loop through categories to build board
-			theCategories?.forEach( (category, idx, array)=> {
-
-				// Is this the final Jeopardy category;
-				let isFinalJeopardyCategory = category.isFinalJeopardy();
-
-				// Determine the width of this category
-				let width = (isFinalJeopardyCategory) ? 100 : 100 * (1 / (this.Categories.length-1) );
-				let dynamicWidth = `style="width:${width}%;"`;
-				
-				// Loop through the questions in this category; Set key
-				let questions = category.Questions;
-				questions.forEach((q)=>{
-					let key = `${category.CategoryID}-${q.Value}`;
-					q.Key = key;
-					q.CategoryName = category.Name;
-					q.Value = (isFinalJeopardyCategory) ? category.Name : q.Value;
-					// Add question to the game
-					this.Game.addQuestion(key,q);
-				});
-	
-				// Set the question templates
-				MyTemplates.getTemplate("board/templates/boardQuestion.html", questions, (questionsTemplate)=>{
-					
-					// The category template object
-					let categoryObj = {
-							"DynamicWidth": dynamicWidth,
-							"CategoryName":(isFinalJeopardyCategory) ? "" : category.Name,
-							"PreFilledCategoryName":(isFinalJeopardyCategory) ? "Final Jeopardy!" : "",
-							"Questions":questionsTemplate,
-						}
-					// Set the category templates;
-					MyTemplates.getTemplate("board/templates/boardCategory.html", categoryObj, (categoriesTemplate)=>{
-						
-						var _push = (isFinalJeopardyCategory) ? finalCategory.push(categoriesTemplate) : mainCategories.push(categoriesTemplate);
-						// When all categories are formatted, callback with the joined content
-						if( (mainCategories.length + finalCategory.length) == theCategories.length)
-						{
-							callback(mainCategories.join(""), finalCategory.join(""));
-						}
-
-					});
-				});
-			});
-		}
-
 
 		/* Subsection: Attachments */
 		// Set/Get: Attachment ID

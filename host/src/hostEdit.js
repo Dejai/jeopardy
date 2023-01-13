@@ -1043,15 +1043,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	function onSetCategoryFormValues(categoryObject)
 	{
 		// Set the values to be set
+		let categoryID = categoryObject?.CategoryID ?? "";
 		let categoryName = categoryObject?.Name ?? "";
-		let categoryOrder = categoryObject?.Order ?? JeopardyGame.Categories.length+1;
-		// let categoryOrderClass = (categoryObject?.FinalJeopardy == "Yes") ? "hidden" : ""
+		let categoryOrder = categoryObject?.Order ?? JeopardyGame.getNextCategoryOrder();
 		let finalJeopardy = categoryObject?.FinalJeopardy ?? "No";
-		let valueCount = categoryObject?.ValueCount ?? 100;
 
 		// Set the content:
 		// mydoc.addClass(".categoryFormOrderSection", categoryOrderClass);
-		mydoc.setContent("#categoryForm [name='categoryFormID']",{"value":categoryName});
+		mydoc.setContent("#categoryForm [name='categoryFormID']",{"value":categoryID});
 		mydoc.setContent("#categoryForm [name='categoryFormName']",{"value":categoryName});
 		mydoc.setContent("#categoryForm [name='categoryFormOrder']",{"value":categoryOrder});
 		mydoc.setContent("#categoryForm [name='categoryFormFinalJeopardy']",{"value":finalJeopardy});
@@ -1075,15 +1074,42 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			"ValueCount": 100
 		}
 
+		// Clear the message
+		mydoc.setContent("#categoryFormMessage", {"innerHTML": ""} );
+
+		// If this order is already in use, then show error
+		let categories = JeopardyGame.getCategories();
+		
 		// Updat existing category
 		if(categoryID != "")
 		{
+			// Check for any existing order
+			let existingOrder = categories.filter((category)=>{ 
+				return (category.Order == newCategory.Order && category.CategoryID != newCategory.ID) 
+			});
+
+			if(existingOrder.length > 0){
+				mydoc.setContent("#categoryFormMessage", {"innerHTML": "This order is already being used. Please use a different one" });
+				return; 
+			}
 			// Update the category
 			JeopardyGame.updateCategory(newCategory);
 		}
 		// Or add new category
 		else if(categoryName != "")
 		{
+			// Check for any existing order
+			let existingOrder = categories.filter((category)=>{ 
+				return (category.Order == newCategory.Order) 
+			});
+
+			if(existingOrder.length > 0){
+				mydoc.setContent("#categoryFormMessage", {"innerHTML": "This order is already being used. Please use a different one" });
+				return; 
+			}
+
+			console.log("New category");
+
 			// Add the new category
 			JeopardyGame.addCategory(newCategory);
 		}		
