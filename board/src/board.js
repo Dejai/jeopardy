@@ -176,16 +176,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			attachments.forEach( (fileName)=>{
 				onGetGameFile(JeopardyGame.getGameID(),fileName)
 			});
-
-			// // Adjust visibility of tabs
-			// mydoc.showContent("#host_edit_tab_section");
-
-			// // See what sections can be shown after getting the diff components
-			// setTimeout( ()=>{
-			// 	mydoc.showContent("#enter_game_name_section");
-			// 	mydoc.showContent("#edit_game_section");
-			// 	mydoc.showContent("#edit_game_details_table");
-			// },1000);
 		}
 		catch(error)
 		{

@@ -164,7 +164,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		onSetLoadingMessage("");
 		mydoc.showContent("#hostEditLoginSection");
 		mydoc.showContent("#edit_game_section");
-		mydoc.showContent("#edit_section_game_login");
+		mydoc.showContent("#loginFormSection");
 
 		// Show error message if we get here -- means, password was not correct
 		if(badPassword)
@@ -179,7 +179,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	{
 		// Hide login tab & form
 		mydoc.hideContent("#hostEditLoginSection");
-		mydoc.hideContent("#edit_section_game_login");
+		mydoc.hideContent("#loginFormSection");
 	}
 
 	// Set a default tab
@@ -205,7 +205,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		document.querySelector(tabSelector)?.click();
 	}
 
-
 	// Listener for keyboard event = keyup
 	function onKeyboardKeyup()
 	{
@@ -230,7 +229,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			TestListID = listsResp[0]?.id ?? undefined;
 		});
 	}
-
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
 
@@ -286,9 +284,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			}
 
 			return new Promise( resolve =>{
-				// Adjust visibility of tabs
-				mydoc.showContent("#edit_game_section");
-				onSetLoadingMessage("");
+				Logger.log("Done with getting the files");
 				resolve("Got all game details");
 			});
 		}
@@ -620,6 +616,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	function onSwitchTab(event)
 	{
 		let target = event.target;
+
+		// Always clear any messages
+		onSetLoadingMessage("");
 
 		// Where are we trying to go?
 		let targetSection = target.getAttribute("data-section-id");
