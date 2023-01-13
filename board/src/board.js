@@ -721,10 +721,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         mydoc.showContent("#question_view");
 
 		// Log that a question was asked (on the game card);
-		// if(!JeopardyGame.Game.IsTestRun)
-		// {
-		// 	MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
-		// }
+		if(!JeopardyGame.Game.IsTestRun)
+		{
+			MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
+		}
 
 		// Set the selected cell to disabled;
         onSetQuestionAsAsked(key);
