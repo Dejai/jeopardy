@@ -414,6 +414,12 @@
 			});
 			return theCategory
 		}
+		getCategoryByID(id)
+		{
+			let categoryList = this.Categories.filter( (cat)=>{ return cat.CategoryID == id; });
+			let category = categoryList?.length > 0 ? categoryList[0] : undefined;
+			return category;
+		}
 		// Get the next available category order
 		getNextCategoryOrder()
 		{
@@ -449,7 +455,7 @@
 			let newCategoryObj = JeopardyHelper.getJSON(jsonObj);
 
 			// The existing category (if exists)
-			let existingCategory = this.getCategory(newCategoryObj?.Name ?? "")
+			let existingCategory = this.getCategoryByID(newCategoryObj?.ID ?? "")
 
 			if(existingCategory != undefined)
 			{
