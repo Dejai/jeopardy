@@ -720,17 +720,19 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
         // Show the question;
         mydoc.showContent("#question_view");
 
-		// Log that a question was asked (on the game card);
-		if(!JeopardyGame.Game.IsTestRun)
-		{
-			MyTrello.create_card_comment(CURR_GAME_STATE_CARD_ID, encodeURIComponent(key));
-		}
-
 		// Set the selected cell to disabled;
         onSetQuestionAsAsked(key);
 
 		// Force a sync of teams to ensure wagers are received.
 		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
+		
+		// Log that a question was asked (on the game card);
+		if(!JeopardyGame.Game.IsTestRun)
+		{
+			MyTrello.create_card_comment(JeopardyGame.Game.GameCard, encodeURIComponent(key));
+		}
+
+		
 	}
 
 
