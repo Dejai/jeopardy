@@ -442,7 +442,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		{
 			let date = Helper.getDateFormatted();
 			let comment = `${date} --> ${JeopardyGame.Game.Code}`;
-			MyTrello.create_card_comment(CURR_GAME_ID, comment);
+			MyTrello.create_card_comment(JeopardyGame.getGameID(), comment);
 		}
 	}
 
@@ -725,7 +725,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		// Force a sync of teams to ensure wagers are received.
 		if(key.includes("FINAL JEOPARDY")){ onSyncTeams() }
-		
+
 		// Log that a question was asked (on the game card);
 		if(!JeopardyGame.Game.IsTestRun)
 		{
