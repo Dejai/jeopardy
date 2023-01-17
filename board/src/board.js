@@ -34,7 +34,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Prevent the page accidentally closing
 	function onClosePage(event)
 	{
-		if( (JeopardyGame?.Game?.Asked?.length ?? 0) > 0)
+		if( (JeopardyGame?.Game?.getQuestionsAskedTotal() ?? 0) > 0)
 		{
 			event.preventDefault();
 			event.returnValue='';
@@ -353,6 +353,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
             let comments = JSON.parse(commentData.responseText);
 
+			console.log(comments);
+
             if(comments?.length > 0)
             {
                 // We've already opened a question, so show all headers
@@ -363,7 +365,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     let val = obj.data?.text ?? "";
                     if(val != "")
                     {
-                        JeopardyGame.Game.Asked.push(val);
                         onSetQuestionAsAsked(val);
                     }
                 });
@@ -486,8 +487,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				let isGameCard = (obj.name.startsWith("GAME_CARD_"));
 
                 // If this is a game that started, then restore it;
-                if(isGameCard && JeopardyGame.Game.Asked.length == 0)
+                if(isGameCard && JeopardyGame.Game.getQuestionsAskedTotal() == 0)
                 {
+					console.log("Loading existing game state");
+					console.log(obj);
 					// The card ID for the game details 
 					JeopardyGame.Game.GameCard = obj["id"];
                     loadGameState(obj);
@@ -655,7 +658,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			// Set the list to archived; With updated name;
 			let dateCode = Helper.getDateFormatted();
 			let archive_name = `${dateCode} - ${JeopardyGame.Game.Code} - ${JeopardyGame.getGameName()}`;
-			MyTrello.update_list_state(CURR_LIST_ID, "closed", archive_name , (data)=>{
+			MyTrello.update_list_state(JeopardyGame.Game.ListID, "closed", archive_name , (data)=>{
 				alert("Game has been archived");
 			});
 		}
@@ -691,9 +694,13 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 
 		console.log(key);
 
+		console.log(JeopardyGame.Game.IsFinalJeopardy);
+
 		// Determing if the question can be opened;
 		let proceed = (JeopardyGame.Game.IsFinalJeopardy) ? canOpenFJ() : canOpenQuestion(key);
 		if(!proceed){ return; }
+
+		console.log("Proceeding");
 
         // Get the question based on the key;
         let questionObj = JeopardyGame.Game.getQuestion(key);
@@ -745,6 +752,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
             cell.classList.add("category_option_selected");
             cell.disabled = true;
         }	
+		JeopardyGame.Game.addQuestionAsked(key);
     }
 
     // Add the list of teams to the question popup
@@ -780,7 +788,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 			window.scrollTo(0,0); // Scroll back to the top of the page;
             mydoc.hideContent("#question_view");
             onSetQuestionPopup(); // Reset the question popup by reloading template;
-			// Timer.resetTimer(); // make sure the timer is reset to default.
 		}
 	}
 
@@ -863,6 +870,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 	// Assigns the scores and then closes the question
 	function onAssignPoints(updateScore=true)
 	{
+
+		updateScore = true; 
 		// First update the score
 		if(updateScore)
 		{ 
@@ -1062,10 +1071,10 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		let limit = availableQuestions.length;
 		let nextQuestion = "N/A";
 
-		if (limit > 1)
+		if (limit >= 1)
 		{
 			// Get a random question from pool left;
-			let randIdx = Math.floor(Math.random()*limit);
+			let randIdx = (limit > 1) ? Math.floor(Math.random()*limit) : 0;
 			let cell = availableQuestions[randIdx];
 			let questionKey = cell?.getAttribute("data-jpd-quest-key");
 			let nextQuestionObj = JeopardyGame.Game.getQuestion(questionKey);
@@ -1257,6 +1266,15 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
             },1500)
 		}
 
+		// Update wager value to be +/-
+		if(JeopardyGame.Game.IsFinalJeopardy)
+		{
+			let sign = (isCorrect) ? "+" : "-";
+			let newWager = `${sign}${team_wager}`
+			MyTrello.update_card_custom_field_by_name(teamCode, "Wager", newWager);
+
+		}
+
 	}
 
 	// Reset the answer
@@ -1298,7 +1316,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if( !headersVisible ){ alert("Please show all the headers before beginning") }
 
 		// Are we opening (even if already opened)?
-		let allowOpen = (JeopardyGame.Game.Asked.includes(key)) ?
+		let allowOpen = (JeopardyGame.Game.hasQuestionAsked(key)) ?
 							(confirm("This question has already been presented. Do you still want to open it?") ) 
 							: true;
 		
@@ -1318,11 +1336,11 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		let teamLength = JeopardyGame.Game.Teams?.length ?? 0;
 		let wagers = document.querySelectorAll(".team_wager.wager_hidden")?.length ?? 0;
 
-		let canOpen = false;
+		let canOpen = true;
 		if(wagers < teamLength)
 		{
+			canOpen = false;
 			canOpen = confirm("Not all wagers have been set. Are you sure you want to open the question") 
-
 			if(!canOpen) { onSyncTeams(); }
 		}
 		return canOpen;

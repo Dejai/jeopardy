@@ -95,5 +95,25 @@ const Promises = {
                 });
             });
         });
+    },
+
+    // Get the archive team row
+    GetArchiveGameRow: (team) => {
+
+        return new Promise( resolve => {
+            MyTemplates.getTemplate("archives/templates/archiveGameRow.html", team, (template) =>{
+                resolve(template);
+            });
+        });
+    },
+
+    // Get the archive team row
+    GetArchiveTeamRow: (team) =>{
+
+        return new Promise( resolve => {
+            MyTemplates.getTemplate("archives/templates/archiveTeamRow.html", team, (template) =>{
+                resolve(template);
+            });
+        });
     }
 }

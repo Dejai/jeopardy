@@ -633,6 +633,7 @@
 			// Keeping track of questions/answers
 			this.QAMap = {};
 			this.Asked = []; //Keeps track of questions already asked;
+			this.Asked2 = {};
 
 			// Keep track of teams in this game;
 			this.Teams = [];
@@ -675,6 +676,31 @@
 
 		// Add a question for the game
 		addQuestion(key, question){ this.QAMap[key] = question; }
+
+		// Add question as Asked
+		addQuestionAsked(key)
+		{
+			if (!this.Asked.includes(key))
+			{
+				this.Asked.push(key);
+			}
+
+			if(!Object.keys(this.Asked2).includes(key))
+			{
+				this.Asked2[key] = 0
+			}
+			this.Asked2[key] += 1; 
+		}
+
+		// Get total of questions asked
+		getQuestionsAskedTotal(){ return Object.keys(this.Asked2).length; }
+
+		// Return if a question has been asked
+		hasQuestionAsked(key)
+		{
+			return Object.keys(this.Asked2).includes(key);
+		}
+
 		// Get a question
 		getQuestion(key)
 		{
@@ -684,7 +710,6 @@
 			if(questObj != undefined)
 			{
 				question = questObj;
-				this.Asked.push(key);
 			}
 			return question;
 		}

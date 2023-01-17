@@ -1,13 +1,10 @@
 
 /*********** INSTANCE VARIABLES *****************************************/ 
 
-var GAME_LIST_ID = "";
 var THE_TEAMS = {};
 var TEAM_SCORES = []
-var THE_ARCHIVE = [];
 var SHOWING_FINAL_SCORE = true;
-
-var TRELLO_IDS = {}
+var CUSTOM_FIELDS = [];
 
 /*********** GETTING STARTED *****************************************/ 
 
@@ -18,123 +15,143 @@ mydoc.ready(function(){
     // Set board name
     MyTrello.SetBoardName("jeopardy");
 
-	let gameID = mydoc.get_query_param("gameID") ?? "";
-	let gameDate = mydoc.get_query_param("gameDate") ?? "";
-	let gameCode = mydoc.get_query_param("gameCode") ?? "";
+	let gameListID = mydoc.get_query_param("gameID") ?? "";
 	let gameName = mydoc.get_query_param("gameName") ?? "";
+	let gameCode = mydoc.get_query_param("gameCode") ?? "";
+	let gameDate = mydoc.get_query_param("gameDate") ?? "";
 
-    if(gameID != "")
+    if(gameListID != "")
     {
-
-        GAME_LIST_ID = gameID;
-
         // Get the game details
-        setGameDetails(gameDate, gameCode, gameName);
+        mydoc.setContent("#archived_game_name", {"innerText": decodeURI(gameName)});
+        mydoc.setContent("#archived_game_code", {"innerText": `(${gameCode})` });
+        mydoc.setContent("#archived_game_date", {"innerText": gameDate });
 
         // Pull up the existing teams
-        onGetTeams(GAME_LIST_ID);
+        onGetTeams(gameListID);
     }
    
 });
 
 /*************** ACTIONS *******************************************/ 
+// Get the custom fields
+function getCustomFields()
+{
+    return new Promise( resolve =>{
+        MyTrello.get_custom_fields( (data) =>{
+            CUSTOM_FIELDS = JSON.parse(data.responseText);
+            resolve(CUSTOM_FIELDS);
+        })
+    });
+}
+
+
 
 // Get the teams that are in this archived game
-function onGetTeams(listID)
+async function onGetTeams(listID)
 {
+
+    // Get the list of custom fields first
+    await getCustomFields();
+
     MyTrello.get_cards(listID, (data)=>{
         response = JSON.parse(data.responseText);
 
-        teamCards = response.filter( (card)=>{
+        var teamCards = response.filter( (card)=>{
             return (!card["name"].includes("GAME_CARD"));
         });
 
-        THE_TEAMS["total"] = teamCards.length;
-        THE_TEAMS["set"] = 0;
+        // Load the teams async
+        loadTeams(teamCards);
+    });
+}
 
-        teamCards.forEach( (obj) => {
-            let teamName = obj["name"];
-            let teamCode = obj["id"];
-            THE_TEAMS[teamCode] = {"name":teamName, "score":undefined, "wager":undefined };
+// Load the teams (ascyn)
+async function loadTeams(teams)
+{
+    // Loop through each team & load
+    for(var idx in teams)
+    {
+        let team = teams[idx];
+        let teamID = team["id"];
+        let teamObject = await getCardData(teamID);
+
+        THE_TEAMS[teamID] = teamObject
+        TEAM_SCORES.push(THE_TEAMS[teamID]);
+    }
+
+    // Show the teams
+    showList(TEAM_SCORES, "score");
+    mydoc.showContent("#toggleScores");
+    mydoc.showContent("#archiveGameTable");
+    mydoc.hideContent("#loading_gif");
+}
+
+// Get the value of the custom field from the given field name
+function getCustomFieldValue(cardFields, fieldName)
+{
+    let fieldID = CUSTOM_FIELDS.filter((obj)=>{ return (obj["name"] == fieldName); })?.[0]?.id ?? undefined;
+    let cardField = cardFields.filter((obj)=>{ return (obj["idCustomField"] == fieldID); })?.[0] ?? undefined;
+    let value = cardField?.value?.text ?? "n/a";
+    value = (value == "") ? "n/a" : value;
+    return value;
+}
+
+// Get card data
+function getCardData(teamCode)
+{
+    return new Promise( resolve => {
+
+        MyTrello.get_single_card(teamCode, (data) => {
+
+            let response = JSON.parse(data.responseText);
+            console.log(response);
+
+            let teamScore = getCustomFieldValue(response["customFieldItems"],"Score");
+            let teamWager = getCustomFieldValue(response["customFieldItems"],"Wager");
+            let teamPreWager = calculatePreWagerScore(teamScore, teamWager);
+
+            let cardData = {
+                "name":response["name"], 
+                "score":teamScore,
+                "wager":teamWager.replace("+","").replace("-",""),
+                "preWagerScore": teamPreWager,
+                "code":teamCode
+            };
+            resolve(cardData);
         });
-
-        getTeamScoresAndWagers();
-        console.log(THE_TEAMS);
     });
 }
 
-// Get the team scores & wagers
-function getTeamScoresAndWagers()
+/*********** TEMP STARTED *****************************************/ 
+
+function addSymbol(teamCode, symbol, value)
 {
-    let teamCodes = Object.keys(THE_TEAMS);
-
-    // Loop through teams & set the scores/wagers;
-    teamCodes.forEach( (teamCode) =>{
-        setCustomFieldValue(teamCode, "Wager");
-        setCustomFieldValue(teamCode, "Score");
-    });
-}
-
-// Get custom field value for team
-function setCustomFieldValue(teamCode, fieldName)
-{
-
-    MyTrello.get_card_custom_field_by_name(teamCode, fieldName, (data)=> {
-
-        let response = JSON.parse(data.responseText);
-
-        if(response.length == 1)
-        {
-            let value = response[0]?.value?.text ?? "n/a";
-            value = (value != "n/a") ? Number(value) : value;
-            THE_TEAMS[teamCode][fieldName.toLowerCase()] = value;
-
-            // Add the score before wager
-            let score = THE_TEAMS[teamCode]["score"];
-            let wager = THE_TEAMS[teamCode]["wager"];
-
-            if(Number.isInteger(score) && Number.isInteger(wager))
-            {
-                THE_TEAMS[teamCode]["preWagerScore"] = (score > wager) ? (score - wager) : (score + wager)
-            }
-            else
-            {
-                THE_TEAMS[teamCode]["preWagerScore"] = THE_TEAMS[teamCode]["score"]
-            }
-        }
-        else
-        {
-            THE_TEAMS[teamCode][fieldName.toLowerCase()] = "n/a";
-            THE_TEAMS[teamCode]["preWagerScore"] = 0;
-        }
-        // Check if all the scores have been set now;
-        checkIfScoresSet(teamCode);
-    });
-}
-
-// Check if a score is set
-function checkIfScoresSet(teamCode)
-{
-    let hasScore = THE_TEAMS[teamCode]["score"] != undefined
-    let hasWager = THE_TEAMS[teamCode]["wager"] != undefined
-
-    // If this team is set, increment the set total
-    if(hasScore && hasWager)
-    {
-        THE_TEAMS["set"] += 1
-        TEAM_SCORES.push(THE_TEAMS[teamCode]);
-    }
-
-    // If all teams are set, then run the show list
-    if(THE_TEAMS["set"] == THE_TEAMS["total"])
-    {
-        showList(TEAM_SCORES, "score");
-        mydoc.showContent("#archive_section")
-        mydoc.hideContent("#loading_gif")
-    }
+    let newValue = symbol + value.replace("+","").replace("-","");
+	MyTrello.update_card_custom_field_by_name(teamCode,"Wager",newValue);
 }
 
 /************************ HELPERS **************************/
+
+// Calculate the pre-wager score
+function calculatePreWagerScore(score, wager)
+{
+    let preWagerScore = score;
+
+    // The calculation is opposite of the wager symbol stored; 
+    if(wager.includes("+") || wager.includes("-"))
+    {
+        wager = (wager.includes("+")) ? wager.replace("+", "-") : wager.replace("-", "+");
+        let formula = `${score}${wager}`;
+        console.log("Calculting wager with eval of: " + formula);
+        preWagerScore = eval(formula);
+    }
+    else if (Number.isInteger(score) && Number.isInteger(wager))
+    {
+        preWagerScore = (score > wager) ? (score - wager) : (score + wager)
+    }
+    return preWagerScore;
+}
 
 // Sort the teams based on score vs. wager
 function sortList(list,sortBy)
@@ -148,47 +165,26 @@ function sortList(list,sortBy)
 }
 
 // Show the (sorted) teams in the table
-function showList(list,sortBy,reverse)
+async function showList(list,sortBy,reverse)
 {
-
-    sortedList = sortList(list,sortBy,reverse);
-
     let htmlList = "";
+    var sortedList = sortList(list,sortBy,reverse);
 
-    for(var idx = 0; idx < sortedList.length; idx++)
+    // Loop through the list of teams
+    for(var idx in sortedList)
     {
-        item = sortedList[idx];
-        if( item.hasOwnProperty("score") )
-        {
-            htmlList += `<tr>
-                            <td>${idx+1}</td>
-                            <td>${item['name']}</td>
-                            <td>${item[sortBy].toLocaleString()}</td>
-                            <td>${item['wager'].toLocaleString()}</td>
-                        </tr>`;
+        let team = sortedList[idx];
+        let teamObj = {
+            "Index": Number(idx)+1,
+            "Name": team["name"],
+            "Score": team[sortBy],
+            "Wager": team['wager'],
+            "Code": team['code']
         }
-        else if ( item.hasOwnProperty("gameCode") )
-        {
-            // <td>${item['gameCode']}</td>
-
-            let gID = item["gameID"];
-            let gDate = item["date"];
-            let gCode = item["gameCode"];
-            let gName = encodeURI(item["gameName"]).replaceAll(/'/g, "%27");
-
-            htmlList += `<tr>
-                            <td>${item['date']}</td>
-                            <td>${item['gameName']}<br/><span class='gameCodeSmaller'>(${item['gameCode']})</span></td>
-                            <td>
-                                <button class='openGameButton' onclick="onOpenGame('${gID}', '${gDate}', '${gCode}', '${gName}' )">
-                                    Open Game
-                                </button>
-                            </td>
-                        </tr>`;
-        }
+        let rowHtml = await Promises.GetArchiveTeamRow(teamObj);
+        htmlList += rowHtml;
     }
-
-    document.getElementById("archive_table_body").innerHTML = htmlList;
+    mydoc.setContent("#archive_table_body", {"innerHTML":htmlList});
 }
 
 // Swap out the scores for the "pre-wager"
@@ -211,13 +207,4 @@ function onToggleScores()
         toggleButton.innerText = "Show Score Before Wager";
 
     }
-}
-
-
-// Get the list of archived games
-function setGameDetails(gameDate, gameCode, gameName)
-{
-    document.getElementById("archived_game_name").innerText = decodeURI(gameName);
-    document.getElementById("archived_game_code").innerText = `(${gameCode})`;
-    document.getElementById("archived_game_date").innerText = gameDate;
 }

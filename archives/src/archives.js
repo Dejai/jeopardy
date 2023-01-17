@@ -1,20 +1,17 @@
 
 /*********** INSTANCE VARIABLES *****************************************/ 
 
-	var GAME_LIST_ID = "";
+	var THE_GAMES = {};
+
 	var THE_TEAMS = {};
 	var TEAM_SCORES = []
 	var THE_ARCHIVE = [];
 	var SHOWING_FINAL_SCORE = true;
-
 	var TRELLO_IDS = {}
 
 /*********** GETTING STARTED *****************************************/ 
 
 	mydoc.ready(function(){
-		// Check for existing player if on player screen
-		let path = location.pathname;
-
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 		
@@ -73,47 +70,29 @@
 	}
 
 	// Show the (sorted) teams in the table
-	function showList(list,sortBy,reverse)
+	async function showList(list,sortBy,reverse)
 	{
 
-		sortedList = sortList(list,sortBy,reverse);
+		var sortedList = sortList(list,sortBy,reverse);
 
 		let htmlList = "";
 
-		for(var idx = 0; idx < sortedList.length; idx++)
+		// Loop through the list of teams
+		for(var idx in sortedList)
 		{
-			item = sortedList[idx];
-			if( item.hasOwnProperty("score") )
-			{
-				htmlList += `<tr>
-								<td>${idx+1}</td>
-								<td>${item['name']}</td>
-								<td>${item[sortBy].toLocaleString()}</td>
-								<td>${item['wager'].toLocaleString()}</td>
-							</tr>`;
+			let game = sortedList[idx];
+			let gameName = decodeURI(game["gameName"]);
+			let gameObj = {
+				"GameID": game["gameID"],
+				"Date": game["date"],
+				"Name": gameName,
+				"Code": game['gameCode']
 			}
-			else if ( item.hasOwnProperty("gameCode") )
-			{
-				// <td>${item['gameCode']}</td>
 
-				let gID = item["gameID"];
-				let gDate = item["date"];
-				let gCode = item["gameCode"];
-				let gName = encodeURI(item["gameName"]).replaceAll(/'/g, "%27");
-
-				htmlList += `<tr>
-								<td>${item['date']}</td>
-								<td>${item['gameName']}<br/><span class='gameCodeSmaller'>(${item['gameCode']})</span></td>
-								<td>
-									<button class='openGameButton' onclick="onOpenGame('${gID}', '${gDate}', '${gCode}', '${gName}' )">
-										Open Game
-									</button>
-								</td>
-							</tr>`;
-			}
+			let rowHtml = await Promises.GetArchiveGameRow(gameObj);
+			htmlList += rowHtml;
 		}
-
-		document.getElementById("archive_table_body").innerHTML = htmlList;
+		mydoc.setContent("#archive_table_body", {"innerHTML":htmlList});
 	}
 
 	// Swap out the scores for the "pre-wager"
