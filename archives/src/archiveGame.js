@@ -123,14 +123,6 @@ function getCardData(teamCode)
     });
 }
 
-/*********** TEMP STARTED *****************************************/ 
-
-function addSymbol(teamCode, symbol, value)
-{
-    let newValue = symbol + value.replace("+","").replace("-","");
-	MyTrello.update_card_custom_field_by_name(teamCode,"Wager",newValue);
-}
-
 /************************ HELPERS **************************/
 
 // Calculate the pre-wager score

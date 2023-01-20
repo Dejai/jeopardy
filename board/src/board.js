@@ -1270,7 +1270,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		if(JeopardyGame.Game.IsFinalJeopardy)
 		{
 			let sign = (isCorrect) ? "+" : "-";
-			let newWager = `${sign}${team_wager}`
+			let newWager = `${sign}${team_wager}`;
 			MyTrello.update_card_custom_field_by_name(teamCode, "Wager", newWager);
 
 		}
