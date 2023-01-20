@@ -3,3 +3,10 @@
 /* TEAM PAGE */
     .teamPageSection { padding-top:1%; padding-bottom:2%; }
 
+	.highlight_team_value { color:orange; }
+	#team_code { color:orange; }
+	#game_code { color:orange; }
+	.submitted_answer{ color:limegreen; }
+	#final_jeopardy_button { float:right; }
+	#final_jeopardy_block { margin-top:1%; margin-bottom:1%; }
+	.team_input_field { width:60%; font-size:120%; text-align:center;  }

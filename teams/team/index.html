@@ -19,7 +19,7 @@
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
 		<h1 id="homemade_jeopardy_title" style="font-size:25px; margin-bottom:0px;">
-			Homemade Jeopardy<br/>
+			<a href="/teams/" target="_self" class="homeLink">Homemade Jeopardy</a><br/>
 			Team: <span id="team_code" class="highlight_team_value"></span>
 		</h1>
 		<button id="show_wager_link" style="float:right;margin-bottom:1%;" class="dlf_button_round_corners dlf_button_medium dlf_button_red hidden"  onclick="onShowFinalJeopardy()">
@@ -33,7 +33,7 @@
 	
 		<!-- Submitted Answer -->
 		<div id="submittedAnswerSection" class="teamPageSection hidden">
-			<h4 style="margin:0px;">
+			<h4 style="margin:0px; font-size:25px;">
 				<span class="submitted_answer">Last Answer:</span>
 				<span id="submitted_answer_value"></span>
 				<br/>
@@ -52,13 +52,13 @@
 
 		<!-- All things WAGER -->
 		<div id="wagerSection" class="hidden">
-
 			<!-- The instructions -->
 			<div id="wagerInstructinos">
-				<p id="wager_instruction" class="wagerInputSubsections" style="color:red;" >
+
+				<p id="wager_instruction" class="wagerInputSubsections" style="color:red;" data-orig="Submit your wager BEFORE the final question is revealed." >
 					Submit your wager BEFORE the final question is revealed.
 				</p>
-				<div id="wagerConfirmationMessages" class="hidden">
+				<div id="wagerConfirmationMessages" class="wagerConfirmationSection hidden">
 					<h4 id="wager_warning" style="color:red; margin-bottom:0px;">
 						CONFIRM YOUR WAGER:
 					</h4>
@@ -67,11 +67,10 @@
 					</p>
 				</div>
 				<div id="wagerAlertSection" style="color:red;"></div>
-				
 			</div>
 
 			<!-- The details -->
-			<div id="wagerValueSubsection" class="teamPageSection hidden">
+			<div id="wagerValueSubsection" class="teamPageSection wagerDetailsSection hidden">
 				<div id="scoresForWagerSection" class="teamPageSection">
 					<h4 style="border:2px dashed white; width:50%; margin:auto; padding:1%; ">				
 						<span>
@@ -95,7 +94,7 @@
 							</span>
 						</span>
 						<br/><br/>
-						<span id="yourWager" class="hidden">
+						<span id="yourWager" class="wagerConfirmationSection hidden">
 							Your Wager: 
 							<span id="wager_input_preview" style="color:red;">0</span>
 						</span>
@@ -104,7 +103,7 @@
 			</div>
 
 			<!-- The Input section -->
-			<div id="wagerInputSubsection" class="teamPageSection wagerInputSubsections">
+			<div id="wagerInputSubsection" class="teamPageSection wagerInputSubsections wagerDetailsSection hidden">
 				<input id="wagerInput" style="width:90%;font-size:34px;"  type="number" placeholder="Enter wager here." name="wager" min="0" autocomplete="off"><br/>
 				<p id="wager_warning_section" style="color:red;"></p>
 				<button id="submit_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onConfirmWager()">
@@ -113,7 +112,7 @@
 			</div>
 
 			<!-- Wager confirmation buttons -->
-			<div id="wagerConfirmationButtons" class="teamPageSection wagerInputSubsections hidden">
+			<div id="wagerConfirmationButtons" class="teamPageSection wagerConfirmationSection hidden">
 				<img id="wagerSubmittingIcon" class="hidden" src="https://dejai.github.io/scripts/assets/img/loading1.gif" alt="Loading ...." style="width:20px;height:20px;">
 				<br/>
 				<button id="cancel_wager" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_red" onclick="onCancelWager()">
@@ -125,11 +124,9 @@
 			</div>
 		</div>
 
-
-
 		<!-- Answer things! -->
 		<div id="answer_input_section" class="hidden">
-			<!-- <h3 style="margin:20px 0px 0px 0px;"><label for="answer">Enter Answer:</label></h3> -->
+			<span id="answerErrorMessage" style="color:red;font-size:25px;"></span>
 			<input id="answer" style="width:90%;font-size:34px;" type="text" placeholder="Enter answer here..." name="answer" autocomplete="off">
 			<br/><br/>
 			<button id="submitAnswer" type="submit" value="Submit" class="dlf_button_round_corners dlf_button_large dlf_button_blue" onclick="onSubmitAnswer()">

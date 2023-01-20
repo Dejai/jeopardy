@@ -141,14 +141,6 @@
 
 	.answer_timestamp { color:red; font-size:smaller; }
 
-/* ANSWERS PAGE*/
-	.highlight_team_value { color:orange; }
-	#team_code { color:orange; }
-	#game_code { color:orange; }
-	.submitted_answer{ color:limegreen; }
-	#final_jeopardy_button { float:right; }
-	#final_jeopardy_block { margin-top:1%; margin-bottom:1%; }
-
 
 /* Selecting Game*/
 	.game_option_label { border:1px solid black; display:inline-block; width:20%; padding:1%; cursor:pointer; text-align:center; margin-right:2%;}

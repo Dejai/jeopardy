@@ -7,6 +7,7 @@
 	<base href="../../" target="_blank">
 	
     <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="teams/src/teams.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- jQuery library -->
@@ -18,41 +19,29 @@
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Team View</h1>
+		<h1 id="homemade_jeopardy_title">Homemade Jeopardy <br/> Create Team</h1>
 		<hr/>
 	</div>
 	<div id="main_section" class="centered">
-
 		<div id="notification_section"></div>
 
-		<div id="enter_game_code_section">
-			<h2>Step 1: Enter Game Code</h2>
-			<input id="player_game_code" type="text" name="player_game_code">
+		<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif"  style="width:5%;height:5%;" class="hidden2">
+		
+        <div id="createTeamSection" class="hidden">
+            <form action="" onsubmit="onCreateTeam(event)">
+                <h2>Enter Team Name</h2>
+                <input id="teamName" type="text" name="team_name" class="team_input_field">
+                <br> <br/>
+                <button id="createTeamButton" type="submit" value="Create" class="dlf_button_round_corners dlf_button_blue" >
+                    CREATE
+                </button>
+            </form>
 		</div>
-
-		<div id="enter_team_name_section" class="hidden">
-			<h2>Step 2: Enter Team Name</h2>
-			<input id="team_name" type="text" name="team_name">
-		</div>
-
-		<div id="buttonsSection">
-			<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif"  style="width:5%;height:5%;" class="hidden">
-			<br/>
-			<button id="lookupGameButton" type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onLookupGameCode()">
-				ENTER
-			</button>
-			<button id="createTeamButton" type="submit" value="Enter" class="hidden dlf_button_round_corners dlf_button_xlarge dlf_button_blue" onclick="onCreateTeam()">
-				CREATE
-			</button>
-		</div>
-
-
 	</div>
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
-	<script src="teams/src/teamsJoin.js"></script>
-
+	<script src="teams/src/teamsCreate.js"></script>
 </html>
