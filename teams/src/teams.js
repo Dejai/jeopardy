@@ -131,18 +131,19 @@
 		let teamID = JTeam.TeamID;
 		let answer = mydoc.getContent("#answer")?.value ?? "";
 
-		// let card_id = document.getElementById("team_card_id").value;
-		// let answer = document.getElementById("answer").value;
+		if(answer == "")
+		{
+			let errMessage = "Cannot submit a blank answer!";
+			mydoc.setContent("#answerErrorMessage", {"innerHTML":errMessage});
+			return;
+		}
+
+		// Clear any error message
+		mydoc.setContent("#answerErrorMessage", {"innerHTML":""});
 
 		// Temporarily disable button;
-		mydoc.setContent("#submitAnswer", {"disabled":true});
-		mydoc.addClass("#submitAnswer", "dlf_button_gray");
-
-		// Re-enable after 1.5 seconds;
-		setTimeout(()=>{
-			mydoc.setContent("#submitAnswer", {"disabled":false});
-			mydoc.removeClass("#submitAnswer", "dlf_button_gray");
-		},1500);
+		disableSubmitButton();
+		
 
 		// Set time of submission
 		let time = Helper.getDate("H:m:s K");
@@ -157,6 +158,12 @@
 			mydoc.showContent("#submittedAnswerSection");
 			mydoc.setContent("#submitted_answer_value", {"innerText":answer});
 			mydoc.setContent("#answer", {"value":""});
+
+			// Enable after it is submitted
+			enableSubmitButton();
+		}, ()=>{ 
+			// Enable even if something goes wrong;
+			enableSubmitButton() 
 		});	
 
 		// If wager is set (meaning final jeopardy)
@@ -165,13 +172,25 @@
 			mydoc.hideContent("#answer_input_section");
 			mydoc.hideContent("#submittButton");
 		}
-		
-		// document.getElementById("submittedAnswerSection").classList.remove("hidden");
-		// document.getElementById("submitted_answer_value").innerText = answer;
-		// document.getElementById("answer").value = "";
-		// document.getElementById("wager").value = "";
+	}
 
-		
+	// Disable Submit Button
+	function disableSubmitButton()
+	{
+		mydoc.setContent("#submitAnswer", {"disabled":true});
+		mydoc.addClass("#submitAnswer", "dlf_button_gray");
+	}
+
+	// Re-anable submit button
+	function enableSubmitButton()
+	{
+		mydoc.setContent("#submitAnswer", {"disabled":false});
+		mydoc.removeClass("#submitAnswer", "dlf_button_gray");
+
+				// Re-enable after 1.5 seconds;
+				setTimeout(()=>{
+					
+				},1500);
 	}
 
 	// Loading the Final Jeopardy (FJ) pieces
@@ -218,41 +237,57 @@
 
 /******* TEAM: Submitting wager POLLING FOR SCORES *******************************************/ 
 
+	// Compare value to wager
+	function isWagerWithinLimit(wager, limit)
+	{
+		let wagerNum = Number(wager);
+		wagerNum = isNaN(wagerNum) ? 9999 : wagerNum;
+		let limitNum = Number(limit);
+		limitNum = isNaN(limitNum) ? 0 : limitNum;
+
+		var results = wagerNum <= limitNum
+		console.log(`Comparing ${wagerNum} <= ${limitNum} = ${results}`)
+
+		return wagerNum <= limitNum
+	}
+
 	// First, confirm the wager 
 	function onConfirmWager()
 	{
 		let wager = mydoc.getContent("#wagerInput")?.value ?? "";
 		let wagerValue = (wager == "") ? "empty" : wager;
 
+		console.log("Wager value: " + wagerValue);
+
+		let origMessage = document.getElementById("wager_instruction")?.getAttribute("data-orig") ?? "";
+		mydoc.setContent("#wager_instruction", {"innerHTML": origMessage});
+
 		if( !isNaN(Number(wagerValue)))
 		{
 			// Get the max they can wager
 			let wagerLimit = getWagerLimit() ?? wagerValue;
 
-			if(wagerValue <= wagerLimit)
+			console.log("Wager limit: " + wagerLimit);
+			if( isWagerWithinLimit(wagerValue, wagerLimit) )
 			{
-				// Hide the wager input part 1
-				mydoc.hideContent("#wager_instruction");
-				mydoc.hideContent("#wagerInputSubsection");				
-
-				// Show the wager input part 2: confirmation
-				mydoc.showContent("#wagerConfirmationButtons");
-				mydoc.showContent("#wagerConfirmationMessages");
-				mydoc.showContent("#yourWager");
+				// Show the confirmation section
+				toggleWagerSections("confirm");
 
 				// Add the score to the preview
 				mydoc.setContent("#wager_input_preview", {"innerHTML":wagerValue});
 			}
 			else
 			{
-				errMessage = `WAGER TOO HIGH! <br/> It cannot be more than ${wagerLimit}`;
-				mydoc.setContent("#wager_instruction",{innerHTML: errMessage} );
+				// Show input sections;
+				toggleWagerSections("input");
+				var errMessage = `WAGER TOO HIGH! <br/> It cannot be more than ${wagerLimit}`;
+				mydoc.setContent("#wager_instruction",{"innerHTML": errMessage} );
 			}
 			
 		}
 		else
 		{
-			errMessage = `INCORRECT WAGER! Your wager must be a number between 0 & ${wagerLimit}`;
+			var errMessage = `INCORRECT WAGER! Your wager must be a number between 0 & ${wagerLimit}`;
 			mydoc.setContent("#wager_instruction",{innerHTML: errMessage} );
 		}
 	}
@@ -260,11 +295,7 @@
 	// Cancel the wager to go back to entering one
 	function onCancelWager()
 	{
-		// Hide the wager input part 2: confirmation
-		mydoc.hideContent("#wagerConfirmationButtons");
-
-		// Show the wager input part 1: entry
-		mydoc.showContent("#wagerInputSubsection");
+		toggleWagerSections("input");
 	}
 
 	// Submit the wager after confirmation
@@ -272,12 +303,11 @@
 	{
 		let teamID = JTeam?.TeamID ?? "";
 		let wager = mydoc.getContent("#wagerInput")?.value ?? "";
-		// let wager = document.getElementById("wager").value;
 
 		if( teamID != "" && !isNaN(Number(wager)))
 		{
-
 			mydoc.showContent("#wagerSubmittingIcon");
+
 			// Update the wager in Trello
 			MyTrello.update_card_custom_field_by_name(teamID, "Wager", wager.toString(), (data)=> {
 
@@ -315,9 +345,7 @@
 
 			if (JTeam.HasWager)
 			{
-				console.log("Wager");
 				mydoc.hideContent("#wagerSection");
-
 				mydoc.setContent("#submitted_wager_value", {"innerText":wager_value});
 				mydoc.showContent("#submitted_wager_section");
 				mydoc.showContent("#answer_input_section");
@@ -341,17 +369,28 @@
 
 		// Set default value for wager limit;
 		let wagerLimit = teamScoreValue;
+		console.log("Wager Limit within function: " + wagerLimit);
 
 		// Set the highest value based on highest score & team score;
 		if(!isNaN(Number(highestScoreValue)) && !isNaN(Number(teamScoreValue)) )
 		{
 			wagerLimit = (setting == "2") ? Number(highestScoreValue) : Number(teamScoreValue);
 		}
-		console.log("Wager Limit:");
-		console.log(wagerLimit);
 
 		return wagerLimit;
 		
+	}
+
+	// Toggle wager instructions
+	function toggleWagerSections(section)
+	{
+		// For the input subsections
+		var _input = (section == "input") ? mydoc.showContent(".wagerInputSubsections") 
+									: mydoc.hideContent(".wagerInputSubsections");
+
+		// For the confirmation subsections
+		var _input = (section == "confirm") ? mydoc.showContent(".wagerConfirmationSection") 
+		: mydoc.hideContent(".wagerConfirmationSection");
 	}
 
 /*************** POLLING FOR SCORES *******************************************/ 
@@ -389,9 +428,11 @@
 			});
 		}, Logger.errorMessage);
 
+		// Wait 4 seconds & then load the scores & show wager submit section
 		setTimeout(() =>{
+			mydoc.showContent("#wagerInputSubsection");
 			setLatestScores();
-		}, 2000);
+		}, 4000);
 	}
 
 	// Displayes the latest scores on the team page;

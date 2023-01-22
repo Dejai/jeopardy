@@ -8,6 +8,7 @@
 	<title>Homemade Jeopardy - Team</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+	<link rel="stylesheet" type="text/css" href="teams/src/teams.css">
 </head>
 <body>
 	<div id="homemade_jeopardy_title" class="centered">
@@ -15,14 +16,41 @@
 		<hr/>
 	</div>
 	<div class="centered dlf_center_block_medium">
-		<h2>What would you like to do?</h2>
-		<a href="teams/join/" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_blue dlf_href_notextdec">
-			JOIN A NEW GAME
-		</a>
 
-		<a href="teams/join/rejoin.html" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_orange dlf_href_notextdec">
-			RE-JOIN AN EXISTING GAME
-		</a>
+		<div id="notification_section"></div>
+		
+		<div id="enterGameCodeSection">
+			<form action="" onsubmit="onLookupGameCode(event)">
+				<h2>Enter Game Code</h2>
+				<input id="player_game_code" type="text" name="player_game_code"><br/>
+
+				<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif"  style="width:5%;height:5%;" class="hidden">
+				<br/>
+				<button id="lookupGameButton" type="submit" value="Enter" class="dlf_button_round_corners dlf_button_xlarge dlf_button_blue" >
+					ENTER
+				</button>
+			</form>
+		</div>
+
+		<!-- Only show rejoin option if non-expired -->
+		<div id="rejoinGame" class="hidden">
+			<h2>Existing Team Found!</h2>
+			<!-- <h4>Game Code = <span id="existingGameCode" class="highlight_team_value"></span> </h4> -->
+			<h3>Do you want to re-open team: <br> <span id="existingTeamName" class="highlight_team_value"></span> </h3>
+			<br/>
+			<button class="dlf_button_round_corners dlf_button_limegreen dlf_href_notextdec" onclick="onReopenTeam()">
+				YES - RE-OPEN TEAM
+			</button>
+			<br/><br/>
+			<button class="dlf_button_round_corners dlf_button_red dlf_href_notextdec" onclick="onEnterNewTeam()">
+				NO - ENTER NEW TEAM
+			</button>
+		</div>
 	</div>
 </body>
+	<!-- Common Code -->
+	<script src="https://dejai.github.io/scripts/js/common.js"></script>
+	<!-- My Trello code -->
+	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<script src="teams/src/teamsJoin.js"></script>
 </html>

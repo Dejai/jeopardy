@@ -23,22 +23,24 @@
 		<h1 id="homemade_jeopardy_title"><a href="/archives/" target="_self" class="homeLink">Homemade Jeopardy:</a> <br/> Archived Game</h1>
 		<hr/>
 	</div>
-	<div class="centered">
-		<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:100px;height:100px;">
-	</div>
-	<div id="archive_section" class="archive_section hidden">
+	
+	<div id="archive_section" class="archive_section">
 		<h2>
 			<span class="notify_orange">
 				<span id="archived_game_name"></span>
 				<span id="archived_game_code"></span>
 			</span><br/>
 			<span id="archived_game_date"></span><br/><br/>
-			<button id="toggleScores" onclick="onToggleScores()" class="dlf_button_round_corners dlf_button_medium dlf_button_red">
+			<button id="toggleScores" onclick="onToggleScores()" class="dlf_button_round_corners dlf_button_medium dlf_button_red hidden">
 				Show Score Before Wager
 			</button>
 		</h2>
 
-		<div class="archive_table_section" style="padding-bottom:5%">
+		<div class="centered">
+			<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:100px;height:100px;">
+		</div>
+
+		<div id="archiveGameTable" class="archive_table_section hidden" style="padding-bottom:5%" class="">
 			<table id="archive_table">
 				<colgroup>
 					<col style="width:5%;">
@@ -63,6 +65,7 @@
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>
 	<!-- My Trello code -->
 	<script src="https://dejai.github.io/scripts/js/trellowrapper.js"></script>
+	<script src="src/js/promises.js"></script>
 	<script src="archives/src/archiveGame.js"></script>
 
 </html>

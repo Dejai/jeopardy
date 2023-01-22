@@ -5,11 +5,11 @@
 	@media screen and (min-width: 768px ){ 
 		.archive_section { width:50%; }
 	}
-	.openGameButton{ background-color:inherit; color:inherit; border-color:black !important;}
 	#archive_table { width:100%; border-spacing:0px; }
 	#archive_table_body tr td { padding-top:3%; padding-bottom:3%; }
-	#archive_table_body tr:nth-child(even) { background-color:goldenrod; color:black; }
-	#archive_table_body tr:nth-child(odd) { background-color:blue; color:yellow; }
+	#archive_table thead { background-color:blue; color:yellow; font-weight:bolder;  }
+	#archive_table_body tr td { border-bottom:2px solid white; }
+	#archive_table_body tr .openGameButton { font-weight:bolder; color:goldenrod; background-color:inherit; }
 	#archive_table button {cursor: pointer; }
 	#archived_game_table { width:100%;}
 	#toggleScores { cursor:pointer; }

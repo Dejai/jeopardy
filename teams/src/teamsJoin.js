@@ -1,37 +1,7 @@
 
 /*********** INSTANCE VARIABLES *****************************************/ 
-
-	class JeopardyTeam
-	{
-		constructor(name, teamID, listID)
-		{
-			this.Name = name ?? "";
-			this.TeamID = teamID ?? "";
-			this.ListID = listID ?? "";
-			this.Score = 0;
-			this.HasWager = false;
-			// Keeping track of things for the game
-			this.Game = {};
-			this.Settings = {};
-		}
-
-	}
-
-	// Main instance for jeapoardy team;
-	var JTeam = undefined;
-
-
-	// var GAME_LIST_ID = "";
-	var TEAM = {}
-	// var TEAM_ID = undefined;
-	// var TEAM_NAME = "";
-	var TEAM_SCORES = {};
-	var HAS_WAGER = false;
-	var SETTINGS_MAPPING = {};
-
-
-
-
+	var GAME_CODE = "";
+	var EXISTING_TEAM = ";"
 	var touchEvent = "ontouchstart" in window ? "touchstart" : "click";
 
 /*********** PLAYER: GETTING STARTED *****************************************/ 
@@ -44,10 +14,13 @@
 /*********** PLAYER: JOINING A GAME *****************************************/ 
 
 	// Looks up the lists from the board and tries to find the one matching the given game code
-	function onLookupGameCode()
+	function onLookupGameCode(event)
 	{
+
+		event.preventDefault();
+
 		// Get the entered game code
-		var gameCode = mydoc.getContent("#player_game_code")?.value ?? "";
+		GAME_CODE = mydoc.getContent("#player_game_code")?.value?.toUpperCase() ?? "";
 
 		// Show loading
 		mydoc.showContent("#loading_gif");
@@ -62,22 +35,14 @@
 			let response = JSON.parse(data.responseText);
 			console.log(response);
 			let singleList = response.filter( (val)=>{
-				return (val.name.toUpperCase() == gameCode.toUpperCase());
+				return (val.name.toUpperCase() == GAME_CODE.toUpperCase());
 			});
 
 			// Handling if the list is found
 			if(singleList.length == 1)
 			{
 				console.log(singleList);
-				// Create a partial jeopardy team instance (to store the game ID);
-				JTeam = new JeopardyTeam(undefined, undefined, singleList[0]["id"]);
-
-				console.log(JTeam);
-
-				disableStepOne();
-				mydoc.setContent("#notification_section", {"innerHTML":""});
-				mydoc.showContent("#enter_team_name_section");
-				mydoc.showContent("#createTeamButton");
+				onShowJoinOptions();
 			}
 			else
 			{
@@ -87,128 +52,49 @@
 		});
 	}
 
-	// Disables the button and input once a game is found;
-	function disableStepOne(){
-
-		mydoc.hideContent("#lookupGameButton");
-		mydoc.setContent("#player_game_code", {"disabled":true});
-	}
-
-	// Create a team (in Trello);
-	function onCreateTeam()
+	// Next step for joining a team (name or reopen page)
+	function onShowJoinOptions()
 	{
-		// Get team name value;
-		var teamName = mydoc.getContent("#team_name")?.value ?? "";
+		var existingTeam = mydoc.getCookie(`HMJ-${GAME_CODE}-Name`) ?? "The Test Team";
 
-		// Show loading
-		mydoc.showContent("#loading_gif");
-
-		// Can't move forward without team name
-		if(teamName == '')
+		if(existingTeam != "")
 		{
-			let errMessage = `<p class="notify_red">Could not create a team. Please enter a team name.</p>`;
-			mydoc.setContent("#notification_section", {"innerHTML":errMessage });
-			mydoc.hideContent("#loading_gif");
+			// Hide game section
+			mydoc.hideContent("#lookupGameButton");
+			mydoc.hideContent("#enterGameCodeSection");
+			mydoc.setContent("#player_game_code", {"disabled":true});
 
-			// Ensure button is enabled
-			mydoc.setContent("#createTeamButton", {"disbled":false});
-			mydoc.removeClass("#createTeamButton","dlf_button_gray");
-
-			return;
+			// Set existing details
+			mydoc.setContent("#existingTeamName", {"innerHTML": existingTeam});
+			mydoc.setContent("#existingGameCode", {"innerHTML": GAME_CODE});
+			mydoc.showContent("#rejoinGame");
 		}
-		
-		// Disable the button and show loading gif;
-		mydoc.setContent("#createTeamButton", {"disbled":true});
-		mydoc.addClass("#createTeamButton","dlf_button_gray");
-
-		// Check for existing cards before creating a new card; Match on name
-		MyTrello.get_cards(JTeam.ListID, (cardData)=>{
-
-			console.log(cardData);
-
-			let cardResp = JSON.parse(cardData.responseText);
-			let existingCard = cardResp.filter( (val)=>{
-				return (val.name.toUpperCase() == teamName.toUpperCase())
-			});
-			
-			// If new team name - create it;
-			if(existingCard.length  == 0)
-			{
-				Logger.log("Creating new card");
-				MyTrello.create_card(JTeam.ListID, teamName, (data)=>{
-					response = JSON.parse(data.responseText);
-					team_id = response["id"];
-					loadTeamUrl(team_id);
-				});
-			}
-			else
-			{
-				let errMessage = `<p class="notify_red">
-									A team with this name arleady exists in this game.
-								  </p>
-								`;
-				mydoc.setContent("#notification_section",{"innerHTML":errMessage});
-				mydoc.hideContent("#loading_gif");
-
-				// Ensure button is enabled
-				mydoc.setContent("#createTeamButton", {"disbled":false});
-				mydoc.removeClass("#createTeamButton","dlf_button_gray");
-			}
-		}, Logger.errorMessage);
+		else
+		{
+			onEnterNewTeam();
+		}
 	}
 
-	// A team rejoining a game
-	function onRejoinGame()
+	// Re-join the existing team
+	function onReopenTeam()
 	{
-
-		let rejoinCode = mydoc.getContent("#player_game_and_team_code")?.value ?? "";
-
-		let code_input = document.getElementById("player_game_and_team_code");
-		let code = code_input.value;
-
-		// Get pieces of rejoin code;
-		let splits = rejoinCode.split("-");
-		let listName = splits[0]?.trim() ?? "";
-		let teamSuffix = splits[1]?.trim() ?? "";
-
-		let loading_html = `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:25%;height:25%;">`;
-		mydoc.setContent("#notification_section", {innerHTML:loading_html});
-
-		// Parse the code to re-login
-		MyTrello.get_lists("open", (listData)=>{
-
-			let listsResp = JSON.parse(listData.responseText);
-			let singleList = listsResp.filter( (val)=>{
-				return (val.name == listName);
-			});
-			let listID = singleList[0]?.id ?? undefined;
-
-			if(listID != undefined)
-			{
-				MyTrello.get_cards(listID, (cardData)=>{
-
-					let cardsResp = JSON.parse(cardData.responseText);
-					console.log(cardsResp);
-					let singleCard = cardsResp.filter( (val)=>{
-						return (val.id.toString().toUpperCase().endsWith(teamSuffix));
-					});
-					
-					let cardID = singleCard[0]?.id ?? undefined;
-					if(cardID != undefined)
-					{
-						loadTeamUrl(cardID);
-					}
-					else
-					{
-						MyNotification.notify("#notification_section", "<p>Could not find a team with that code</p>");					}
-				});
-			}
-		});
+		if(GAME_CODE != "")
+		{
+			var existingTeamID = mydoc.getCookie(`HMJ-${GAME_CODE}-ID`);
+			onNavigateNextPage(existingTeamID);
+		}
 	}
 
-	// Navigate to a team page
-	function loadTeamUrl(teamID)
+	// Go to create a new team
+	function onEnterNewTeam()
 	{
-		var loadUrl =`http://${location.host}/teams/team/?teamid=${teamID}`;
-		location.replace(loadUrl);
+		onNavigateNextPage();
+	}
+
+	// Navigate to the next possible page
+	function onNavigateNextPage(teamID="")
+	{
+		var path = (teamID != "") ? `team/?teamid=${teamID}` : `create/?gamecode=${GAME_CODE}`;
+		var nextURL = `http://${location.host}/teams/${path}`;
+		location.replace(nextURL);
 	}
