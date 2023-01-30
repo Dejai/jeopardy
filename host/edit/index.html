@@ -45,17 +45,20 @@
 		<div class="center_section_70">
 			<div id="loginFormSection" class="edit_section hidden">
 				<div id="loginForm">
-					<h2>Game Passphrase</h2>
-					<p>
-						<input id="loginPassPhrase" style="font-size:20px; width:40%;" type="text" placeholder="Enter game pass phrase ..">
-					</p>
-					<div class="actionButtonSection">
-						<button class="dlf_button dlf_button_round_corners dlf_button_blue" onclick="onValidatePassword()">
-							SUBMIT
-						</button>
-						<span id="loginLoading" style="margin-top:2%;"></span>
-					</div>
-					<p id="loginMessage" style="color:red;"></p>
+					<form onsubmit="onSubmitLoginForm(event)">
+						<h2>Game Passphrase</h2>
+						<p>
+							<input id="loginPassPhrase" style="font-size:20px; width:40%;" type="text" placeholder="Enter game pass phrase ..">
+						</p>
+						<div class="actionButtonSection">
+							<button type="submit" class="dlf_button dlf_button_round_corners dlf_button_blue">
+								SUBMIT
+							</button>
+							<span id="loginLoading" style="margin-top:2%;"></span>
+						</div>
+						<p id="loginMessage" style="color:red;"></p>
+					</form>
+				
 				</div>
 			</div>
 
@@ -180,9 +183,6 @@
 					</div>
 				</div>
 			</div>			
-		</div>
-		<div class="center_section_70 centered hidden">
-			<p id="loading_results_section"></p>
 		</div>
 	</div>
 	<div id="load_game_section" style="text-align:center;">

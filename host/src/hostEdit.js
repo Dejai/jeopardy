@@ -16,7 +16,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		MyTrello.SetBoardName("jeopardy");
 
 		// Loading up this page based on pathname;
-		onKeyboardKeyup();
 
 		// Make sure the page doesn't close once the game starts
 		window.addEventListener("beforeunload", onClosePage);
@@ -119,12 +118,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Validate the user entered password
-	function onValidatePassword()
+	function onSubmitLoginForm(event)
 	{
+		event.preventDefault();
 		// Loading gif
 		mydoc.setContent("#loginLoading", {innerHTML:LoadingGIF});
 		let gameID = JeopardyGame.getGameID();
 		onValidateAccess(gameID, true);
+
 	}
 
 	// Validate the access
@@ -146,9 +147,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 			// Show the menu while the files load
 			mydoc.showContent("#host_edit_tab_section");
-
-			// Get the game details (await)
-			await onGetGameDetailsAsync();
 
 			// Set the default section that is displayed
 			onSetDefaultSection();
@@ -208,28 +206,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		document.querySelector(tabSelector)?.click();
 	}
 
-	// Listener for keyboard event = keyup
-	function onKeyboardKeyup()
-	{
-		document.addEventListener("keyup", function(event)
-		{
-			switch(event.code)
-			{
-				case "Enter":
-					if(CurrentSection == ""){ onValidatePassword(); }
-					break;
-				case "Escape":
-					if( typeof(onCloseQuestion) == "function")
-					{
-						onCloseQuestion();
-					}
-					break;
-				default:
-					return;
-			}
-		});
-	}
-
 	// Get the TEST list ID
 	function onGetTestListID()
 	{
@@ -260,15 +236,12 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 				// Create a new Jeopardy instance
 				onCreateJeopardyGame(gameID, gameName, gameDesc);
+
+				// Set name (even before login)
+				onSetGameName();
 				
 				// Set the attachments mapping;
 				JeopardyGame.setAttachments(attachments);
-
-				// Set game name & ID on the page
-				onSetGameName();
-				onSetGameDescription();
-				onSetGameID();
-		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
 				onSetLoadingMessage(result);
@@ -277,29 +250,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		catch(error)
 		{
 			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
-		}
-	}
-
-	// Get the key details of an existing game
-	async function onGetGameDetailsAsync()
-	{
-		try
-		{
-			let attachments = Object.keys(JeopardyGame.Attachments);
-			for(var idx in attachments)
-			{
-				fileName = attachments[idx];
-				await onGetGameFileAsync(JeopardyGame.getGameID(),fileName)
-			}
-
-			return new Promise( resolve =>{
-				Logger.log("Done with getting the files");
-				resolve("Got all game details");
-			});
-		}
-		catch(error)
-		{
-			onSetLoadingMessage("onGetGameDetailsAsync: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -330,7 +280,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					// The file with images/audio
 					else if(fileName == "media.json")
 					{
-						// JeopardyGame.media.setMedia(response);
+						console.log(response);
 						JeopardyGame.setMedia(response);
 
 						// Set the media after loading
@@ -621,26 +571,84 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 /***** SWITCH/TOGGLE ACTIONS: Actions that involve a switch/toggle in stateof page */
 	
+	// Function to manage loading content of a tab
+	async function loadTabContent(targetSection)
+	{
+		console.log("Load tab content: " + targetSection);
+
+		// Check if tab is already loaded; Don't load again if already loaded
+		let sectionLoadedClass = "sectionLoaded"
+		let isLoaded = document.querySelector(`#${targetSection}`)?.classList?.contains(sectionLoadedClass);
+		if(isLoaded)
+		{
+			return new Promise( resolve =>{
+				resolve(true);
+			})
+		}
+
+		// Make sure class is loaded
+		mydoc.addClass(`#${targetSection}`, sectionLoadedClass);
+
+		// Switch on target section to load
+		switch(targetSection)
+		{
+			case "generalDetails":
+				return new Promise ( resolve =>{
+					onSetGameName();
+					onSetGameDescription();
+					onSetGameID();
+					resolve(true);
+				});	
+			case "questionsAnswers":
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "categories.json");
+			case "gameSettings":
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "config.json");
+			case "gameMedia":
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "media.json");
+			case "testAndPlay":
+				await loadTabContent("questionsAnswers");
+				await loadTabContent("gameSettings");
+				await loadTabContent("gameMedia");
+				return new Promise( resolve => {
+					onSetCanPlay();
+					resolve(true);
+				});
+			default:
+				return new Promise( resolve =>{ resolve("Default"); });
+		}
+	}
+	
 	// Toggle the tabs
-	function onSwitchTab(event)
+	async function onSwitchTab(event)
 	{
 		let target = event.target;
 
 		// Always clear any messages
 		onSetLoadingMessage("");
 
-		// Where are we trying to go?
+		// First, get details of target section
 		let targetSection = target.getAttribute("data-section-id");
+		let identifier = `#${targetSection}`;
+		let section = document.querySelector(identifier);
 
-		// Update the 'selected' class selectors
+		// Update the TAB selection first
 		mydoc.removeClass(".selected_tab", "selected_tab");
 		mydoc.addClass(".edit_section.selected_section", "hidden");
 		mydoc.removeClass(".edit_section.selected_section", "selected_section");
+		target.classList.add("selected_tab");
+
+		// Toggle the loader
+		onToggleLoading("show");
+
+		// Next, load the tab section 
+		await loadTabContent(targetSection);
+		
+		// Hide the loader
+		onToggleLoading("hide");
 
 		// Show the new section
-		target.classList.add("selected_tab");
-		mydoc.addClass(`#${targetSection}`, "selected_section");
-		mydoc.showContent(`#${targetSection}`);
+		mydoc.addClass(identifier, "selected_section");
+		mydoc.showContent(identifier);
 
 		// Conditional action for syncing media
 		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
