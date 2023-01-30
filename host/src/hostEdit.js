@@ -148,10 +148,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Show the menu while the files load
 			mydoc.showContent("#host_edit_tab_section");
 
-			// Get the game details (await)
-			// await onGetGameDetailsAsync();
-			onToggleLoading();
-
 			// Set the default section that is displayed
 			onSetDefaultSection();
 
@@ -243,12 +239,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				
 				// Set the attachments mapping;
 				JeopardyGame.setAttachments(attachments);
-
-				// Set game name & ID on the page
-				// onSetGameName();
-				// onSetGameDescription();
-				// onSetGameID();
-		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
 				onSetLoadingMessage(result);
@@ -257,29 +247,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		catch(error)
 		{
 			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
-		}
-	}
-
-	// Get the key details of an existing game
-	async function onGetGameDetailsAsync()
-	{
-		try
-		{
-			let attachments = Object.keys(JeopardyGame.Attachments);
-			for(var idx in attachments)
-			{
-				fileName = attachments[idx];
-				await onGetGameFileAsync(JeopardyGame.getGameID(),fileName)
-			}
-
-			return new Promise( resolve =>{
-				Logger.log("Done with getting the files");
-				resolve("Got all game details");
-			});
-		}
-		catch(error)
-		{
-			onSetLoadingMessage("onGetGameDetailsAsync: Something went wrong:<br/>" + error);
 		}
 	}
 
@@ -617,9 +584,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			case "questionsAnswers":
 				return onGetGameFileAsync(JeopardyGame.getGameID(), "categories.json");
 			case "gameSettings":
-				return onGetGameDetailsAsync(JeopardyGame.getGameID(), "config.json");
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "config.json");
 			case "gameMedia":
-				return onGetGameDetailsAsync(JeopardyGame.getGameID(), "medi.json");
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "media.json");
 			case "testAndPlay":
 				return new Promise( resolve => {
 					resolve(true);
@@ -628,6 +595,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				return new Promise( resolve =>{ resolve("Default"); });
 		}
 	}
+	
 	// Toggle the tabs
 	async function onSwitchTab(event)
 	{
