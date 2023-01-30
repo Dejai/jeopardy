@@ -208,7 +208,6 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 				// The file with images/audio
 				else if(fileName == "media.json")
 				{
-					// JeopardyGame.media.setMedia(response);
 					JeopardyGame.setMedia(response);
 				}
 
