@@ -236,6 +236,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 				// Create a new Jeopardy instance
 				onCreateJeopardyGame(gameID, gameName, gameDesc);
+
+				// Set name (even before login)
+				onSetGameName();
 				
 				// Set the attachments mapping;
 				JeopardyGame.setAttachments(attachments);
@@ -569,12 +572,27 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 /***** SWITCH/TOGGLE ACTIONS: Actions that involve a switch/toggle in stateof page */
 	
 	// Function to manage loading content of a tab
-	function loadTabContent(targetSection)
+	async function loadTabContent(targetSection)
 	{
+		console.log("Load tab content: " + targetSection);
+
+		// Check if tab is already loaded; Don't load again if already loaded
+		let sectionLoadedClass = "sectionLoaded"
+		let isLoaded = document.querySelector(`#${targetSection}`)?.classList?.contains(sectionLoadedClass);
+		if(isLoaded)
+		{
+			return new Promise( resolve =>{
+				resolve(true);
+			})
+		}
+
+		// Make sure class is loaded
+		mydoc.addClass(`#${targetSection}`, sectionLoadedClass);
+
+		// Switch on target section to load
 		switch(targetSection)
 		{
 			case "generalDetails":
-				console.log("Promising to return Game Details");
 				return new Promise ( resolve =>{
 					onSetGameName();
 					onSetGameDescription();
@@ -588,7 +606,11 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			case "gameMedia":
 				return onGetGameFileAsync(JeopardyGame.getGameID(), "media.json");
 			case "testAndPlay":
+				await loadTabContent("questionsAnswers");
+				await loadTabContent("gameSettings");
+				await loadTabContent("gameMedia");
 				return new Promise( resolve => {
+					onSetCanPlay();
 					resolve(true);
 				});
 			default:
@@ -618,16 +640,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Toggle the loader
 		onToggleLoading("show");
 
-		// Next, check if the section is already loaded
-		let loadedClass = "sectionLoaded";
-		let isLoaded = section.classList.contains(loadedClass);
-
-		if( !isLoaded )
-		{
-			await loadTabContent(targetSection);
-			// After loading content
-			mydoc.addClass(identifier, loadedClass);
-		}
+		// Next, load the tab section 
+		await loadTabContent(targetSection);
 		
 		// Hide the loader
 		onToggleLoading("hide");
