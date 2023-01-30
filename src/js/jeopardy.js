@@ -526,6 +526,9 @@
 		// Add a new media object (by list)
 		setMedia(jsonObj)
 		{
+			if(jsonObj == undefined)
+				return;
+			
 			var mediaObject = JeopardyHelper.getJSON(jsonObj);
 			mediaObject.forEach( (media) =>{
 				this.Media.push( new Media(media) );

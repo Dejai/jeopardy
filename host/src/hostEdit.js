@@ -280,7 +280,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					// The file with images/audio
 					else if(fileName == "media.json")
 					{
-						// JeopardyGame.media.setMedia(response);
+						console.log(response);
 						JeopardyGame.setMedia(response);
 
 						// Set the media after loading
