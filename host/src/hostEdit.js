@@ -16,7 +16,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		MyTrello.SetBoardName("jeopardy");
 
 		// Loading up this page based on pathname;
-		onKeyboardKeyup();
 
 		// Make sure the page doesn't close once the game starts
 		window.addEventListener("beforeunload", onClosePage);
@@ -119,12 +118,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Validate the user entered password
-	function onValidatePassword()
+	function onSubmitLoginForm(event)
 	{
+		event.preventDefault();
 		// Loading gif
 		mydoc.setContent("#loginLoading", {innerHTML:LoadingGIF});
 		let gameID = JeopardyGame.getGameID();
 		onValidateAccess(gameID, true);
+
 	}
 
 	// Validate the access
@@ -148,7 +149,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			mydoc.showContent("#host_edit_tab_section");
 
 			// Get the game details (await)
-			await onGetGameDetailsAsync();
+			// await onGetGameDetailsAsync();
+			onToggleLoading();
 
 			// Set the default section that is displayed
 			onSetDefaultSection();
@@ -208,28 +210,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		document.querySelector(tabSelector)?.click();
 	}
 
-	// Listener for keyboard event = keyup
-	function onKeyboardKeyup()
-	{
-		document.addEventListener("keyup", function(event)
-		{
-			switch(event.code)
-			{
-				case "Enter":
-					if(CurrentSection == ""){ onValidatePassword(); }
-					break;
-				case "Escape":
-					if( typeof(onCloseQuestion) == "function")
-					{
-						onCloseQuestion();
-					}
-					break;
-				default:
-					return;
-			}
-		});
-	}
-
 	// Get the TEST list ID
 	function onGetTestListID()
 	{
@@ -265,9 +245,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				JeopardyGame.setAttachments(attachments);
 
 				// Set game name & ID on the page
-				onSetGameName();
-				onSetGameDescription();
-				onSetGameID();
+				// onSetGameName();
+				// onSetGameDescription();
+				// onSetGameID();
 		
 			}, (data) => {
 				result = "Sorry, could not load game. Invalid ID!";
@@ -621,26 +601,72 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 /***** SWITCH/TOGGLE ACTIONS: Actions that involve a switch/toggle in stateof page */
 	
+	// Function to manage loading content of a tab
+	function loadTabContent(targetSection)
+	{
+		switch(targetSection)
+		{
+			case "generalDetails":
+				console.log("Promising to return Game Details");
+				return new Promise ( resolve =>{
+					onSetGameName();
+					onSetGameDescription();
+					onSetGameID();
+					resolve(true);
+				});	
+			case "questionsAnswers":
+				return onGetGameFileAsync(JeopardyGame.getGameID(), "categories.json");
+			case "gameSettings":
+				return onGetGameDetailsAsync(JeopardyGame.getGameID(), "config.json");
+			case "gameMedia":
+				return onGetGameDetailsAsync(JeopardyGame.getGameID(), "medi.json");
+			case "testAndPlay":
+				return new Promise( resolve => {
+					resolve(true);
+				});
+			default:
+				return new Promise( resolve =>{ resolve("Default"); });
+		}
+	}
 	// Toggle the tabs
-	function onSwitchTab(event)
+	async function onSwitchTab(event)
 	{
 		let target = event.target;
 
 		// Always clear any messages
 		onSetLoadingMessage("");
 
-		// Where are we trying to go?
+		// First, get details of target section
 		let targetSection = target.getAttribute("data-section-id");
+		let identifier = `#${targetSection}`;
+		let section = document.querySelector(identifier);
 
-		// Update the 'selected' class selectors
+		// Update the TAB selection first
 		mydoc.removeClass(".selected_tab", "selected_tab");
 		mydoc.addClass(".edit_section.selected_section", "hidden");
 		mydoc.removeClass(".edit_section.selected_section", "selected_section");
+		target.classList.add("selected_tab");
+
+		// Toggle the loader
+		onToggleLoading("show");
+
+		// Next, check if the section is already loaded
+		let loadedClass = "sectionLoaded";
+		let isLoaded = section.classList.contains(loadedClass);
+
+		if( !isLoaded )
+		{
+			await loadTabContent(targetSection);
+			// After loading content
+			mydoc.addClass(identifier, loadedClass);
+		}
+		
+		// Hide the loader
+		onToggleLoading("hide");
 
 		// Show the new section
-		target.classList.add("selected_tab");
-		mydoc.addClass(`#${targetSection}`, "selected_section");
-		mydoc.showContent(`#${targetSection}`);
+		mydoc.addClass(identifier, "selected_section");
+		mydoc.showContent(identifier);
 
 		// Conditional action for syncing media
 		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
