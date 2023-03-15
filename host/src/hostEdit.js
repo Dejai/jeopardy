@@ -280,7 +280,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					// The file with images/audio
 					else if(fileName == "media.json")
 					{
-						console.log(response);
 						JeopardyGame.setMedia(response);
 
 						// Set the media after loading
@@ -574,8 +573,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	// Function to manage loading content of a tab
 	async function loadTabContent(targetSection)
 	{
-		console.log("Load tab content: " + targetSection);
-
 		// Check if tab is already loaded; Don't load again if already loaded
 		let sectionLoadedClass = "sectionLoaded"
 		let isLoaded = document.querySelector(`#${targetSection}`)?.classList?.contains(sectionLoadedClass);
@@ -598,12 +595,17 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					onSetGameDescription();
 					onSetGameID();
 					resolve(true);
-				});	
+				});
 			case "questionsAnswers":
+				// Load the media first. 
+				await loadTabContent("gameMedia");
+				
+				// Then return the Categories
 				return onGetGameFileAsync(JeopardyGame.getGameID(), "categories.json");
 			case "gameSettings":
 				return onGetGameFileAsync(JeopardyGame.getGameID(), "config.json");
 			case "gameMedia":
+				onSetGameID();
 				return onGetGameFileAsync(JeopardyGame.getGameID(), "media.json");
 			case "testAndPlay":
 				await loadTabContent("questionsAnswers");
@@ -784,6 +786,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	function loadFormHTML(identifier, formValuesObject)
 	{
 
+		console.log("Load the form HTML");
+		
 		let formName = identifier.replace("#","");
 		let templateName = `host/templates/${formName}.html`;
 
