@@ -20,6 +20,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Make sure the page doesn't close once the game starts
 		window.addEventListener("beforeunload", onClosePage);
 
+		onKeyboardKeyup();
+
 		let gameID = mydoc.get_query_param("gameid");
 
 		if(gameID != undefined)
@@ -42,6 +44,22 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			location.assign("/host/load/");
 		}
 	});
+
+	// Listener for keyboard event = keyup
+	function onKeyboardKeyup()
+	{
+		document.addEventListener("keyup", function(event)
+		{
+			switch(event.code)
+			{
+				case "Escape":
+					onCloseQuestion();
+					break;
+				default:
+					return;
+			}
+		});
+	}
 
 	// Create or return an instance of the Jeopardy game
 	function onCreateJeopardyGame(gameID, gameName, gameDesc="")
@@ -124,6 +142,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Loading gif
 		mydoc.setContent("#loginLoading", {innerHTML:LoadingGIF});
 		let gameID = JeopardyGame.getGameID();
+		console.log(gameID);
 		onValidateAccess(gameID, true);
 
 	}
@@ -146,7 +165,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			onHideLoginForm();
 
 			// Show the menu while the files load
-			mydoc.showContent("#host_edit_tab_section");
+			mydoc.showContent("#sidebarNav .tab.section");
 
 			// Set the default section that is displayed
 			onSetDefaultSection();
@@ -163,9 +182,9 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	{
 		// If we get here, show the option to
 		onSetLoadingMessage("");
-		mydoc.showContent("#hostEditLoginSection");
+		mydoc.showContent("#sidebarNav .tab.login");
 		mydoc.showContent("#edit_game_section");
-		mydoc.showContent("#loginFormSection");
+		mydoc.showContent("#loginForm");
 
 		// Show error message if we get here -- means, password was not correct
 		if(badPassword)
@@ -179,8 +198,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	function onHideLoginForm()
 	{
 		// Hide login tab & form
-		mydoc.hideContent("#hostEditLoginSection");
-		mydoc.hideContent("#loginFormSection");
+		mydoc.hideContent("#sidebarNav .tab.login");
+		mydoc.hideContent("#loginForm");
 	}
 
 	// Set a default tab
@@ -196,7 +215,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		}
 		else 
 		{
-			let firstSection = document.querySelector("#host_edit_tab_section .host_edit_tab");
+			// let firstSection = document.querySelector("#host_edit_tab_section .host_edit_tab");
+			let firstSection = document.querySelector("#sidebarNav .tab.section");
 			let firstSectionVal = firstSection?.getAttribute("data-section-id");
 			section = firstSectionVal;
 		}
@@ -435,8 +455,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Show the button as something is to be saved
 		if(SectionsToBeSaved.length > 0)
 		{
-			mydoc.removeClass("#saveButton", "dlf_button_gray");
-			mydoc.addClass("#saveButton", "dlf_button_limegreen");
+			mydoc.showContent("#saveButton");
 		}
 	}
 
@@ -449,7 +468,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		{
 			mydoc.setContent("#saveButton", {"innerHTML":"SAVING ... "});
 			mydoc.removeClass("#saveButton", "dlf_button_limegreen");
-			mydoc.addClass("#saveButton", "dlf_button_blue");
+			mydoc.addClass("#saveButton", "dlf_button_gray");
 
 			while(SectionsToBeSaved.length > 0)
 			{
@@ -459,15 +478,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 			// Reset  button;
 			setTimeout(()=>{
-				mydoc.setContent("#saveButton", {"innerHTML":"DONE"});
-				mydoc.removeClass("#saveButton", "dlf_button_blue");
+				mydoc.removeClass("#saveButton", "dlf_button_gray");
 				mydoc.addClass("#saveButton", "dlf_button_limegreen");
+				mydoc.setContent("#saveButton", {"innerHTML":"SAVED"});
 
 				// Final phase
 				setTimeout(()=>{
-					mydoc.setContent("#saveButton", {"innerHTML":"SAVE"});
-					mydoc.removeClass("#saveButton", "dlf_button_limegreen");
-					mydoc.addClass("#saveButton", "dlf_button_gray");
+					mydoc.setContent("#saveButton", {"innerHTML":"SAVE CHANGES"});
+					mydoc.hideContent("#saveButton");
 				}, 1500);
 
 			}, 1500);
