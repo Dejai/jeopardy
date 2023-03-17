@@ -1,10 +1,7 @@
 <tr>
-    <th>
-        <h3>{{Name}}</h3>
-        <p>&nbsp;</p>
-    </th>
     <td>
-        <select id="{{Key}}" data-jpd-rule-name="{{Name}}" class="ruleOption input_mash" onChange="onRuleOptionChange(event); onChangeInSection();">
+        <h3 style="margin:0px;">{{Name}}</h3>
+        <select id="{{Key}}" data-jpd-rule-name="{{Name}}" class="ruleOption input_mash" style="width:40%;margin-left:1%;" onChange="onRuleOptionChange(event); onChangeInSection();">
             {{FormattedOptions}}
         </select>
         <div class="rule_details_div">

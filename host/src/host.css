@@ -1,12 +1,18 @@
 /* General */
+
+    html { height:100%; }
+    body { height:99%; }
+    input { background-color: ghostwhite;}
+    textarea { background-color: ghostwhite; }
+    button {padding:0.5%; }
+
     .hostHomeLink { text-decoration: none; color:inherit;}
     .actionButtonSection { display:flex; align-items: center;}
 
-    .categoryQuestionsTable { width:100%;text-align:left; border-collapse: collapse !important;}
-    .questionRow td { padding: 2%; }
+    .categoryQuestionsTable { width:90%;text-align:left; border-collapse: collapse !important;}
+    .questionRow td { padding: 2% 0%; }
     .questionRow:hover { background-color: lightblue; color:black;}
     .questionRow:hover .fa-picture-o { color:black; }
-    /* .questionRow td:hover { background-color: lightblue; } */
 
 /* LOAD: */
     .gameItem { float:left; width: 25%; border:2px solid gray; padding:1%; height:150px; overflow-y:scroll; margin:3%; }
@@ -25,6 +31,17 @@
     .createFieldSection{ margin-top:5%;}
     #newGameSection h2 {margin:0px; }
     #newGameSection p  {margin:3px; }
+
+
+/* EDIT: General */
+    .container { display:table; height:100%; width:100%; }
+    .container .sidebar { width:30px; min-width:30px; display:table-cell; vertical-align: top; border-right:2px solid white; height:100%; }
+    .container .main { vertical-align: top; padding-left:1%; width:100%; }
+    .sidebar .tab { font-size:120%; text-align:center; width:100%; cursor:pointer; margin-bottom:5%;}
+    .sidebar .tab.section { padding-top:3%; padding-bottom:3%; }
+    .sidebar .tab.section.selected { background-color:blue; color:white; }		
+    .sidebar .tab.section.selected_tab { background-color:blue; color:white; }		
+    .container .main .edit_section { padding-left:1%; text-align:left; }
 
 /* EDIT: Tab for Questions/Answers */
 
@@ -46,6 +63,9 @@
     /* For questions that use an audio file */
     .HasURLNo { display:none !important; }
     .HasURLYes { color:blue; }
+
+/* Settings */ 
+	#settings_table .rule_details_div { padding-left:2%; }
 
 /* MEDIA */
     /* .mediaItem{ border: 2px dashed lightgray; padding:2%; float:left; text-align:center; margin-right:5%; margin-bottom:5%; } */

@@ -11,128 +11,131 @@
 
     <link rel="stylesheet" type="text/css" href="src/css/game.css">
     <link rel="stylesheet" type="text/css" href="board/src/board.css">
+	<link rel="stylesheet" type="text/css" href="src/css/game.css">
     <link rel="stylesheet" type="text/css" href="host/src/host.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-	<link rel="stylesheet" type="text/css" href="src/css/game.css">
 </head>
 <body>
-	<div style="border-bottom: 2px solid white;">
-		<div class="homeIconSection" style="border-right:2px solid white;width:16%;display: inline-block;margin:none;">
-			<h1 style="font-size:20px;">
-				<span><a href="/host/load/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a><br/></span>
-				<span id="edit_game_name"><br/></span>
-			</h1>
-		</div>
-		<div style="width: 75%; display:inline-block;">
-			<div id="hostEditLoginSection" class="hidden">
-				<h2>Login</h2>
-			</div>
-			<div id="host_edit_tab_section" class="hidden" style="font-size:14px;margin:none;">
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="generalDetails">General <br/> Details</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/<br>Answers</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/<br/>Rules</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</h2>
-				<h2 class="host_edit_tab" onclick="onSwitchTab(event)" data-section-id="testAndPlay">Test/Play<br/> Game</h2>
-				<h2 id="saveButton" class="host_edit_tab dlf_button_round_corners dlf_button_gray" onclick="onSaveGame()">SAVE</h2>
-			</div>
-		</div>
+	<div style="border-bottom: 2px solid white;text-align:left; margin:0px;">
+		<h1 style="font-size:22px;padding:0.5%;display:inline-block">
+			<span><a href="/host/load/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a></span> &nbsp;
+			<span id="edit_game_name">Name of Game</span>
+		</h1>
+		<button id="saveButton" class="host_edit_tab3 dlf_button_round_corners dlf_button_limegreen hidden" style="margin-left:3%;" onclick="onSaveGame()">SAVE CHANGES</button>
 	</div>
-	<div id="edit_game_section" style="margin-top:3%;">
-		<div class="dlf_centered_block_medium centered">
-			<span id="generalNotificationBar"></span>
+
+	<div class="container">
+		<div id="sidebarNav" class="sidebar">
+			<p class="tab login" data-section-id="loginForm" style="color:black;">LOGIN</p>
+			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="generalDetails">General Details</p>
+			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/Rules</p>
+			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="testAndPlay">Test/Play Game</p>
+			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/Answers</p>
+			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</p>
 		</div>
-		<div class="center_section_70">
-			<div id="loginFormSection" class="edit_section hidden">
-				<div id="loginForm">
-					<form onsubmit="onSubmitLoginForm(event)">
-						<h2>Game Passphrase</h2>
-						<p>
-							<input id="loginPassPhrase" style="font-size:20px; width:40%;" type="text" placeholder="Enter game pass phrase ..">
-						</p>
-						<div class="actionButtonSection">
-							<button type="submit" class="dlf_button dlf_button_round_corners dlf_button_blue">
-								SUBMIT
-							</button>
-							<span id="loginLoading" style="margin-top:2%;"></span>
-						</div>
-						<p id="loginMessage" style="color:red;"></p>
-					</form>
-				
-				</div>
+		<div class="main">
+			
+			<!-- Login Form -->
+			<div id="loginForm" class="hidden" >
+				<form onsubmit="onSubmitLoginForm(event)" style="width:20%">
+					<h2>Game Passphrase</h2>
+					<p>
+						<input id="loginPassPhrase" style="font-size:20px; width:100%;" type="text" placeholder="Enter game pass phrase ..">
+					</p>
+					<div class="actionButtonSection2">
+						<button type="submit" class="dlf_button dlf_button_round_corners dlf_button_blue">
+							SUBMIT
+						</button>
+						<span id="loginLoading" style="margin-top:2%;"></span>
+					</div>
+					<p id="loginMessage" style="color:red;"></p>
+				</form>
 			</div>
 
-			<div id="generalDetails" class="edit_section hidden" style="text-align:left;">
+			<!-- General Details -->
+			<div id="generalDetails" class="edit_section hidden">
 				<div>
-					<h3>Game Name</h3>
-					<div style="margin-left:5%;">
-						<p>This is the name of your game.</p>
+					<h3>Name your Game</h3>
+					<div style="margin-left:3%;">
 						<input id="game_name_value" type="text" name="game_name_value" class="edit_game_value" onchange="onChangeInSection()">
 					</div>
 				</div>
 				<div>
-					<h3>Game Description</h3>
-					<div style="margin-left:5%;">
-						<p>A brief description about your game</p>
+					<h3>Description of your Game</h3>
+					<div style="margin-left:3%;">
 						<textarea name="gameDescription" id="gameDescription" cols="20" rows="2" placeholder="Enter description" class="edit_game_value" onchange="onChangeInSection()"></textarea>
 					</div>
 				</div>
 				<div>
-					<h3>Pass Phrase</h3>
-					<div style="margin-left:5%;">
-						<p>This pass phrase is used to access this edit page.</p>
+					<h3>Pass Phrase for Game</h3>
+					<div style="margin-left:3%;">
 						<input id="game_pass_phrase" type="text" name="game_password" class="edit_game_value" placeholder="Enter password" onchange="onChangeInSection()">
 					</div>
 				</div>
 			</div>
 
+			<!-- Questions & Answers -->
 			<div id="questionsAnswers" class="edit_section hidden">
-				<p>Enter the categories & questions for your game.</p>
+				<div class="addCategoriesSection2" style="text-align:left;padding:1%">
+					<button class="dlf_button dlf_button_blue dlf_button_round_corners" onclick="onAddCategory(event)">Add Game Category</button>
+					<button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy Category</button>
+				</div>
 
 				<div id="listOfCategories"></div>
-
-				<div class="addCategoriesSection" style="margin-top:5%; text-align:left; border-top:2px solid white; padding:2%;">
-					<button class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onAddCategory(event)">Add Category</button>
-					<button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy!</button>
-				</div>
+				
 				<div id="questionForm" class="hidden"></div>
 				<div id="categoryForm" class="hidden"></div>
 			</div>
 
-			<div id="gameSettings" class="centered edit_section hidden">
-				<p class="section_description" style="margin:0px;">
-					Configure the settings that you want to use for your game.
-				</p>
+			<!-- Game Settings -->
+			<div id="gameSettings" class="edit_section hidden">
+				<h3>
+					Configure the settings/rules that you want to use for your game.
+				</h3>
 				<table id="settings_table" class="edit_game_section_table" style="width:100%;">
 					<colgroup>
-						<col style="width:20%; text-align:left;"/>
 						<col style="width:65%; text-align:left;"/>
 					</colgroup>
 					<tbody id="settings_table_body"></tbody>
 				</table>
+				
 			</div>
 
+			<!-- Game Media -->
 			<div id="gameMedia" class="centered edit_section hidden">
 
-				<p class="section_description centered">
-					OPTIONAL: Upload any images or audio you want to use in your game.
-				</p>
-				<div class="centered">
-					<h3>
-						<a id="gameFormURL" class="hyperlink" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
-							Upload Game Media Here
-						</a>
-					</h3>
-					<p>If asked for a <strong>Game ID</strong>, use this value: </p>
-					<p><span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span> </p>
+				<h3 class="section_description2">
+					Upload Images/Audio For the Game (optional)
+				</h3>
+				<div style="padding-left:1%;">
+					<table style="width:50%;">
+						<tr>
+							<td>
+								<a id="gameFormURL" class="dlf_button dlf_button_blue dlf_button_round_corners dlf_href_notextdec" style="padding:2%; font-size:20px;" href="https://docs.google.com/forms/d/e/1FAIpQLSd3HQnDkJDrZXULSnbMRDepwcxztb1uXKHePLnc75Bj3CKQ3A/viewform?usp=sf_link" target="_blank">
+									Upload Game Media
+								</a>
+							</td>
+							<td>
+								<p style="padding-left:2%;">
+									If asked for a <strong>Game ID</strong>, use this value: <br/> <br/>
+									<span id="read_only_game_id" style="padding:1%; background-color:gray;color:white;"></span> 
+								</p>
+							</td>
+						</tr>
+					</table>
+					<br/>
+					
 				</div>
-				<hr/>
+				<br/>
 				<h3>Current Game Media: &nbsp; <span id="syncNotifier"></span></h3>
+				<hr/>
 				<div id="game_media">
 					<p>N/A</p>
 				</div>
 			</div>
 
+			<!-- Test & Play -->
 			<div id="testAndPlay" class="edit_section hidden">
 				<div class="center_section_702">
 					<h2>Test the Game</h2>
@@ -182,19 +185,21 @@
 						<p id="hostGameValidation" class="gameValidationMessage" style="color:red;"></p>
 					</div>
 				</div>
-			</div>			
+			</div>	
+
+			<!-- LOADING GIF -->
+			<div id="load_game_section" style="text-align:center;" class="hidden">
+				<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" class="">
+				<div id="loading_results_section"></div>
+			</div>
 		</div>
-	</div>
-	<div id="load_game_section" style="text-align:center;">
-		<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" class="">
-		<div id="loading_results_section"></div>
 	</div>
 
 	<!-- The magic question/answer section that displays -->
 	<div id="question_view" class="hidden">
 		<div id="show_question_section"></div>
 	</div>
-
+		
 </body>
 	<!-- Common Code -->
 	<script src="https://dejai.github.io/scripts/js/common.js"></script>

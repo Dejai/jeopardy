@@ -652,7 +652,7 @@
 			this.IsFinalJeopardy = false;
 			this.IsTestRun = false;
 			this.IsOver = false;
-			this.IsRulesShown = false; 
+			this.FirstTeamsSynced = false;
 		}
 
 		// Add the list ID

@@ -97,6 +97,40 @@ const Promises = {
         });
     },
 
+    // Get Rule for Board view
+    GetRuleForBoard: (ruleNumber, ruleObj, savedConfig) => {
+
+        return new Promise ( resolve => {
+            // The rule object that gets displayed on the page;
+            let newRuleObj = {"Number": ruleNumber, "Rule": "", "SubRules":"" }
+
+            // Set the current rule based on saved option
+            ruleObj.Options?.forEach((option)=>{
+                if(option.id == savedConfig.option)
+                {
+                    let theValue = savedConfig?.value ?? "";
+                    newRuleObj["Rule"] = option['rule'].replace("${VALUE}",theValue);
+                    
+                    // Set any subrules;
+                    if(option["subRules"]?.length > 0)
+                    {
+                        let subRulesHTML = ""
+                        option["subRules"].forEach( (subRule)=>{
+                            subRulesHTML += `<span class="subRule">${subRule}</span><br/>`;
+                        });
+                        newRuleObj["SubRules"] = subRulesHTML;
+                    }
+                }
+            });
+
+            // Set the template for the rules
+            MyTemplates.getTemplate("board/templates/ruleItem.html",newRuleObj,(template)=>{
+                resolve(template);
+            });
+        });
+
+    },
+
     // Get the archive team row
     GetArchiveGameRow: (team) => {
 

@@ -114,7 +114,7 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                 // Get the game details;
                 onGetGameDetails();
 
-                // Add teh common media
+                // Add the common media
                 onSetCommonMedia();
 		
 			}, (data) => {
@@ -157,13 +157,9 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     // Only set the code after we get a list 
                     mydoc.setContent("#game_code", {"innerHTML":JeopardyGame.Game.getCode()});
 					mydoc.showContent("#game_code_header");
-
-                    // Only show the start button after we get a list
-                    onShowStartButton();
                 }
             });
         }
-        
     }
 
 	// Get the key details of an existing game
@@ -239,55 +235,29 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
     }
 
 	// Set the game Config/Rules
-	function onSetGameRules()
+	async function onSetGameRules()
 	{
 		var rulesHTML = [];
 
 		onToggleLoading("show");
 
-        // Format the rules for hte board
-		Rules.forEach( (ruleObj, idx, array)=>{
+		// Rules HTML
+		var rulesHTML = "";
+
+		// Loop through the rules
+		for(var idx in Rules)
+		{
+			let ruleObj = Rules[idx];
 			let ruleKey = JeopardyHelper.getKeyName(ruleObj.Name);
-			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey)
-           
-			// The rule object that gets displayed on the page;
-            let newRuleObj = {"Rule": "", "SubRules":"" }
+			let savedConfig = JeopardyGame.Config.getConfiguration(ruleKey); 
 
-			// Set the current rule based on saved option
-			ruleObj.Options?.forEach((option)=>{
-                if(option.id == savedConfig.option)
-                {
-					let theValue = savedConfig?.value ?? "";
-                    newRuleObj["Rule"] = option['rule'].replace("${VALUE}",theValue);
-                    
-                    // Set any subrules;
-                    if(option["subRules"]?.length > 0)
-                    {
-                        let subRulesHTML = ""
-                        option["subRules"].forEach( (subRule)=>{
-                            subRulesHTML += `<span class="subRule">${subRule}</span>`;
-                        });
-                        newRuleObj["SubRules"] = subRulesHTML;
-                    }
-                }
-			});
+			let ruleNumber = Number(idx)+1
+			let singelRuleHTML = await Promises.GetRuleForBoard(ruleNumber, ruleObj, savedConfig);
+			rulesHTML += singelRuleHTML;
+		}
 
-            // Set the template for the rules
-            MyTemplates.getTemplate("board/templates/ruleItem.html",newRuleObj,(template)=>{
-				rulesHTML.push(template);
-
-				if(rulesHTML.length == array.length)
-				{
-					setTimeout(()=>{
-						var formattedHTML = rulesHTML.join("");
-						mydoc.setContent("#rules_list", {"innerHTML":formattedHTML});
-						mydoc.showContent("#rules_section");
-						JeopardyGame.Game.IsRulesShown = true;
-						onSetLoadingMessage("") // Clear the loading message
-					}, 1500);
-				}
-			});	
-		});
+		// Set the rules
+		mydoc.setContent("#rules_list", {"innerHTML":rulesHTML});
 	}
 
 	// Set the game questions
@@ -404,23 +374,21 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		});
 	}
 
-    // Show the start button
-    function onShowStartButton()
-    {
-		// Set interval to show the button (after the rules)
-		let canShowStartButton = setInterval(()=>{
-			if(JeopardyGame.Game.IsRulesShown)
-			{
-				mydoc.showContent("#startGameSection");
-				clearInterval(canShowStartButton);
-			}
-		}, 500);
-    }
+
+	// View the rules
+	function onViewRules()
+	{
+		// Hide Content
+		mydoc.hideContent("#joinGameSection");
+		
+		// Show Content
+		mydoc.showContent("#rules_section");	
+	}
 
     // Reveal the game board & set initial team
 	function onStartGame()
 	{
-		// Sync teams before starting game; 
+		// Sync teams again before starting game; 
 		onSyncTeams();
 
 		// Hide Content
@@ -474,6 +442,8 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
 		// Get the highest score at the time
 		let highestScore = getHighestScore();
 
+		
+
 		MyTrello.get_cards(JeopardyGame.Game.getListID(), function(data){
 
             response = JSON.parse(data.responseText);
@@ -524,6 +494,12 @@ var SectionsToBeSaved = []; // Keep track of sections that should be saved
                     }
                 }
 			});
+
+			// Show start button if it's the first sync
+			if(!JeopardyGame.Game.FirstTeamsSynced)
+			{
+				mydoc.showContent("#viewRulesButton");
+			}
 
 			// Set the first player if it is not already set
 			if(!JeopardyGame.Game.PlayerSelected && !JeopardyGame.Game.IsFinalJeopardy)

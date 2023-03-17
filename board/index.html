@@ -18,7 +18,7 @@
 	<div id="homemade_jeopardy_title" class="centered"></div>
 
 	<!-- The loading section -->
-	<div id="load_game_section" class="centered">
+	<div id="load_game_section" class="centered hidden">
 		<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:35px;height:35px;" class="hidden">
 		<div id="loading_results_section"></div>
 	</div>
@@ -26,18 +26,32 @@
 	<!-- The rules section -->
 	<div id="rules_section" style="width:60%;margin:auto;" class="centered hidden">
 		<h2>The Rules:</h2>
-		<div style="padding-left:17%;">
-			<ol id="rules_list">
+		<div id="rules_list" style="text-align:center; margin:auto;">
+			<!-- <ol id="rules_list">
 				<img id="loading_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:35px;height:35px;" class="hidden">
-			</ol>
+			</ol> -->
 		</div>
+		<button id="startGameButton" class="dlf_button dlf_button_limegreen dlf_button_round_corners" style="padding:1%;" onclick="onStartGame()"">
+			START GAME
+		</button>
+	</div>
+
+	<!-- The subsection for joining the game -->
+	<div id="joinGameSection" class="centered">
+		<h2 style="color:darkorange">Join The Game.</h2>
+		<p>Teams can use the Game Code above.</p>
+		<p>Click <strong><em>Sync Teams</em></strong> to make sure all teams have joined.</p>
+		<button id="viewRulesButton" class="dlf_button dlf_button_orange dlf_button_round_corners hidden" style="padding:1%;" onclick="onViewRules()"">
+			VIEW RULES
+		</button>
 	</div>
 
 	<!-- The subsection for the start game button -->
 	<div id="startGameSection" class="centered hidden">
-		<button id="startGameButton" class="dlf_button dlf_button_limegreen dlf_button_round_corners" onclick="onStartGame()"">
-			START GAME
-		</button>
+		<h2>Join The Game.</h2>
+		<p>Teams can use the Game Code above.</p>
+		<p>Click <strong><em>Sync Teams</em></strong> to make sure all teams have joined.</p>
+		
 	</div>
 
 
@@ -69,7 +83,7 @@
 			</h2>
 		</div>
 		<hr/>
-		<div id="teams_sync_section" class="hidden">
+		<div id="teams_sync_section" class="hidden2">
 			<div style="width:40%;">
 				<h3 style="display:inline-block;">
 					<span id="team_sync_message" class="fa fa-refresh teams_icons syncIcon" onclick="onSyncTeams()">&nbsp;Sync Teams</span>
@@ -79,7 +93,7 @@
 				</h3>
 			</div>
 		</div>
-		<table id="teams_table" class="hidden">
+		<table id="teams_table" class="hidden2">
 			<colgroup>
 				<col style="width:50%">
 			</colgroup>
