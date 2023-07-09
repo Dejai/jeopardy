@@ -11,7 +11,7 @@
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
-			this.Name = categoryObject.Name;
+			this.Name = categoryObject.Name.trim();
 			this.Order = categoryObject.Order;
 			this.FinalJeopardy = categoryObject.FinalJeopardy;
 			this.ValueCount = 100;

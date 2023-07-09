@@ -63,8 +63,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Load all the tabs
 			await onLoadAllTabs();
 
-			// Show the TEST vs. PLAY section
-			onShowTestOrPlay();
+			
 
 		} else {
 			// Navigate to load page if no game ID is present
@@ -215,6 +214,10 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Show the menu while the files load
 			mydoc.showContent(".showOnLogin");
 			mydoc.hideContent(".hideOnLogin");
+
+			// Show the TEST vs. PLAY section
+			onShowTestOrPlay();
+
 			return;
 		}
 		// Show the login form if not right
@@ -579,8 +582,10 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				var gameID = JeopardyGame.getGameID();
 				var attachmentID = JeopardyGame.getAttachmentID(fileName);
 				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
-				JeopardyGame.setCategories(response);
-				onSetGameQuestions();
+				if(response != undefined){
+					JeopardyGame.setCategories(response);
+					onSetGameQuestions();
+				}
 				onEnableTab(targetSection);
 				return new Promise( resolve => { resolve(true); } );
 
@@ -589,8 +594,10 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				var gameID = JeopardyGame.getGameID();
 				var attachmentID = JeopardyGame.getAttachmentID(fileName);
 				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
-				JeopardyGame.Config.createConfiguration(response);
-				onSetGameRules();
+				if(response != undefined){
+					JeopardyGame.Config.createConfiguration(response);
+					onSetGameRules();	
+				}
 				onEnableTab(targetSection);
 				return new Promise( resolve => { resolve(true); } );
 
@@ -600,8 +607,10 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				var gameID = JeopardyGame.getGameID();
 				var attachmentID = JeopardyGame.getAttachmentID(fileName);
 				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
-				JeopardyGame.setMedia(response);
-				onSetGameMedia();
+				if(response != undefined){
+					JeopardyGame.setMedia(response);
+					onSetGameMedia();
+				}
 				onEnableTab(targetSection);
 				return new Promise( resolve => { resolve(true); } );
 

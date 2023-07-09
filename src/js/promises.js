@@ -51,8 +51,13 @@ const Promises = {
     GetTrelloCardAttachment: (cardID, attachmentID, fileName) => {
         return new Promise( resolve => {
             MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+               try { 
                 var response = JSON.parse(data.responseText);
                 resolve(response);
+               } catch(err){ 
+                console.log(err);
+                resolve(undefined);
+               }
             });
         });
     },
