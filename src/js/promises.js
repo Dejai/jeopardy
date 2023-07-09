@@ -47,6 +47,16 @@ const Promises = {
         });
     },
 
+    // Get attachment from a card
+    GetTrelloCardAttachment: (cardID, attachmentID, fileName) => {
+        return new Promise( resolve => {
+            MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+                var response = JSON.parse(data.responseText);
+                resolve(response);
+            });
+        });
+    },
+
     // Get the Category HTML for Edit page
     GetCategoryEditHTML: (category) => {
 		return new Promise(resolve =>{

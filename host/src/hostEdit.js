@@ -1,13 +1,10 @@
 // The instance of this jeopardy game
 const JeopardyGame = new Jeopardy();
-const JeopardyGame2 = new Jeopardy();
-var GameCard = undefined; // Used to store the game card from Trello
 var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
 var TestListID = undefined;
 var WindowScroll = {"X":0, "Y":0} // Used for tracking going back to scroll position
 var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.io/scripts/assets/img/loading1.gif" style="width:10%;height:10%;">`
-
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
@@ -52,13 +49,23 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			console.log(JeopardyGame);
 
 			// Validate the access
-			onValidateAccess(gameID);
+			await onValidateAccess(gameID);
 
 			// Set the question popup
 			onSetQuestionPopup();
+			
+			// Set the default section that is displayed
+			onSetDefaultSection();
 
 			// Always get the test list ID
 			onGetTestListID();
+
+			// Load all the tabs
+			await onLoadAllTabs();
+
+			// Show the TEST vs. PLAY section
+			onShowTestOrPlay();
+
 		} else {
 			// Navigate to load page if no game ID is present
 			location.assign("/host/load/");
@@ -99,10 +106,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Show/hide the loading GIF
-	function onToggleLoading(state)
-	{
-		switch(state)
-		{
+	function onToggleLoading(state) {
+		switch(state) {
 			case "show":
 				mydoc.showContent("#loading_gif");		
 				break;
@@ -110,8 +115,14 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// in all else situation, just hie
 			default:
 				mydoc.hideContent("#loading_gif");		
-
 		}
+	}
+
+	// Load all tabs
+	async function onLoadAllTabs(){
+		await loadTabContent("gameSettings");
+		await loadTabContent("gameMedia");
+		await loadTabContent("questionsAnswers");
 	}
 
 	// Setting a message based on loading 
@@ -188,8 +199,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Validate the access
-	async function onValidateAccess(gameID, viaForm=false)
-	{
+	async function onValidateAccess(gameID, viaForm=false) {
 		// Check if it is a valid password (await)
 		let isValidPassword = await onValidPasswordAsync(gameID);
 		if(isValidPassword) {
@@ -205,13 +215,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			// Show the menu while the files load
 			mydoc.showContent(".showOnLogin");
 			mydoc.hideContent(".hideOnLogin");
-
-			// Set the default section that is displayed
-			onSetDefaultSection();
-
-			// Show the TEST vs. PLAY section
-			onShowTestOrPlay();
-
 			return;
 		}
 		// Show the login form if not right
@@ -243,28 +246,21 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		mydoc.hideContent("#loginForm");
 	}
 
+	// Get the first enabled tab from a list of given tabs
+	function getEnabledTabID(tabs) {
+		return Array.from(tabs)?.filter(x => !x.classList.contains("disabled"))?.[0]?.getAttribute("data-section-id") ?? "";
+	}
+
 	// Set a default tab
 	function onSetDefaultSection()
 	{
 		let sectionParam = mydoc.get_query_param("section");
-		let section = "";
+		var requestedTab    = getEnabledTabID( document.querySelectorAll(`[data-section-id="${sectionParam}"]`) );
+		var firstEnabledTab = getEnabledTabID( document.querySelectorAll(".tab.section") );
+		var tabToSet = (requestedTab != "") ? requestedTab : firstEnabledTab;
+		console.log("Tab to set : " + tabToSet);
 
-		// If provided use the section parameter
-		if(sectionParam != undefined)
-		{
-			section = `${sectionParam}`;
-		}
-		else 
-		{
-			// let firstSection = document.querySelector("#host_edit_tab_section .host_edit_tab");
-			let firstSection = document.querySelector("#sidebarNav .tab.section");
-			let firstSectionVal = firstSection?.getAttribute("data-section-id");
-			section = firstSectionVal;
-		}
-
-		// Set the tab selector & click it!
-		let tabSelector = `[data-section-id="${section}"]`;
-		document.querySelector(tabSelector)?.click();
+		document.querySelector(`[data-section-id="${tabToSet}"]`)?.click();
 	}
 
 	// Show/hide the TEST vs PLAY sections
@@ -288,95 +284,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 /****** MAIN GAME PARTS: Get list of content & core setup things ****************************/ 
-
-	// Get the game
-	function onGetGame(gameID)
-	{
-		try
-		{
-			// Query Trello for this card
-			MyTrello.get_single_card(gameID,(data) => {
-
-				// If we got the game (i.e. card) .. get the details
-				response = JSON.parse(data.responseText);
-
-				// Get game components
-				var gameID = response["id"];
-				var gameName = response["name"];
-				var gameDesc = response["desc"];
-				var attachments = response["attachments"];
-
-				// Create a new Jeopardy instance
-				onCreateJeopardyGame(gameID, gameName, gameDesc);
-
-				// Set name (even before login)
-				onSetGameName();
-				
-				// Set the attachments mapping;
-				JeopardyGame.setAttachments(attachments);
-			}, (data) => {
-				result = "Sorry, could not load game. Invalid ID!";
-				onSetLoadingMessage(result);
-			});
-		}
-		catch(error)
-		{
-			onSetLoadingMessage("onGetGame: Something went wrong:<br/>" + error);
-		}
-	}
-
-	// Get the attachment & do the corresponding callback
-	async function onGetGameFileAsync(cardID, fileName)
-	{
-		try 
-		{
-			return new Promise(resolve =>{
-				
-				// Get the attachment ID;
-				let attachmentID = JeopardyGame.getAttachmentID(fileName);
-
-				// Get the corresponding attachment
-				MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
-							
-					let response = myajax.GetJSON(data.responseText);
-
-					// The file with the game rules
-					if(fileName == "config.json")
-					{
-						JeopardyGame.Config.createConfiguration(response);
-						
-						// Set the game rules after the config is setup
-						resolve( onSetGameRules() );
-					}
-
-					// The file with images/audio
-					else if(fileName == "media.json")
-					{
-						JeopardyGame.setMedia(response);
-
-						// Set the media after loading
-						resolve( onSetGameMedia() );
-					}
-
-					// The file with the categries/questions/answers
-					else if(fileName = "categories.json")
-					{
-						JeopardyGame.setCategories(response);
-
-						// Set the game rules
-						resolve( onSetGameQuestions() );
-					}
-
-
-				}, (err) => {
-					console.error("Could not find config file");
-				});	
-			});
-		
-		} catch (error) {
-			
-		}
-	}
 
 	// Set the game name
 	function onSetGameName()
@@ -646,13 +553,11 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Check if tab is already loaded; Don't load again if already loaded
 		let sectionLoadedClass = "sectionLoaded"
 		let isLoaded = document.querySelector(`#${targetSection}`)?.classList?.contains(sectionLoadedClass);
-		if(isLoaded)
-		{
+		if(isLoaded) {
 			return new Promise( resolve =>{
 				resolve(true);
 			})
 		}
-
 		// Make sure class is loaded
 		mydoc.addClass(`#${targetSection}`, sectionLoadedClass);
 
@@ -666,17 +571,40 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					onSetGameID();
 					resolve(true);
 				});
+
 			case "questionsAnswers":
 				// Load the media first. 
 				await loadTabContent("gameMedia");
-				
-				// Then return the Categories
-				return onGetGameFileAsync(JeopardyGame.getGameID(), "categories.json");
+				var fileName = "categories.json";
+				var gameID = JeopardyGame.getGameID();
+				var attachmentID = JeopardyGame.getAttachmentID(fileName);
+				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
+				JeopardyGame.setCategories(response);
+				onSetGameQuestions();
+				onEnableTab(targetSection);
+				return new Promise( resolve => { resolve(true); } );
+
 			case "gameSettings":
-				return onGetGameFileAsync(JeopardyGame.getGameID(), "config.json");
+				var fileName = "config.json";
+				var gameID = JeopardyGame.getGameID();
+				var attachmentID = JeopardyGame.getAttachmentID(fileName);
+				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
+				JeopardyGame.Config.createConfiguration(response);
+				onSetGameRules();
+				onEnableTab(targetSection);
+				return new Promise( resolve => { resolve(true); } );
+
 			case "gameMedia":
 				onSetGameID();
-				return onGetGameFileAsync(JeopardyGame.getGameID(), "media.json");
+				var fileName = "media.json";
+				var gameID = JeopardyGame.getGameID();
+				var attachmentID = JeopardyGame.getAttachmentID(fileName);
+				var response = await Promises.GetTrelloCardAttachment(gameID, attachmentID, fileName);
+				JeopardyGame.setMedia(response);
+				onSetGameMedia();
+				onEnableTab(targetSection);
+				return new Promise( resolve => { resolve(true); } );
+
 			case "testAndPlay":
 				await loadTabContent("questionsAnswers");
 				await loadTabContent("gameSettings");
@@ -689,6 +617,11 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				return new Promise( resolve =>{ resolve("Default"); });
 		}
 	}
+
+	// Enable a tab
+	function onEnableTab(tabIdentifier) { 
+		document.querySelector(`[data-section-id="${tabIdentifier}"]`)?.classList.remove("disabled");	
+	}
 	
 	// Toggle the tabs
 	async function onSwitchTab(event)
@@ -700,6 +633,12 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 		// First, get details of target section
 		let targetSection = target.getAttribute("data-section-id");
+		let isDisabled = target?.classList.contains("disabled");
+		if(isDisabled){
+			onSetDefaultSection();
+			return;
+		}
+
 		let identifier = `#${targetSection}`;
 		let section = document.querySelector(identifier);
 

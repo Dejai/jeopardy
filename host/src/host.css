@@ -44,7 +44,9 @@
     .sidebar .tab.section { padding-top:3%; padding-bottom:3%; }
     .sidebar .tab.section.selected { background-color:blue; color:white; }		
     .sidebar .tab.section.selected_tab { background-color:blue; color:white; }		
+    .sidebar .tab.section.disabled { color:gray !important; }
     .container .main .edit_section { padding-left:1%; text-align:left; }
+
 
 /* EDIT: Tab for Questions/Answers */
 

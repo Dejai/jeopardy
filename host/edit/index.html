@@ -20,20 +20,20 @@
 	<div style="border-bottom: 2px solid white;text-align:left; margin:0px;">
 		<h1 style="font-size:22px;padding:0.5%;display:inline-block">
 			<span><a href="/host/load/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a></span> &nbsp;
-			<span id="edit_game_name">Name of Game</span>
+			<span id="edit_game_name"></span>
 		</h1>
 		<button id="saveButton" class="host_edit_tab3 dlf_button_round_corners dlf_button_limegreen hidden" style="margin-left:3%;" onclick="onSaveGame()">SAVE CHANGES</button>
 	</div>
 
 	<div class="container">
 		<div id="sidebarNav" class="sidebar">
-			<p class="tab section hidden hideOnLogin" data-section-id="loginForm">LOGIN</p>
 			<p class="tab section hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="generalDetails">General Details</p>
-			<p class="tab section hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/Rules</p>
-			<p class="tab section hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</p>
-			<p class="tab section hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/Answers</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/Rules</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/Answers</p>
 			<p class="tab section hidden hideOnLogin showOnUnpublished showOnPublished" onclick="onSwitchTab(event)" data-section-id="testAndPublish">Test Game</p>
 			<p class="tab section hidden hideOnLogin showOnPublished" onclick="onSwitchTab(event)" data-section-id="playGame">Play Game</p>
+			<p class="tab section hidden hideOnLogin" data-section-id="loginForm">LOGIN</p>
 		</div>
 		<div class="main">
 			
@@ -150,14 +150,14 @@
 
 					<hr style="margin-bottom:2%; margin-top:2%;"/>
 					
-					<div class="hideOnPublished">
+					<div class="hidden showOnUnpublished hideOnPublished">
 						<p>Once you feel like this game is ready to be played, you can publish it. This makes it actually playable</p>
 						<button id="publishGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPublishGame()">
 							PUBLISH GAME
 						</button>
 						<p id="publishGameValidation" class="gameValidationMessage" style="color:red;"></p>
 					</div>
-					<div class="showOnPublished hideOnUnpublished">
+					<div class="hidden showOnPublished hideOnUnpublished">
 						<p>This makes it so that people can't play a real game with this one any more</p>
 						<button id="publishGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_red" onclick="onUnPublishGame()">
 							UNPUBLISH GAME
