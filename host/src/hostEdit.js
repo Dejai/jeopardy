@@ -1,5 +1,6 @@
 // The instance of this jeopardy game
-var JeopardyGame = undefined;
+const JeopardyGame = new Jeopardy();
+const JeopardyGame2 = new Jeopardy();
 var GameCard = undefined; // Used to store the game card from Trello
 var CurrentSection = ""; 
 var SectionsToBeSaved = []; // Keep track of sections that should be saved
@@ -10,24 +11,45 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 /****************  HOST: ON PAGE LOAD ****************************/ 
 	
-	mydoc.ready(function()
-	{
+	mydoc.ready( async () => {
 		// Set board name
 		MyTrello.SetBoardName("jeopardy");
 
-		// Loading up this page based on pathname;
-
 		// Make sure the page doesn't close once the game starts
 		window.addEventListener("beforeunload", onClosePage);
-
 		onKeyboardKeyup();
 
 		let gameID = mydoc.get_query_param("gameid");
+		if(gameID != undefined) {
 
-		if(gameID != undefined)
-		{
-			// Get the game & load the basic things
-			onGetGame(gameID);
+			let labels = await Promises.GetTrelloLabels();
+			JeopardyGame.setTrelloLabels(labels);
+
+			let trelloCard = await Promises.GetTrelloCard(gameID);
+			if(trelloCard == undefined){
+				onSetLoadingMessage("Something went wrong:<br/>Could not load this game.");
+				return;
+			}
+
+			// Get game pieces
+			var gameName = trelloCard?.["name"] ?? "";
+			var gameDesc = trelloCard?.["desc"] ?? "";
+			var attachments = trelloCard?.["attachments"] ?? "";
+			var gameLabels = trelloCard?.["idLabels"] ?? [];
+
+			// Set the pieces
+			JeopardyGame.setGameID(gameID);
+			JeopardyGame.setGameName(gameName);
+			JeopardyGame.setGameDesc(gameDesc);
+			JeopardyGame.setGameLabels(gameLabels);
+
+			// Set the game name (even before validation);
+			onSetGameName();
+
+			// Set up teh attachments
+			JeopardyGame.setAttachments(attachments);
+
+			console.log(JeopardyGame);
 
 			// Validate the access
 			onValidateAccess(gameID);
@@ -37,9 +59,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 			// Always get the test list ID
 			onGetTestListID();
-		}
-		else
-		{
+		} else {
 			// Navigate to load page if no game ID is present
 			location.assign("/host/load/");
 		}
@@ -101,6 +121,26 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		mydoc.setContent("#loading_results_section", {"innerHTML":value});
 	}
 
+	// Publishing a game
+	async function onPublishGame(){
+		var publishLabelID = JeopardyGame.TrelloLabels["Not Published"] ?? "";
+		let confirmAction = confirm("Are you sure you want to PUBLISH this game?");
+		if(confirmAction) {
+			let remove = await Promises.RemoveTrelloLabel(JeopardyGame.getGameID(), publishLabelID);
+			location.reload();
+		}
+	}
+
+	// Unpublish a game
+	async function onUnPublishGame(){
+		var publishLabelID = JeopardyGame.TrelloLabels["Not Published"] ?? "";
+		let confirmAction = confirm("Are you sure you want to UNPUBLISH this game?");
+		if(confirmAction) {
+			let remove = await Promises.AddTrelloLabel(JeopardyGame.getGameID(), publishLabelID);
+			location.reload();
+		}
+	}
+
 /***** BEGIN: Key things to set/do when getting started ****************************/ 
 
 	// Check if a valid password has been entered or saved
@@ -152,9 +192,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	{
 		// Check if it is a valid password (await)
 		let isValidPassword = await onValidPasswordAsync(gameID);
-
-		if(isValidPassword)
-		{
+		if(isValidPassword) {
 			// Get the game pass
 			let gamePass = JeopardyGame.getGamePass(); 
 
@@ -165,14 +203,17 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 			onHideLoginForm();
 
 			// Show the menu while the files load
-			mydoc.showContent("#sidebarNav .tab.section");
+			mydoc.showContent(".showOnLogin");
+			mydoc.hideContent(".hideOnLogin");
 
 			// Set the default section that is displayed
 			onSetDefaultSection();
 
+			// Show the TEST vs. PLAY section
+			onShowTestOrPlay();
+
 			return;
 		}
-
 		// Show the login form if not right
 		onShowLoginForm(viaForm);
 	}
@@ -224,6 +265,17 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Set the tab selector & click it!
 		let tabSelector = `[data-section-id="${section}"]`;
 		document.querySelector(tabSelector)?.click();
+	}
+
+	// Show/hide the TEST vs PLAY sections
+	function onShowTestOrPlay(){
+		if(JeopardyGame.isPublished()){
+			mydoc.showContent(".showOnPublished");
+			mydoc.hideContent(".hideOnPublished");
+		} else {
+			mydoc.showContent(".showOnUnpublished");
+			mydoc.hideContent(".hideOnUnpublished");
+		}
 	}
 
 	// Get the TEST list ID
