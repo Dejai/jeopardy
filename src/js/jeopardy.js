@@ -11,7 +11,7 @@
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
-			this.Name = categoryObject.Name;
+			this.Name = categoryObject.Name.trim();
 			this.Order = categoryObject.Order;
 			this.FinalJeopardy = categoryObject.FinalJeopardy;
 			this.ValueCount = 100;
@@ -356,14 +356,17 @@
 
 	class Jeopardy
 	{
-		constructor(gameID, gameName, gameDesc="")
+		constructor(gameID="", gameName="", gameDesc="")
 		{
-			this.GameID = gameID;
-
 			// Set updatable values
+			this.setGameID(gameID);
 			this.setGameName(gameName);
 			this.setGamePass("");
 			this.setGameDesc(gameDesc);
+
+			// Keep track of labels that could be associated with a game (from Trello);
+			this.TrelloLabels = {};
+			this.GameLabels = new Set(); // The one actually set on the card;
 
 			// List for the key parts of the game
 			this.Categories = []
@@ -376,13 +379,36 @@
 			this.Tested = false;
 		}
 
+		// Set the game ID
+		setGameID(gameID){ this.GameID = gameID; }
+
+		// Is a game published
+		isPublished(){
+			let notPublishedLabelID = this.TrelloLabels?.["Not Published"] ?? "";
+			if( notPublishedLabelID == "") {
+				return true;
+			}
+			return !this.GameLabels.has(notPublishedLabelID);
+		}
+
+		// Set the Trello Labels
+		setTrelloLabels(labels){
+			labels.forEach( (label) =>{
+				this.TrelloLabels[label.name] = label.id;
+			});
+		}
+		setGameLabels(labels=[]){
+			labels.forEach( (label) => {
+				this.GameLabels.add(label);
+			});
+		}
+
 		/* Subsection: Game * */
 		newGame(code){  this.Game = new Game(code); }
 	
 		/* Subsection: Categories * */
 		// Get the list of categories
-		getCategories()
-		{ 
+		getCategories() { 
 			let listOfCategories = this.Categories;
 			listOfCategories.sort( (a,b)=>{
 				if(a["Order"] < b["Order"]){ return -1; }

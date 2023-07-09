@@ -20,25 +20,26 @@
 	<div style="border-bottom: 2px solid white;text-align:left; margin:0px;">
 		<h1 style="font-size:22px;padding:0.5%;display:inline-block">
 			<span><a href="/host/load/" target="_self" class="hostHomeLink">Homemade Jeopardy:</a></span> &nbsp;
-			<span id="edit_game_name">Name of Game</span>
+			<span id="edit_game_name"></span>
 		</h1>
 		<button id="saveButton" class="host_edit_tab3 dlf_button_round_corners dlf_button_limegreen hidden" style="margin-left:3%;" onclick="onSaveGame()">SAVE CHANGES</button>
 	</div>
 
 	<div class="container">
 		<div id="sidebarNav" class="sidebar">
-			<p class="tab login" data-section-id="loginForm" style="color:black;">LOGIN</p>
-			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="generalDetails">General Details</p>
-			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/Rules</p>
-			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="testAndPlay">Test/Play Game</p>
-			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/Answers</p>
-			<p class="tab section hidden" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</p>
+			<p class="tab section hidden hideOnLogin" onclick="onSwitchTab(event)" data-section-id="mainSection">LOGIN</p>
+			<p class="tab section hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="generalDetails">General Details</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameSettings">Settings/Rules</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="gameMedia">Game Media</p>
+			<p class="tab section disabled hidden showOnLogin" onclick="onSwitchTab(event)" data-section-id="questionsAnswers">Questions/Answers</p>
+			<p class="tab section hidden hideOnLogin showOnUnpublished showOnPublished" onclick="onSwitchTab(event)" data-section-id="testAndPublish">Test Game</p>
+			<p class="tab section hidden hideOnLogin showOnPublished" onclick="onSwitchTab(event)" data-section-id="playGame">Play Game</p>
 		</div>
 		<div class="main">
 			
 			<!-- Login Form -->
-			<div id="loginForm" class="hidden" >
-				<form onsubmit="onSubmitLoginForm(event)" style="width:20%">
+			<div id="mainSection" class="edit_section hidden" >
+				<form id="loginForm" class="hidden" onsubmit="onSubmitLoginForm(event)" style="width:20%">
 					<h2>Game Passphrase</h2>
 					<p>
 						<input id="loginPassPhrase" style="font-size:20px; width:100%;" type="text" placeholder="Enter game pass phrase ..">
@@ -51,6 +52,9 @@
 					</div>
 					<p id="loginMessage" style="color:red;"></p>
 				</form>
+				<div id="welcomeSection" class="hidden showOnLogin">
+					<p>Use this page to edit, manage, and configure the settings for your game.</p>
+				</div>
 			</div>
 
 			<!-- General Details -->
@@ -136,54 +140,53 @@
 			</div>
 
 			<!-- Test & Play -->
-			<div id="testAndPlay" class="edit_section hidden">
-				<div class="center_section_702">
-					<h2>Test the Game</h2>
-					<div style="padding-left:5%;">
-						<p>Run a test of the game to ensure everything works as expected.</p>
-						<p>This should not be used for the real game.</p>
-						<div class="actionButtonSection">
-							<button id="testGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
-								TEST GAME
-							</button>
-							<span id="testGameLoading" style="margin-top:2%;"></span>
-						</div>
+			<div id="testAndPublish" class="edit_section hidden">
+				<div class="center_section_702" style="padding-top:1%;">
+					<div>
+						<p>Run a test of the game to ensure everything works as expected. <span style="color:orange;">This should not be used for the real game.</span></p>
+						<button id="testGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_orange" onclick="onTestGame()">
+							TEST GAME
+						</button>
+						<span id="testGameLoading" style="margin-top:2%;"></span>
 						<p id="testGameValidation" class="gameValidationMessage" style="color:red;"></p>
 					</div>
-					<hr/>
-					<h2>Play the Game</h2>
-					<div style="padding-left:5%;">
-						<p>Play the real game with a real game code (to be shared with players).</p>
-						<p>This should only be done if you have fully tested the game.</p>
-						<div class="actionButtonSection">
-							<button id="playGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPlayGame()">
-								PLAY GAME
-							</button>
-							<span id="playGameLoading" style="margin-top:2%;"></span>
-							<span class="playWarning">
-								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
-								Be sure to <strong>TEST GAME</strong> before playing a game.
-							</span>
-						</div>
-						<p id="playGameValidation" class="gameValidationMessage" style="color:red;"></p>
+
+					<hr style="margin-bottom:2%; margin-top:2%;"/>
+					
+					<div class="hidden showOnUnpublished hideOnPublished">
+						<p>Once you feel like this game is ready to be played, you can publish it. This makes it actually playable</p>
+						<button id="publishGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPublishGame()">
+							PUBLISH GAME
+						</button>
+						<p id="publishGameValidation" class="gameValidationMessage" style="color:red;"></p>
 					</div>
-					<hr/>
-					<h2>Host-only View</h2>
-					<div style="padding-left:5%;">
-						<p>Use this option to view the questions & answers at the same time. </p>
-						<p>This should only be seen by the Host of the game.</p>
-						<div class="actionButtonSection">
-							<button id="hostGameButton" class="dlf_button_padding2 dlf_button_xxxlarge dlf_button_round_corners dlf_button_blue" onclick="onHostGame()">
-								HOST GAME
-							</button>
-							<span id="hostGameLoading" style="margin-top:2%;"></span>
-							<span class="playWarning">
-								<i class="fa fa-exclamation-triangle playWarning" aria-hidden="true"></i>
-								Be sure to <strong>TEST GAME</strong> before hosting a game.
-							</span>
-						</div>
-						<p id="hostGameValidation" class="gameValidationMessage" style="color:red;"></p>
+					<div class="hidden showOnPublished hideOnUnpublished">
+						<p>This makes it so that people can't play a real game with this one any more</p>
+						<button id="publishGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_red" onclick="onUnPublishGame()">
+							UNPUBLISH GAME
+						</button>
+						<p id="publishGameValidation" class="gameValidationMessage" style="color:red;"></p>
 					</div>
+				</div>
+			</div>	
+
+			<!-- Play Game -->
+			<div id="playGame" class="edit_section hidden">
+				<div class="center_section_702">
+					<p>Play the real game with a real game code (to be shared with players).</p>
+					<button id="playGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_limegreen" onclick="onPlayGame()">
+						PLAY GAME
+					</button>
+					<span id="playGameLoading" style="margin-top:2%;"></span>
+					<p id="playGameValidation" class="gameValidationMessage" style="color:red;"></p>
+
+					<hr style="margin-bottom:2%; margin-top:2%;"/>
+					
+					<p>Use this option to view the questions & answers at the same time. </p>
+					<button id="hostGameButton" class="dlf_button_xxxlarge dlf_button_round_corners dlf_button_blue" onclick="onHostGame()">
+						HOST GAME
+					</button>
+					<p id="hostGameValidation" class="gameValidationMessage" style="color:red;"></p>
 				</div>
 			</div>	
 

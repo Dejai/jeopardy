@@ -36,7 +36,9 @@
 
                     // Setup a map of all cards
 					response.forEach((card) => {
-                        gameList.push( {"ID": card["id"],"Name":card["name"], "Description":card["desc"]})
+                        let published = !card["idLabels"].includes("5fdfd98086c6bc9cc56d4db0") ? "Yes" : "No";
+
+                        gameList.push( {"ID": card["id"],"Name":card["name"], "Description":card["desc"], "Published":published});
 					});
 
                     // Sort games by name

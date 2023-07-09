@@ -26,6 +26,9 @@
     .searchBar.searchPlaceholder { color:gray; }
     .searchBar.searchText { color: black; }
 
+    .published-Yes { display:none;  }
+    .published- , .published-No { display:block; color:red; font-weight:bold; text-align:right; padding:2%; }
+
 /* CREATE: */
     .notificationSection { color:red;font-style:bolder;font-size:120%; }
     .createFieldSection{ margin-top:5%;}
@@ -41,7 +44,9 @@
     .sidebar .tab.section { padding-top:3%; padding-bottom:3%; }
     .sidebar .tab.section.selected { background-color:blue; color:white; }		
     .sidebar .tab.section.selected_tab { background-color:blue; color:white; }		
+    .sidebar .tab.section.disabled { color:gray !important; }
     .container .main .edit_section { padding-left:1%; text-align:left; }
+
 
 /* EDIT: Tab for Questions/Answers */
 

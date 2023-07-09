@@ -4,6 +4,64 @@
 
 const Promises = {
 
+    // Get trello labels
+    GetTrelloLabels: () => {
+        return new Promise ( resolve => {
+            MyTrello.get_labels( (data)=> {
+                var response = JSON.parse(data.responseText);
+                resolve(response);
+            });
+        });
+    },
+
+    // Get a card from Trello
+    GetTrelloCard: (cardID) =>{
+        return new Promise ( resolve => {
+            MyTrello.get_single_card(cardID, (data) => {
+				// If we got the game (i.e. card) .. get the details
+				var response = JSON.parse(data.responseText);
+                resolve(response);
+			}, (data) => {
+                resolve(undefined);
+			});
+        });
+    },
+
+    // Remove a Trello Label
+    RemoveTrelloLabel: (cardID, labelID) => {
+        return new Promise ( resolve => {
+            MyTrello.delete_card_label(cardID, labelID, (data) =>{
+                var response = JSON.parse(data.responseText);
+                resolve(response);
+            });
+        });
+    },
+
+    // Add a Trello Label
+    AddTrelloLabel: (cardID, labelID) => {
+        return new Promise ( resolve => {
+            MyTrello.update_card_label(cardID, labelID, (data) =>{
+                var response = JSON.parse(data.responseText);
+                resolve(response);
+            });
+        });
+    },
+
+    // Get attachment from a card
+    GetTrelloCardAttachment: (cardID, attachmentID, fileName) => {
+        return new Promise( resolve => {
+            MyTrello.get_card_attachment(cardID, attachmentID, fileName, (data)=>{
+               try { 
+                var response = JSON.parse(data.responseText);
+                resolve(response);
+               } catch(err){ 
+                console.log(err);
+                resolve(undefined);
+               }
+            });
+        });
+    },
+
     // Get the Category HTML for Edit page
     GetCategoryEditHTML: (category) => {
 		return new Promise(resolve =>{
@@ -62,7 +120,6 @@ const Promises = {
 			});
         });
     },
-
 
     // Get the category column for the game board
     GetCategoryColumnHTML: (category, theCategories) => {
