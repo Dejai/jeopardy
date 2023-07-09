@@ -610,7 +610,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 				await loadTabContent("gameSettings");
 				await loadTabContent("gameMedia");
 				return new Promise( resolve => {
-					onSetCanPlay();
 					resolve(true);
 				});
 			default:
@@ -627,7 +626,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	async function onSwitchTab(event)
 	{
 		let target = event.target;
-
+		
 		// Always clear any messages
 		onSetLoadingMessage("");
 
@@ -663,9 +662,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 
 		// Conditional action for syncing media
 		var syncMedia = (targetSection == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
-
-		// Setting if the game can be played
-		var canPlay = (targetSection == "testAndPlay") ? onSetCanPlay() : undefined; 
 
 		// Set the current section
 		CurrentSection = targetSection;
@@ -1286,7 +1282,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Set the test cookie to zero; So the game is no longer test worthy
 		let gameID = JeopardyGame.getGameID();
 		mydoc.setCookie(gameID+"Tested", "0", 60);
-		onSetCanPlay();
 	}
 
 	// Clear the error messages
@@ -1317,35 +1312,8 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		// Set a cookie to indicate game has been tested; Expires in 60 minutes;
 		mydoc.setCookie(gameID+"Tested", "1", 60);
 
-		// If tested, then we can enable the play button
-		onSetCanPlay();
-
 		// Clear the spinning
 		mydoc.setContent("#testGameLoading", {"innerHTML":""});
-
-	}
-
-	// Set the ability to play
-	function onSetCanPlay()
-	{
-		let gameID = JeopardyGame.getGameID();
-		let testedCookie = mydoc.getCookie(gameID+"Tested") ?? "";
-		JeopardyGame.Tested = (testedCookie == "1") ? true : JeopardyGame.Tested;
-
-		if(JeopardyGame.Tested)
-		{
-			mydoc.hideContent(".playWarning");
-			
-			// Clear any error messages
-			onClearErrorMessages();
-
-		}
-		else
-		{
-			mydoc.showContent(".playWarning");
-		}
-
-
 
 	}
 	
