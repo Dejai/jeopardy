@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout</title>
+	<link rel="stylesheet" type="text/css" href="https://dejai.github.io/scripts/css/dtk-styles.css?v=4">
+</head>
+<body class="dtk-theme-blackbg">
+    <p class="hidden showOnLogoutFail">Issue with Logging out.</p>
+    <button class="hidden showOnLogoutFail" onclick="history.back()">Go back</button>
+</body>
+    <script src="https://dejai.github.io/scripts/js/v2/my.js"></script>
+    <script>
+        MyDom.ready( async ()=> {
+            // Run the code for on logout
+            await MyAuth.onLogout();
+        });
+    </script>
+</html>

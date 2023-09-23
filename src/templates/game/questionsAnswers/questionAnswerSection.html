@@ -1,0 +1,97 @@
+<div class="addCategoriesSection2" style="text-align:left;padding:1%">
+    <button class="dlf_button dlf_button_blue dlf_button_round_corners" onclick="onAddCategory(event)">Add Game Category</button>
+    <button class="dlf_button dlf_button_orange dlf_button_round_corners addFinalJeopardyCategory hidden" onclick="onAddCategory(event)">Add Final Jeopardy Category</button>
+</div>
+
+<div id="listOfCategories">
+    {{ListOfCategoryBlocks}}
+</div>
+
+<!-- Form for adding/updating Questions -->
+<div id="questionForm" class="hidden">
+    <h2 style="width:70%;">
+        Category:
+        <span id="questionFormCategoryName"></span>
+    </h2>
+    <div id="questionFormActions1" style="text-align:center;">
+        <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveQuestion()">SAVE QUESTION</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="onCancelQuestionForm()">CANCEL</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_red" onclick="onDeleteQuestion()">DELETE</button>
+    </div>
+    <h4 style="text-align:left;">General:</h4>
+    <div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+        <label for="questionFormValue">Value (read-only)</label>
+        <input id="questionFormValue" type="text" name="questionFormValue" value="" disabled>
+        <br/><br/>
+        <label for="isDailyDouble">Is this a Daily Double?</label><br/>
+        <select name="isDailyDouble" id="">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+        </select>
+    </div>
+    <h4 style="text-align:left;">The Question:</h4>
+    <div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+        <label for="question">Text </label><br/>
+        <textarea name="questionText" style="width:100%" rows="3"></textarea>
+        <br/>
+        <label for="questionImage">Image</label><br/>
+        <select name="questionImage" id="" style="width:100%">
+            {{ImageOptions}}
+        </select>
+        <br/>
+        <label for="questionAudio">Audio</label><br/>
+        <select name="questionAudio" id="" style="width:100%">
+            {{AudioOptions}}
+        </select>
+        <label for="questionURL">URL</label><br/>
+        <input type="text" name="questionURL" style="width:100%"/>
+    </div>
+    <h4 style="text-align:left;">The Answer:</h4>
+    <div class="questionFormDetails" style="padding-left:5%;text-align:left;">
+        <label for="answer">Text </label><br/>
+        <textarea name="answerText" style="width:100%" rows="3"></textarea>
+        <br/>
+        <label for="answerImage">Image</label><br/>
+        <select name="answerImage" id="" style="width:100%">
+            {{ImageOptions}}
+        </select>
+        <br/>
+        <label for="answerAudio">Audio</label><br/>
+        <select name="answerAudio" id="" style="width:100%">
+            {{AudioOptions}}
+        </select>
+        <label for="answerURL">URL</label><br/>
+        <input type="text" name="answerURL" style="width:100%"/>
+    </div>
+    <div id="questionFormActions2" style="text-align:center;">
+        <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveQuestion()">SAVE QUESTION</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="onCancelQuestionForm()">CANCEL</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_red" onclick="onDeleteQuestion()">DELETE</button>
+    </div>
+</div>
+
+<!-- Form for adding/updating Categories -->
+<div id="categoryForm" class="hidden">
+    <h2 style="text-align:left;">Category Details</h2>
+    <div class="categoryFormDetails" style="padding-left:5%;text-align:left;">
+        <input id="categoryFormID" type="text" name="categoryFormID" value="" hidden disabled>
+        <label for="categoryFormName">Name:</label><br/>
+        <input id="categoryFormName" type="text" name="categoryFormName" placeholder="Enter name of category" value="">
+        <br/><br/>
+        <label for="categoryFormOrder">Order:</label><br/>
+        <input id="categoryFormOrder" type="number" min="1" max="99" name="categoryFormOrder" value="">
+        &nbsp; &nbsp;
+        <span id="categoryFormMessage" style="color:red"></span>
+        <br/><br/>
+        <select name="categoryFormFinalJeopardy" id="categoryFormFinalJeopardy" disabled hidden>
+            <option value="No" seleced>No</option>
+            <option value="Yes">Yes</option>
+        </select>
+    </div>
+    <hr/>
+    <div id="categoryFormActions1" style="width:40%; text-align:center;">
+        <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="onSaveCategory()">SAVE CATEGORY</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="onCancelCategoryForm()">CANCEL</button>
+        <button class="dlf_button dlf_button_round_corners dlf_button_red" onclick="onDeleteCategory()">DELETE</button>
+    </div>
+</div>

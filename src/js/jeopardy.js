@@ -1,13 +1,8 @@
-/************Jeopardy Generic Variables**********************/
-	var JEOPARDY_GAME = undefined;
-	var JEOPARDY_QA_MAP = {};
-
 /****** CLASS: "Category" ; For the different categories in a game ********/
 
 	class Category
 	{
-		constructor(jsonObj)
-		{
+		constructor(jsonObj) {
 			var categoryObject = JeopardyHelper.getJSON(jsonObj);
 
 			// Set the common things of a category
@@ -906,4 +901,26 @@
 			return formatted;
 		}
 
+	}
+
+
+/****** CLASS: "TrelloCard" ; Represents a single Trello Card ********/
+
+	class TrelloCard
+	{
+		constructor(trelloCard)
+		{
+			this.CardID = trelloCard?.id ?? "";
+			this.Name = trelloCard?.name ?? "";
+			this.Description = trelloCard?.desc ?? "";
+			this.Labels = trelloCard?.idLabels ?? [];
+			this.DateLastUpdated = new Date(trelloCard?.dateLastActivity);
+			this.Published = this.IsPublished() ?  "Yes" : "No";
+		}
+
+		//  Return if this game is published
+		IsPublished(){
+			var notPublishedID = "5fdfd98086c6bc9cc56d4db0";
+			return !this.Labels.includes(notPublishedID);
+		}
 	}

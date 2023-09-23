@@ -1,0 +1,68 @@
+/********* Headers/Titles/Icons ***********************/
+/* General */
+body.theme_black_bg { background-color:black; color:white; }
+.pageMessage { font-size: 16px; }
+
+.iconSize { font-size: 18px; }
+.iconSizeSmaller { font-size: 14px; }
+
+/* Menu/Search Sections */
+.menuLogin { position: fixed; top:2%; right:2%; z-index:1000; text-align:right; }
+.menuLogin .authLink { cursor:pointer; font-size: 16px; }
+.menuLogin .authLink .login { color:orange !important; }
+.menuLogin .authLink .logout { color:white !important; }
+
+.searchIcons { float:right; margin-left:2%; vertical-align: middle;}
+#randomAdventureIcon { color:orange; }
+#searchClearIcon { color: red !important; }
+#searchBarSection { text-align:left; border-radius:77px; border:1px solid gray; background-color:white; padding:2%; width:70%; }
+.searchBarSection { display:inline-block; }
+#searchBarInput { width:80%; border: none; }
+#searchBarInput:focus{ outline: none; outline-offset: 0;}
+.menuSeparator { clear:both; }
+
+/*** Adventures List */
+#listOfGames { display:flex; flex-wrap: wrap; flex-direction: row; justify-content: center; gap:20px; align-items:center; align-content:center;  }
+.gameBlock { 
+	height:200px; width:20%; border:2px solid black; cursor:pointer; overflow:hidden; position:relative; border-color:lightgray; border-radius: 25px; 
+	transition: width 0.5s ease, height 0.5s ease, transform 0.5s ease; 
+}
+.gameBlock .nameSection { text-align:center; margin:0%; position:relative; width: 100%;  z-index: 50; background-color:lightgray;  padding: 1%; top: 0; }
+.gameBlock:hover { transform: scale(1.05);}
+.gameBlock .loadingGif { display:block; margin:auto; text-align:center; width:20%;height:20%; }
+.gameBlock .showOnImageLoad { opacity: 0%; transition: opacity 2s ease; }
+.gameBlock.visible .showOnImageLoad { opacity: 100%; }
+.gameBlock.visible .loadingGif { display:none; }
+.gameBlockImageSection { height:100%; }
+.gameBlock img { width:100%; height:100%; }
+.gameBlockLink { color: #1F51FF !important; font-size: 16px !important }
+.openLinkIcon { font-size:smaller !important; }
+
+/**************************************************** 
+	MEDIA SCREENS
+*****************************************************/
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+	.pageMessage { font-size: 32px; }
+	#searchBarSection { width:50%; }
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+	.gameBlock{ min-width:10%;}
+	#searchBarSection { padding:0.5%; }
+}
+
+/* Large devices (laptops/desktops ) */
+@media only screen and (min-width: 900px) {
+	#searchBarSection { width:40%; }
+	.menuLogin .authLink { font-size: 24px; }
+	.iconSize { font-size: 22px; }
+	.iconSizeSmaller { font-size: 16px; }
+}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-device-width:1200px) {
+	#searchBarSection { width:20%; }
+}

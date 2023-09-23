@@ -72,8 +72,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	});
 
 	// Listener for keyboard event = keyup
-	function onKeyboardKeyup()
-	{
+	function onKeyboardKeyup() {
 		document.addEventListener("keyup", function(event)
 		{
 			switch(event.code)
@@ -85,13 +84,6 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 					return;
 			}
 		});
-	}
-
-	// Create or return an instance of the Jeopardy game
-	function onCreateJeopardyGame(gameID, gameName, gameDesc="")
-	{
-		JeopardyGame = (JeopardyGame == undefined) ? new Jeopardy(gameID, gameName, gameDesc) : JeopardyGame;
-		return JeopardyGame
 	}
 
 	// Prevent the page accidentally closing
@@ -132,6 +124,7 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 	}
 
 	// Publishing a game
+	// UPDATE: Just get the Not-Published ID from the trello card
 	async function onPublishGame(){
 		var publishLabelID = JeopardyGame.TrelloLabels["Not Published"] ?? "";
 		let confirmAction = confirm("Are you sure you want to PUBLISH this game?");
@@ -676,11 +669,12 @@ var LoadingGIF =  `<img class="component_saving_gif" src="https://dejai.github.i
 		CurrentSection = targetSection;
 
 		// Update window history state to allow for easy refresh
-		let newSearch = mydoc.getNewSearch({"section":targetSection});
-		let newPath = location.pathname + newSearch;
-		mydoc.addWindowHistory({"path":newPath}, true); //use replace to avoid confusion with Back button not changing page
+		MyUrls.modifySearch({"section":targetSection});
+		// let newSearch = mydoc.getNewSearch({"section":targetSection});
+		// let newPath = location.pathname + newSearch;
+		// mydoc.addWindowHistory({"path":newPath}, true); //use replace to avoid confusion with Back button not changing page
 
-		Logger.log("Switching Section to: " + targetSection);
+		MyLogger.LogInfo("Switching Section to: " + targetSection);
 	}
 
 	// Toggle visibility of sections related to selected rule option

@@ -1,29 +1,44 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <html>
 <head>
-	<!-- Base of the path -->
-	<base href="./" target="_blank">
-
 	<title>Homemade Jeopardy</title>
-	<link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="src/css/main.css">
+    <link rel="stylesheet" type="text/css" href="src/css/game.css">
+    <link rel="stylesheet" type="text/css" href="host/src/host.css">
+	<link rel="stylesheet" type="text/css" href="https://dejai.github.io/scripts/css/dtk-styles.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body>	
-	<div id="homemade_jeopardy_title" class="centered">
-		<h1 id="homemade_jeopardy_title">Homemade Jeopardy</h1>
-		<hr/>
-	</div>
-	<div class="centered dlf_center_block_medium">
-		<h2 style="margin-bottom:0px;">What would you like to do?</h2>
-		<a href="./teams" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_limegreen dlf_href_notextdec">
-			JOIN AS A PLAYER/TEAM
-		</a>
-		<a href="./host" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_blue dlf_href_notextdec">
-			HOST A GAME 
-		</a>
-		<a href="../archives/" target="_self" class="identify_yourself dlf_button_round_corners dlf_button_gold dlf_href_notextdec">
-			VIEW THE ARCHIVES
-		</a>
+<body class="dtk-theme-blackbg">	
+	<div>
+		<div id="menuSection" class="menuSection dtk-menu-sticky dtk-theme-blackbg" >
+			<div id="menuItems">
+				<div class="menuItem centered">
+					<h1 style="margin:0px;" class="pointer">
+						<span style="font-size:smaller;"> Homemade Jeopardy</span>
+					</h1>
+					<!-- <div class="searchSection">
+						<div id="searchBarSection" class="searchBarSection">
+							<input id="searchBarInput" type="text" placeholder="Search adventures ... " onkeyup="onSearchGames()">
+							<i id="searchClearIcon" class="fa fa-times-circle pointer hidden searchIcons" aria-hidden="true" style="color:red;" onclick="onClearSearch()"></i>
+						</div>
+					</div> -->
+				</div>
+			</div>
+			<div class="menuLogin">
+				<a class="authLink dtk-href-no-textdec" href="">
+				</a>
+			</div>
+			<hr class="menuSeparator" style="clear:both;"/>
+		</div>
+		<div id="listOfGames" style="width:95%; margin:auto; padding-top:1%; overflow-y:scroll;">
+		</div>
 	</div>
 </body>
+<!-- Common Scripts -->
+<script src="https://dejai.github.io/scripts/js/v2/my.js?v=2"></script>
+<script src="https://dejai.github.io/scripts/js/v3/trellowrapper.js?v=4"></script>
+<!-- Adventure SCripts -->
+<script type="text/javascript" src="./src/js/models.js"></script>
+<script type="text/javascript" src="./src/js/main.js?v=2"></script>
 </html>

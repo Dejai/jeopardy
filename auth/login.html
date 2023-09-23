@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+	<link rel="stylesheet" type="text/css" href="https://dejai.github.io/scripts/css/dtk-styles.css?v=4">
+</head>
+<body class="dtk-theme-blackbg">
+    <div class="centered dtk-center-block-large">
+        <h1>Login</h1>
+        <iframe class="hidden" id="dtk-LoginFrame" style="border:none;"></iframe>
+    </div>
+</body>
+    <script src="https://dejai.github.io/scripts/js/v2/my.js?v=1"></script>
+    <script>
+        MyDom.ready( async ()=> {
+            // Run the onLogin logic
+            await MyAuth.onLogin();
+        });
+    </script>
+</html>

@@ -1,0 +1,31 @@
+
+
+
+.navTabs { display: flex; flex-flow: row; justify-content:left; align-items:stretch; align-content: stretch; gap:1px; }
+.navTabs p.tab { min-width:50px; max-width:150px; text-align: center; cursor:pointer; padding:0.5%; border-radius:40px; border:2px solid white; }
+.navTabs p.tab:hover { background-color: lightblue; color:black;}
+.navTabs p.tab.selected { background-color:lightblue; color:black; }
+.navTabs p.tab.disabled { background-color: gray !important; border-color:lightgray !important; color:lightgray !important; }
+
+.sectionLoadingGif { height:3%; width:3%; margin-left:2%; }
+
+/* EDIT: Tab for Questions/Answers */
+
+    /* Control visibility of order buttons */
+    .categorySectionBody tr.questionRow:nth-child(1) td span.fa-arrow-up { display:none; }
+    .categorySectionBody tr.questionRow:last-child td span.fa-arrow-down { display:none; } 
+
+    /* Highlighting the ones that are indeed daily double */
+    .IsDailyDoubleYes { color:limegreen !important; font-weight:bolder; }
+
+    /* For questions that use an image */
+    .HasImageNo { display:none !important; }
+    .HasImageYes { color:lightblue; }
+
+    /* For questions that use an audio file */
+    .HasAudioNo { display:none !important; }
+    .HasAudioYes { color:orange; }
+
+    /* For questions that use an audio file */
+    .HasURLNo { display:none !important; }
+    .HasURLYes { color:blue; }
