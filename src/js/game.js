@@ -2,28 +2,25 @@
 class GamePage {
 	constructor(){
 		this.CurrentTab = "";
-		this.TrelloCard = undefined
+		this.TrelloCard = undefined;
+		this.Rules = [];
+
 		this.Tabs = [];
 		this.IsLoggedIn = false;
 		this.LoadedTabs = [];
+
+		// Sections to be saved
+		this.SectionsToSave = new Set();
 	}
 
-	// Get the tab to show
-	getTabToShow(isLoggedIn){
-		var defaultTab = "gameOverview";
-		if(isLoggedIn){
-			var tabs = Array.from(document.querySelectorAll("#navTabs .tab"));
-			var singleTab = tabs.filter(x => x.getAttribute("data-section-id"))?.[0] ?? undefined;
-			
-			return 
-		}
+	// Add a section to save
+	addSectionToSave(sectionID){
+		this.SectionsToSave.add(sectionID);
 	}
 }
 
 const MyTrello = new TrelloWrapper("jeopardy");
 const MyGamePage = new GamePage();
-const JeopardyGame = new Jeopardy();
-
 
 /*********************** GETTING STARTED *****************************/
 
@@ -51,6 +48,8 @@ const JeopardyGame = new Jeopardy();
 
 			var trelloLabels = await MyTrello.GetLabels();
 			MyGamePage.TrelloCard = new TrelloCard(cardDetails, trelloLabels);
+
+			console.log(MyGamePage.TrelloCard);
 
 			// Set the name before loading tabs (so it's clear what game it is)
 			MyDom.setContent(".triviaGameName", {"innerHTML": MyGamePage.TrelloCard?.Name ?? "" });
@@ -151,8 +150,8 @@ const JeopardyGame = new Jeopardy();
 		{
 			case "generalDetails":
 				return new Promise ( resolve => {
-					var fileName = (MyGamePage.IsLoggedIn) ? "edit.html" : "overview.html";
-					var templatePath = `src/templates/game/generalDetails/${fileName}`;
+					var fileName = (MyGamePage.IsLoggedIn) ? "Edit" : "Overview";
+					var templatePath = `src/templates/game/generalDetails/_section${fileName}.html`;
 					MyTemplates.getTemplate(templatePath, MyGamePage.TrelloCard, (template) => {
 						MyDom.setContent("#generalDetails", {"innerHTML": template});
 						resolve(true);
@@ -177,7 +176,7 @@ const JeopardyGame = new Jeopardy();
 				await loadTabContent("gameSettings");
 				await loadTabContent("gameMedia");
 				return new Promise(resolve => {
-					MyTemplates.getTemplate("src/templates/game/testAndPublishSection.html", {}, (template) =>{
+					MyTemplates.getTemplate("src/templates/game/testAndPublish/_section.html", {}, (template) =>{
 						MyDom.setContent("#testAndPublish", {"innerHTML":template});
 						resolve(true);
 					});
@@ -187,7 +186,7 @@ const JeopardyGame = new Jeopardy();
 				await loadTabContent("gameSettings");
 				await loadTabContent("gameMedia");
 				return new Promise(resolve => {
-					MyTemplates.getTemplate("src/templates/game/playGameSection.html", {}, (template) =>{
+					MyTemplates.getTemplate("src/templates/game/playGame/_section.html", {}, (template) =>{
 						MyDom.setContent("#playGame", {"innerHTML":template});
 						resolve(true);
 					});
@@ -195,9 +194,6 @@ const JeopardyGame = new Jeopardy();
 			default:
 				return new Promise( resolve =>{ resolve("Default"); });
 		}
-
-		// Show the tab
-
 	}
 
 	// Get attachment content
@@ -205,29 +201,16 @@ const JeopardyGame = new Jeopardy();
 		var cardID = MyGamePage.TrelloCard?.CardID;
 		var attachment = MyGamePage.TrelloCard?.getAttachment(fileName) ?? undefined;
 		var attachmentID = attachment?.AttachmentID ?? "";
-		var attachmentContent = await MyTrello.GetCardAttachment(cardID, attachmentID, fileName);
-		if(attachmentContent != undefined){
-			// attachmentContent = JSON.parse(attachmentContent);
-			attachment.setContent(attachmentContent);
+		var attachmentContent = "";
+		if(attachmentID != ""){
+			attachmentContent = await MyTrello.GetCardAttachment(cardID, attachmentID, fileName) ?? [];
+			if(attachment != undefined && attachmentContent != undefined){
+				attachmentContent = JSON.parse(attachmentContent);
+				attachment.setContent(attachmentContent);
+			}
 		}
 		return attachmentContent;
 	}
-
-
-/******** HELPERS: Functions that supplement all the stuff going on for this script ******************************/
-    
-    // Set the game name
-	function onSetGameDetails() {
-		// Using name from JeopardyGame;
-		var gameName = JeopardyGame.getGameName();
-        var gameDesc = JeopardyGame.getGameDesc();
-		var gameID = JeopardyGame.getGameID();
-		MyDom.setContent("#triviaGameName", {"innerHTML": MyGamePage.TrelloCard?.Name ?? "" });
-		// MyDom.setContent("#edit_game_name", {"innerText":gameName});
-		MyDom.setContent("#gameDescription", {"value":gameDesc});
-		MyDom.setContent("#read_only_game_id", {"innerText":gameID});
-	}
-
 
 /******** LOADERS: Load the things based on the section  ******************************/
 
@@ -235,7 +218,7 @@ const JeopardyGame = new Jeopardy();
 	async function onLoadCategories(content)
 	{
 		// The categories
-		var theCategories = JSON.parse(content)?.map(x => new Category(x)) ?? [];
+		var theCategories = content?.map(x => new Category(x)) ?? [];
 
 		// Loop through each category & build HTML templates;
 		var categoryBlocksHtml = "";
@@ -267,61 +250,56 @@ const JeopardyGame = new Jeopardy();
 		}
 
 		// Set the section
-		MyTemplates.getTemplate("src/templates/game/questionsAnswers/questionAnswerSection.html", {"ListOfCategoryBlocks": categoryBlocksHtml}, (template)=>{
+		MyTemplates.getTemplate("src/templates/game/questionsAnswers/_section.html", {"ListOfCategoryBlocks": categoryBlocksHtml}, (template)=>{
 			MyDom.setContent("#questionsAnswers", {"innerHTML": template});
 		});
 
 	}
 
 	// Set the game Config/Rules
-	async function onLoadGameSettings(content)
+	async function onLoadGameSettings(gameConfig)
 	{
-		var rulesHTML = "";
 
-		var gameConfig = JSON.parse(content);
 		console.log(gameConfig);
-
 		var ruleConfig = await MyFetch.call("GET", "src/config/rules.json");
-		var rules = ruleConfig.map(x => new Rule(x));
+		MyGamePage.Rules = ruleConfig.map(rc => new Rule(rc, gameConfig));
 
 		// From the config from the game, set the rule config options
-		Object.keys(gameConfig)?.forEach( (key) =>{
-			var conf = gameConfig[key];
-			var option = conf?.option ?? "";
-			var value = conf?.value ?? undefined;
-			var ruleConf = rules.filter(x => x.RuleKey == key)?.[0];
-			if(ruleConf != undefined){
-				ruleConf.setOption(option, value);
-			}
-		});
+		// Object.keys(gameConfig)?.forEach( (key) =>{
+		// 	var conf = gameConfig[key];
+		// 	var option = conf?.option ?? "";
+		// 	var value = conf?.value ?? undefined;
+		// 	var ruleConf = rules.filter(x => x.RuleKey == key)?.[0];
+		// 	if(ruleConf != undefined){
+		// 		ruleConf.setOption(option, value);
+		// 	}
+		// });
 
 		// Get formatted options 
-		for(var idx in rules)
+		for(var idx in MyGamePage.Rules)
 		{
-			var rule = rules[idx];
+			var rule = MyGamePage.Rules[idx];
 			rule.FormattedOptions = await new Promise (resolve => {
-				MyTemplates.getTemplate("host/templates/ruleOption.html", rule.Options, (template) =>{
+				MyTemplates.getTemplate("src/templates/game/gameSettings/ruleOption.html", rule.Options, (template) =>{
 					resolve(template);
 				});
 			});
 		}
 
-		console.log(rules);
-
 		var rulesRows = await new Promise(resolve => {
-			MyTemplates.getTemplate("host/templates/ruleRow.html", rules, (template) =>{
+			MyTemplates.getTemplate("src/templates/game/gameSettings/ruleRow.html", MyGamePage.Rules, (template) =>{
 				resolve(template);
 			});
 		});
 
 		// Set the content
-		MyTemplates.getTemplate("src/templates/game/settingsSection.html", {"RuleRows":rulesRows}, (template) =>{
+		MyTemplates.getTemplate("src/templates/game/gameSettings/_section.html", {"RuleRows":rulesRows}, (template) =>{
 			MyDom.setContent("#gameSettings", {"innerHTML": template});
 		});
 
-		document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-			onToggleRuleOptionDetails(ruleOpt);
-		});
+		// document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
+		// 	onToggleRuleOptionDetails(ruleOpt);
+		// });
 	}
 
 	// Toggle visibility of sections related to selected rule option
@@ -384,29 +362,22 @@ const JeopardyGame = new Jeopardy();
 			customInput.value = "";
 		}
 	}
-
-	// On data change to be saved
-	function onDataChange(obj){
-		MyDom.showContent("#saveButton");
-	}
-
-	// Listener for when the user changes an option on the settings section
-	function onRuleOptionChange(event)
-	{
-		let sourceEle = event.srcElement;	
-		let sourceID = sourceEle.id;
-		let value = sourceEle.value;
-
-		// Update the game
-		JeopardyGame.Config[sourceID].option = value;
-
-		// Toggle details
-		onToggleRuleOptionDetails(sourceEle);
-	}
 	
 	// Set the game media
 	async function onLoadGameMedia(content)
 	{
+		var mediaHTML = "";
+		if(content?.map != undefined){
+			var mediaFiles = content.map(x => new Media(x)) ?? [];
+			mediaHTML = await new Promise( resolve => {
+				MyTemplates.getTemplate("src/templates/game/gameMedia/mediaItem.html", mediaFiles, (template)=>{
+					resolve(template);
+				});	
+			});
+		}
+		MyTemplates.getTemplate("src/templates/game/gameMedia/_section.html", {"GameMedia": mediaHTML}, (template)=>{
+			MyDom.setContent("#gameMedia", {"innerHTML":template});
+		});	
 		// Load the game-specific form URL
 		// let formURL = MyGoogleDrive.getFormURL(MyGamePage.TrelloCard.CardID);
 		// MyDom.setContent("#gameFormURL", {"href": formURL});
@@ -414,19 +385,6 @@ const JeopardyGame = new Jeopardy();
 		// if (aHref != undefined){ aHref.href = formURL; }
 
 		// // Get the list of media files
-		var mediaFiles = JSON.parse(content).map(x => new Media(x)) ?? [];
-		console.log(mediaFiles);
-
-		var mediaHtml = await new Promise( resolve => {
-			MyTemplates.getTemplate("host/templates/mediaItem.html", mediaFiles, (template)=>{
-				resolve(template);
-			});	
-		});
-
-		MyTemplates.getTemplate("src/templates/game/mediaSection.html", {"GameMedia": mediaHtml}, (template)=>{
-			MyDom.setContent("#gameMedia", {"innerHTML":template});
-		});	
-	
 	}
 
 	// Syncing the Game Media (temporary -- I should go back to Trello)
@@ -442,5 +400,120 @@ const JeopardyGame = new Jeopardy();
 			// Run it first, then start an Interval
 			onSyncMedia()
 			var syncMediaInterval = setInterval( onSyncMedia, 60000);
+		}
+	}
+
+/******** CHANGES: Capturing changes on the config ******************************/
+
+	function onChangeGameSetting(select)
+	{
+		var ruleID = select.getAttribute("id");
+		var newOption = select.value ?? "";
+		var rule = MyGamePage.Rules.filter(x => x.RuleKey == ruleID)?.[0] ?? undefined;
+		if(rule != undefined){
+			var newConfig = {};
+			newConfig[ruleID] = {"option": newOption };
+			rule.setCurrentOption(newConfig);
+			MyDom.setContent(`#${ruleID}Description`, {"innerHTML": rule.RuleDescription});
+			MyDom.setContent(`#${ruleID}Suggestion`, {"innerHTML": rule.RuleSuggestion});
+			MyDom.setContent(`#${ruleID}CustomValue`, {"value": rule.RuleCustomValue});
+			var _cust = (rule.RuleCustomValueShow) ? MyDom.replaceClass(`#${ruleID}CustomValue`, "false", "true") : MyDom.replaceClass(`#${ruleID}CustomValue`, "true", "false");
+		}
+		onDataChange(select);
+	}
+
+	// On data change to be saved
+	function onDataChange(element){
+		let closestSectionID = element.closest("div.edit_section")?.id ?? "";
+		if(closestSectionID != ""){
+			MyGamePage.addSectionToSave(closestSectionID);
+			MyDom.showContent("#saveButton");
+		}
+	}
+
+
+/******** SAVING: Saving changes to the game  ******************************/
+
+
+	// The general save -- keeps track of diffs & saves accordingly
+	async function onSaveGame()
+	{
+		// Switch what to save based on the section
+		var sectionsToSave = Array.from(MyGamePage.SectionsToSave);
+
+		MyDom.setContent("#saveButton", {"innerHTML":"SAVING ... "});
+		MyDom.removeClass("#saveButton", "dlf_button_limegreen");
+		MyDom.addClass("#saveButton", "dlf_button_gray");
+
+		for(var idx in sectionsToSave)
+		{
+			var section = sectionsToSave[idx];
+			
+			switch(section)
+			{
+				case "generalDetails":
+					// Update the name and description
+					MyGamePage.TrelloCard.setName( MyDom.getContent("#game_name_value")?.value );
+					MyGamePage.TrelloCard.setDescription( MyDom.getContent("#gameDescription")?.value );
+
+					// Make the update calls
+					await MyTrello.UpdateCardName(MyGamePage.TrelloCard.CardID, MyGamePage.TrelloCard.Name);
+					await MyTrello.UpdateCardDescription(MyGamePage.TrelloCard.CardID, MyGamePage.TrelloCard.Description);
+					break;
+				case "gameSettings":
+					let configToSave = {};
+					MyGamePage.Rules.forEach( (rule) => {
+						let key = rule.RuleKey;
+						let opt = rule.Options.filter(x => x.IsSelected)?.[0];
+						let optID = opt?.OptionID ?? "1";
+						configToSave[key] = { "option": `${optID}`}
+						let optVal = opt?.CustomValue ?? "";
+						if(optVal != ""){
+							configToSave[key]["value"] = optVal;
+						}
+					});
+					console.log(configToSave);
+					await onSaveGameFile(configToSave, "config.json");
+					break;
+				default:
+					MyLogger.LogError("Could not save section = " + section);
+					break;
+			}
+			// Remove the section from to be removed
+			MyGamePage.SectionsToSave.delete(section);
+		}
+
+		// Reset  button;
+		setTimeout(()=>{
+			MyDom.removeClass("#saveButton", "dlf_button_gray");
+			MyDom.addClass("#saveButton", "dlf_button_limegreen");
+			MyDom.setContent("#saveButton", {"innerHTML":"SAVED"});
+
+			// Final phase
+			setTimeout(()=> {
+				MyDom.setContent("#saveButton", {"innerHTML":"SAVE CHANGES"});
+				MyDom.hideContent("#saveButton");
+			}, 1500);
+
+		}, 1500);
+	}
+
+	// Save one of the config files (config, category, media, etc?)
+	async function onSaveGameFile(jsonObj, fileName)
+	{
+		try {
+			var currentAttachment = MyGamePage.TrelloCard.getAttachment(fileName);
+			var newFileResults = await MyTrello.CreateCardAttachment(MyGamePage.TrelloCard.CardID, "config.json", JSON.stringify(jsonObj));
+			if(newFileResults != undefined){
+		
+				MyGamePage.TrelloCard.addAttachment(newFileResults);
+				
+				if(currentAttachment != undefined){
+					var removeOldFileResults = await MyTrello.DeleteCardAttachment(MyGamePage.TrelloCard.CardID, currentAttachment.AttachmentID);
+					MyLogger.LogInfo(`Removed file: ${currentAttachment.AttachmentID} ; ` + removeOldFileResults);
+				}
+			}
+		} catch(err){
+			MyLogger.LogError(err);
 		}
 	}

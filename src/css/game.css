@@ -1,312 +1,34 @@
 
-/**************************************************** 
-	GENERAL: Applies to all pages;
-*****************************************************/
 
-/* General purpose */
-	.homeLink { text-decoration: none; color:inherit;}
-	.hidden { display:none; }
-	.centered { text-align: center; }
-	.pointer { cursor:pointer; }
-	/* #game_table { font-size:200%; } */
-	.noselect {
-		-webkit-touch-callout: none; /* iOS Safari */
-		-webkit-user-select: none; /* Safari */
-		-khtml-user-select: none; /* Konqueror HTML */
-			-moz-user-select: none; /* Old versions of Firefox */
-			-ms-user-select: none; /* Internet Explorer/Edge */
-				user-select: none; /* Non-prefixed version, currently
-										supported by Chrome, Edge, Opera and Firefox */
-	}
 
-
-/* Identify Yourself*/
-	.identify_yourself { display:block; text-align:center; padding:10%; width:70%; margin:auto; cursor:pointer; margin-top:10%; }
-	.identify_yourself:hover{background-color:blue; color:yellow; }
-
-/* Headings */
-	.dlf_title { font-size:80px; }
-
-/* Alignment */
-	.dlf_center_block_small { margin:auto; width:40%;}
-	.dlf_center_block_medium { margin:auto; width:60%;}
-	.dlf_center_block_large { margin:auto; width:80%;}
-	.dlf_center_block_xlarge { margin:auto; width:90%;}
-	.dlf_center_block_xxlarge { margin:auto; width:99%;}
-
-/* Tables */
-	.dlf_table { border-spacing: 0; }
-	.dlf_table_small { width:25%; }
-	.dlf_table_medium { width:50%; }
-	.dlf_table_large { width:100%; }
-
-/* Hyperlinks */
-	.dlf_href_notextdec { text-decoration:none !important; }
-
-/* Paragraphs */
-	.dlf_paragraph_medium { font-size: 190%; }
-	.dlf_paragraph_large { font-size: 150%; }
-	.dlf_paragraph_xlarge { font-size: 190%; }
-	.dlf_paragraph_xxlarge { font-size: 220%; }
-	.dlf_paragraph_xxxlarge { font-size: 250%; }
-
-/* Buttons */
-	/*Button Shape & hover*/
-	button { cursor: pointer; padding:2% 1%; border:none; }
-	[class*="dlf_button"] { font-weight:bolder; }
-	button:focus { outline: none; box-shadow: none; }
-	.dlf_button_round_corners { border-radius:77px; }
-
-	/*Button Sizes*/
-	.dlf_button_small { font-size: 50%; }
-	.dlf_button_large { font-size: 140%; }
-	.dlf_button_xlarge { font-size: 190%; }
-	.dlf_button_xxlarge { font-size: 200%; }
-	.dlf_button_xxxlarge { font-size: 250%; }
-	.button_mash { font-size:140%; cursor:pointer;  }
-
-	/* Button Colors */
-	.dlf_button_blue { background-color:blue !important; color:white !important;}
-	.dlf_button_red { background-color:red !important; color:white !important;}
-	.dlf_button_orange { background-color:orange !important; color:black !important;}
-	.dlf_button_limegreen { background-color:limegreen !important; color:black !important;}
-	.dlf_button_green { background-color:green !important; color:white !important;}
-	.dlf_button_purple { background-color:purple !important; color:white !important;}
-	.dlf_button_violet { background-color:violet !important; color:black !important;}
-	.dlf_button_gold { background-color:goldenrod !important; color:black !important;}
-	.dlf_button_yellow { background-color:yellow !important; color:black !important;}
-	.dlf_button_gray { background-color:gray !important; color:lightgray !important;}
-
-	/* Button spacing */
-	.dlf_button_padding2 { padding:2%; }
-
-	/* Select Inputs */
-	.dlf_select { padding:3%; border:none; }
-	.dlf_select:focus { outline:none; }
-	.dlf_select_round_corners { border-radius:77px; }
-
-
-	.dlf_select_small { font-size: 50%; width:50%; }
-	.dlf_select_large { font-size: 140%; width:100%;}
-	.dlf_select_xlarge { font-size: 190%; width:100%;}
-	.dlf_select_xxlarge { font-size: 200%; width:100%;}
-	.dlf_select_xxxlarge { font-size: 250%; width:100%;}
-
-	.dlf_select_red { background-color:red; color:white; }
-	.dlf_select_blue { background-color:blue; color:white; }
-
-
-
-/* HOW TO PLAY */
-
-	.how_to_play_section { background-color:red;color:white; text-align:center; }
-	.how_to_play_section .instruction { font-size:150%; }
-
-
-
-
-/* GENERAL */
-	body{ margin:0px; padding:0px; background-color:black; color:#F5F5F5; }
-	.invisible { visibility: hidden; }
-	#home_button button { background-color:black; color:gray; }
-	.header { font-size:50px !important; }
-	.center_section_40 { width:40%; margin:auto; }
-	.center_section_50 { width:50%; margin:auto; }
-	.center_section_60 { width:60%; margin:auto; }
-	.center_section_70 { width:70%; margin:auto; }
-	.center_section_80 { width:80%; margin:auto; }
-	
-	.button_mash { font-size:140%; cursor:pointer;  }
-	.input_mash { width:80%; font-size:140%; text-align:center;  }
-	.save_button { background-color:limegreen; color:black; }
-	.test_button { background-color:orange; color:black; }
-	.play_button { background-color:#060CE9; color:yellow;}
-	/* .hyperlink { background-color:blue; color:white;} */
-	.hyperlink { color:dodgerblue;}
-
-	.jeopardy_image{ max-width:95%; max-height:400px; }
-	/* #homemade_jeopardy_title { text-decoration:underline; } */
-
-	.notify_limegreen { color:limegreen !important; }
-	.notify_orange { color:orange !important; }
-	.notify_red { color:red !important; }
-	.notify_white { color:white !important; }
-
-	.jpd_subtext { font-size: 60%; font-style:italic; }
-
-	.newliner { display:inline; }
-	@media screen and (min-width: 768px ){
-		.newliner { display:none;}
-	}
-
-	.answer_timestamp { color:red; font-size:smaller; }
-
-
-/* Selecting Game*/
-	.game_option_label { border:1px solid black; display:inline-block; width:20%; padding:1%; cursor:pointer; text-align:center; margin-right:2%;}
-	.game_option_label:hover { background-color:lightgray; }
-
-/* ADMIN/HOST VIEW */
-
-	/* .edit_section { width: 85%; margin:auto; text-align:center;  } */
-	.edit_section .description { cursor:pointer; color:goldenrod; padding-left:2%; }
-	.edit_section .section_description { font-size:120%; margin-bottom:5% }
-	/* #host_edit_tab_section { border-bottom:3px solid white; margin-bottom:5%; } */
-
-	.host_edit_tab { text-align:center; display:inline-block; width:15%; cursor:pointer;  }
-	.host_edit_tab.selected_tab { background-color:blue; }
-	.host_edit_tab_disabled { color: gray;}
-	
-	#generalDetails table tbody tr td { padding-bottom:3%; }
-
-	.edit_section_question_category { border: 2px solid white; }
-
-
-	.edit_game_value { padding:1%; width:60%; }
-
-	#edit_game_details_table tbody td:nth-child(2) { text-align: left;}
-
-	.edit_game_section_table tbody td { padding-bottom:2%; }
-	.edit_game_section_table thead th { padding-bottom:2%; }
-
-	.save_component_button { float:right; clear:both; cursor:pointer; }
-
-	.rule_detail { font-size:smaller; }
-	p.rule_detail { margin-bottom: 0px; }
-	.rule_suggestion { margin: 0px; font-style:italic; color:orange; padding-left:2%; }
-
-	.edit_game_subsection {border-bottom:2px solid white; padding:5%; padding-top:0%; }
-	#game_media a { color:lightblue; }
-	.delete_media { cursor:pointer; color:red; }
-	.delete_media:hover { color:red; }
-
-	.rule_input { width:100%; }
-	.rule_delete { float:right; clear:both; color:red; cursor:pointer; font-size:200%;}
-	.rule_entry { margin-bottom:2%; padding:2%; border:1px dashed white; }
-	#type_of_rules { color:red; text-decoration:underline; }
-	.rule_builtin_note { color:red; font-style:italic; }
-
-	#settings_table { text-align:left; }
-	#settings_table thead tr th { border-bottom:2px solid white; }
-	/* #settings_table tbody tr td { padding:2%; border-bottom:1px dashed white; } */
-	/* #settings_table tbody tr th { padding:2%; border-bottom:1px dashed white; } */
-	/* #settings_table tbody tr td { padding:2%; border-bottom:1px dashed white; } */
-	/* #settings_table tbody tr td { padding:1%; } */
-
-	#game_media_details_table { width: 100%; text-align:left; }
-	#game_media_details_table tr th { padding:3%; }
-	#game_media_details_table tr td { padding:3%; }
-
-/* HOST Views*/
-	#host_instructions { text-align:left; }
-	#host_instructions li { margin-bottom:3%; }
-	#host_instructions a { color:blue; }
-
-
-/* CREATE GAME VIEW */
-	.create_game_section { width:70%; margin:auto; }
-
-/* MENU */
-	#menu { float:left; width:100%; border-bottom: 1px solid #F5F5F5; padding-bottom:1%; margin-bottom:2%; text-align:center; }
-	#menu h1 { width:100%; text-align:center; margin-bottom:0%;}
-	.menu_button { float:right; margin-right:1%; margin-top:2%; cursor:pointer; }
-	#home_button { display:block; text-align:left; margin-left:1%; margin-top:1%; cursor:pointer; }
-	#home_button button { border:none; font-size:25px; cursor:pointer;}
-	#finalJeopardyButton{ float:right; cursor:pointer; font-size:120%; padding:3%; }
-
-
-
-/* MAIN VIEW */
-	#main_view_section { padding-left:1%; padding-right:1%; display:relative; }
-	.loadingMessage { padding:2%; font-size:200%; color:red; }
-
-/* GAME BOARD */
-	#game_board { width:100%;margin-bottom:3%; }
-	.category { background-color:#060CE9; font-size:64px; cursor:pointer; }
-	.category_column { width:100%; }
-	.category_title { color:#F5F5F5; font-size:25px; height:100px;}
-	.category_option { color:yellow; text-align:center; font-weight:bolder; cursor:pointer;}
-	.category_option_selected { color:black; background-color: gray; cursor:pointer; }
-	.final_jeopardy_row { display:block; width:50%;margin:auto; }
-	.final_jeopardy_row td { display:block; width:100%; }
-	.final_jeopardy_row td.category_option { padding-top:10%; padding-bottom:10%; }
-
-/* PRE-TEAMS SECTION */
-	.pre_team_block{ text-align:center; font-size:120%; }
-	.pre_team_block_value { background-color:blue;color:yellow;padding:1%; }
-
-/* TEAMS SECTION */
-
-	/* OLDER */
-	#teams_block { margin:60%;  margin:auto; border-top:1px solid white; padding-top:1%; }
-	.team_section { border:1px solid black; margin:auto; display:inline-block; margin-right:3%;}
-	.team_section h2 { margin-bottom: 0px; margin-top: 0px; }
-	.team_section textarea { resize:none; color:gray; font-style:italic; display:inline-block; width:90%; }
-	.current_turn { border:5px solid green; }
-	.first_place { background-color:orange; color:black; }
-	.second_place { background-color:green; color:white; }
-	.third_place { background-color:maroon; color:white; }
-
-/* Tooltips for How to Play */
-
-	.howtoplay_tooltip { position: relative }
-
-	.howtoplay_tooltip .tooltiptext { position: absolute; z-index: 1; padding:1%; font-size:20px; border-color:red; background-color:red; color:white; padding:5px 0; border-radius:6px; text-align:center; transition: opacity 2s; }
-
-	/* Visibility of the tooltiptext*/
-	/* .tooltiptext.tooltipvisible { visibility:visible; opacity:1 } */
-	.tooltiptext.tooltiphidden { visibility:hidden; opacity:0 }
-
-	/* The tooltip carrot */
-	.howtoplay_tooltip .tooltiptext::after { content: ""; position: absolute; border-width:10px; border-style: solid; }
-
-	/* Position the tooltip text and carrot */
-	.tooltiptext.tooltipabove {  width:400px; bottom: 105%; left: -25%; margin-left: -60px; }
-	.tooltiptext.tooltipabove::after { top:100%; left:50%; margin-left:-5px; border-color: red transparent transparent transparent; }
-
-	.tooltiptext.tooltipright { width:400px; margin-left:20px; }
-	.tooltiptext.tooltipright::after { right:100%; top: 20%; margin-left:5px; border-color: transparent red transparent transparent; }
-
-	.tooltiptext.tooltipleft { width:400px; margin-right:20px; }
-	.tooltiptext.tooltipleft::after { top: 20%; right:-5%; margin-left:5px; border-color: transparent transparent transparent red; }
-
-
-/**************************************************** 
-	MEDIA SCREENS
-*****************************************************/
-
-@media only screen and (min-device-width:1200px)
-{
-	/* Headings */
-	.dlf_title { font-size:2em;}
-
-	/* Alignment */
-	.dlf_center_block_small { margin:auto; width:30%;}
-	.dlf_center_block_medium { margin:auto; width:50%;}
-	.dlf_center_block_large { margin:auto; width:70%;}
-	.dlf_center_block_xlarge { margin:auto; width:80%;}
-	.dlf_center_block_xxlarge { margin:auto; width:90%;}
-
-	/*Button Sizes*/
-	.dlf_button_large { font-size: initial; }
-	.dlf_button_xlarge { font-size: initial; }
-	.dlf_button_xxlarge { font-size: initial; }
-	.dlf_button_xxxlarge { font-size: initial; }
-
-	/* Select Input Sizes*/
-	.dlf_select_small { font-size: initial; }
-	.dlf_select_large { font-size: initial; }
-	.dlf_select_xlarge { font-size: initial; }
-	.dlf_select_xxlarge { font-size: initial; }
-	.dlf_select_xxxlarge { font-size: initial; }
-
-	/* Paragraph sizes */
-	.dlf_paragraph_medium { font-size: initial; }
-	.dlf_paragraph_large { font-size: initial; }
-	.dlf_paragraph_xlarge { font-size: initial; }
-	.dlf_paragraph_xxlarge { font-size: initial; }
-	.dlf_paragraph_xxxlarge { font-size: initial; }
-
-	/* Identify Yourself*/
-	.identify_yourself { padding:2%; margin-top:7%; }
-}
+.navTabs { display: flex; flex-flow: row; justify-content:left; align-items:stretch; align-content: stretch; gap:1px; }
+.navTabs p.tab { min-width:50px; max-width:150px; text-align: center; cursor:pointer; padding:0.5%; border-radius:40px; border:2px solid white; }
+.navTabs p.tab:hover { background-color: lightblue; color:black;}
+.navTabs p.tab.selected { background-color:lightblue; color:black; }
+.navTabs p.tab.disabled { background-color: gray !important; border-color:lightgray !important; color:lightgray !important; }
+
+.sectionLoadingGif { height:3%; width:3%; margin-left:2%; }
+
+/* SETTINGS */
+    .ruleCustomValue.false { display:none !important; }
+    .ruleCustomValue.true { display:inline-block !important; }
+    
+/* EDIT: Tab for Questions/Answers */
+    /* Control visibility of order buttons */
+    .categorySectionBody tr.questionRow:nth-child(1) td span.fa-arrow-up { display:none; }
+    .categorySectionBody tr.questionRow:last-child td span.fa-arrow-down { display:none; } 
+
+    /* Highlighting the ones that are indeed daily double */
+    .IsDailyDoubleYes { color:limegreen !important; font-weight:bolder; }
+
+    /* For questions that use an image */
+    .HasImageNo { display:none !important; }
+    .HasImageYes { color:lightblue; }
+
+    /* For questions that use an audio file */
+    .HasAudioNo { display:none !important; }
+    .HasAudioYes { color:orange; }
+
+    /* For questions that use an audio file */
+    .HasURLNo { display:none !important; }
+    .HasURLYes { color:blue; }

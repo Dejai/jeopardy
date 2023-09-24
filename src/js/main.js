@@ -27,7 +27,7 @@ const MyTrello = new TrelloWrapper("jeopardy");
         });
 
         // Add adventure as we go
-        MyTemplates.getTemplate("src/templates/gameBlock.html", trelloCards, (template) => {
+        MyTemplates.getTemplate("src/templates/main/gameBlock.html", trelloCards, (template) => {
             MyDom.setContent("#listOfGames", {"innerHTML":template}, true);
         });
 	}

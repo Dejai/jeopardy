@@ -571,7 +571,7 @@ class Jeopardy
 	getGameName(){ return this.TrelloCard?.Name ?? ""; }
 	getGameID(){ return this.TrelloCard?.CardID ?? ""; }
 	getGameDesc() { return this.TrelloCard?.Description ?? ""; }
-	getAttachmentID(fileName){ return this.TrelloCard.getAttachmentIdByFileName(fileName); }
+	getAttachment(fileName){ return this.TrelloCard.getAttachment(fileName); }
 
 
 	// Set the passphrase for the game
@@ -833,7 +833,6 @@ class Team
 
 }
 
-
 /****** CONST: "JeopardyHelper" ; For general helper methods used by multiple classes ********/
 const JeopardyHelper = 
 {
@@ -898,7 +897,6 @@ const JeopardyHelper =
 
 }
 
-
 /****** CLASS: "TrelloCard" ; Represents a single Trello Card ********/
 
 class TrelloCard
@@ -912,8 +910,10 @@ class TrelloCard
 		this.DateLastUpdated = new Date(trelloCard?.dateLastActivity);
 
 		// Set the attachments on the card
-		var attachments = trelloCard?.attachments ?? []
-		this.Attachments = attachments.map(x => new TrelloAttachment(x));
+		this.Attachments = {};
+		trelloCard?.attachments?.forEach( (att) => {
+			this.addAttachment(att);
+		});
 
 		// Also store a list of possible labels
 		this.TrelloLabels = {};
@@ -925,23 +925,30 @@ class TrelloCard
 		this.Published = this.isPublished() ?  "Yes" : "No";
 	}
 
+	// Set key values on this card
+	setName(newName){ this.Name = (newName != undefined) ? newName : this.Name; }
+	setDescription(newDesc){ this.Description = (newDesc != undefined) ? newDesc : this.Description; }
+
+	// Get an attachment from the trello card
+	getAttachment(fileName){
+		return this.Attachments[fileName] ?? undefined;
+	}
+
+	// Set attachment (only save the most recent one)
+	addAttachment(trelloAttachment){
+		var newAtt = new TrelloAttachment(trelloAttachment);
+		var existing = this.Attachments[newAtt.FileName] ?? undefined;
+		if(existing != undefined && existing.Date > newAtt.Date){
+			MyLogger.LogInfo("Not adding this attachment. It is older than the current one");
+			return; 
+		}
+		this.Attachments[newAtt.FileName] = newAtt;
+	}
+
 	//  Return if this game is published
 	isPublished(){
 		var notPublishedID = this.TrelloLabels["Not Published"] ?? this.CardLabels[0];
 		return !this.CardLabels.includes(notPublishedID);
-	}
-
-	// Get an attachment from the trello card
-	getAttachment(fileName){
-		return this.Attachments?.filter(x => x.FileName == fileName)?.[0] ?? undefined;
-	}
-
-	// Get an Attachment ID based on file name
-	getAttachmentIdByFileName(fileName){
-		console.log(this.Attachments);
-		console.log("Checking for: " + fileName);
-		var attachment = this.Attachments.filter(x => x.FileName == fileName)?.[0]?.AttachmentID ?? "";
-		return attachment;
 	}
 }
 
@@ -949,46 +956,67 @@ class TrelloCard
 class TrelloAttachment
 {
 	constructor(attachmentDetails) {
-		this.Date = new Date(attachmentDetails?.date);
 		this.AttachmentID = attachmentDetails?.id ?? "";
 		this.FileName = attachmentDetails?.fileName ?? ""; 
 		this.MimeType = attachmentDetails?.mimeType ?? ""; 
-
-		this.Name = attachmentDetails?.name ?? ""; 
 		this.Url = attachmentDetails?.url ?? ""; 
+		this.Date = new Date(attachmentDetails?.date);
+		this.Name = attachmentDetails?.name ?? ""; 
 		this.Content = undefined;
 	}
 
 	// Set the attachment content
 	setContent(jsonObj){
 		try{
-			this.Content = JSON.parse(jsonObj);
+			this.Content = jsonObj;
 		} catch(err) {
 			MyLogger.LogError(err);
 		}
 	}
 }
 
-/****** CLASS: "Rule" ; Represents a single Rule ********/
+/****** CLASS: "Rule" : Represents a single Rule ********/
 class Rule
 {
-	constructor(ruleJson) {
+	constructor(ruleJson, gameConfig) {
 		this.Name = ruleJson?.Name ?? "";
 		this.Options = ruleJson?.Options?.map(x => new RuleOption(x)) ?? [];
 		this.RuleKey = this.Name.split(" ").map(x => x[0].toUpperCase() + x.substring(1)).join("").replace("?","");
+
+		// Fields calcualated based on options
 		this.FormattedOptions = "";
+		this.RuleDescription = "";
+		this.RuleSuggestion = "";
+		this.RuleCustomValue = "";
+		this.RuleCustomValueShow = false;
+
+		// Set current option based on given game config
+		this.setCurrentOption(gameConfig);
 	}
 
-	// Set selected option
-	setOption(optionID, customValue){
-		var option = this.Options.filter(x => x.OptionID == optionID)?.[0];
-		if(option != undefined){
-			option.IsSelected = "selected"; 
-			option.CustomValue = customValue;
-		}
+	// Set the current option based on game config
+	setCurrentOption(gameConfig){
+		var matchConfig = gameConfig?.[this.RuleKey];
+		// Loop through all options and set/update accordingly
+		this.Options.forEach( (option) => {
+			if(option.OptionID == matchConfig?.option ?? "n/a"){
+				option.IsSelected = true;
+				option.IsSelectedText = "selected";
+				option.CustomValue = matchConfig.customValue ?? "";
+				
+				this.RuleDescription = option.Rule;
+				this.RuleSuggestion = option.Suggestion;
+				this.RuleCustomValue = option.CustomValue;
+				this.RuleCustomValueShow = (option.Type.startsWith("custom"));
+			} else {
+				option.IsSelected = "";
+				option.CustomValue = "";
+			}
+		})
 	}
 }
 
+/****** CLASS: "RuleOption" : Represents an option within a Rule ********/
 class RuleOption
 {
 	constructor(optionObj){
@@ -1000,7 +1028,8 @@ class RuleOption
 		this.Suggestion = optionObj?.suggestion ?? "";
 
 		// Calculated value
-		this.IsSelected = "";
+		this.IsSelected = false;
+		this.IsSelectedText = "";
 		this.CustomValue = "";
 	}
 }

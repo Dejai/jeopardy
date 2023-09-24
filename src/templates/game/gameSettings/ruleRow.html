@@ -1,0 +1,13 @@
+<tr>
+    <td>
+        <h3 style="margin:0px;">{{Name}}</h3>
+        <select id="{{RuleKey}}" class="ruleOption input_mash" style="width:40%;margin-left:1%;" onChange="onChangeGameSetting(this)">
+            {{FormattedOptions}}
+        </select>
+        <div class="ruleDetailsSection">
+            <p id="{{RuleKey}}Description" class="ruleDetail ruleDescription">{{RuleDescription}}</p>
+            <p id="{{RuleKey}}Suggestion" class="ruleDetail ruleSuggestion">{{RuleSuggestion}}</p>
+            <input id="{{RuleKey}}CustomValue" class="ruleCustomValue {{RuleCustomValueShow}}" type="text" placeholder="Enter custom \${VALUE}" name="customValue" onkeyup="onDataChange(this)" value="{{RuleCustomValue}}"/>
+        </div>
+    </td>
+</tr>
