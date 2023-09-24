@@ -970,10 +970,20 @@ class TrelloAttachment
 	// Set the attachment content
 	setContent(content){
 		try{
-			if(typeof(content) == "object"){
-				this.Content = content?.body ?? content;
-			} else {
-				this.Content = JSON.parse(content);
+			switch(this.MimeType)
+			{
+				case "image/jpeg":
+					var imageBase64 = content?.body ?? "";
+					this.Content = `<img src="data:image/png;base64, ${imageBase64}" alt="Trivia Image" />`;
+					break;
+				case "audio/mpeg":
+					var audioBase64 = content?.body ?? "";
+					this.Content = `<audio controls="controls" autobuffer="autobuffer">
+									<source src="data:audio/wav;base64, ${audioBase64}" />
+								</audio>`;
+					break;
+				default:
+					this.Content = JSON.parse(content);
 			}
 		} catch(err) {
 			MyLogger.LogError(err);
@@ -983,7 +993,6 @@ class TrelloAttachment
 
 	// Get the attachment's content
 	async getContent(){ 
-
 		// If this content is not set yet, then go get it
 		if(this.Content == undefined){
 			var attachmentContent = await MyTrello.GetCardAttachment(this.CardID, this.AttachmentID, this.FileName) ?? [];
@@ -991,25 +1000,7 @@ class TrelloAttachment
 				this.setContent(attachmentContent);
 			}
 		}
-
-		// If content is set, go ahead and parse/return;
-		var returnContent = undefined;
-		if(this.Content != undefined){
-			switch(this.MimeType)
-			{
-				case "image/jpeg":
-					returnContent = `<img src="data:image/png;base64, ${this.Content}" alt="Trivia Image" />`;
-					break;
-				case "audio/mpeg":
-					returnContent = `<audio controls="controls" autobuffer="autobuffer">
-									<source src="data:audio/wav;base64, ${this.Content}" />
-								</audio>`;
-					break;
-				default:
-					returnContent = this.Content;
-			}
-		}
-		return returnContent; 
+		return this.Content; 
 	}
 }
 
@@ -1070,4 +1061,99 @@ class RuleOption
 		this.IsSelectedText = "";
 		this.CustomValue = "";
 	}
+}
+
+
+class ScrollManager
+{
+	constructor(){}
+
+	// Scroll a page element into view
+	scrollIntoView(selector){
+		try {
+			document.querySelector(selector)?.scrollIntoView();
+		} catch(err) {
+			MyLogger.LogError(err);
+		}
+	}
+
+	scrollTo(x, y){
+		window.scrollTo(x, y);
+	}
+}
+
+
+class FormManager
+{
+	constructor(formTemplateName) {
+		this.FormTemplate = formTemplateName;
+		this.SectionID = "";
+		this.BlockID = "";
+	}
+
+	onAdd(addButton) {
+		this.SectionID = addButton.closest(".edit_section")?.id ?? "";
+		this.onShowForm({});
+	}
+
+	onEdit(editButton) {
+		this.SectionID = editButton.closest(".edit_section")?.id ?? "";
+        let block = editButton.closest(".blockSection");
+        this.BlockID = block.getAttribute("data-jpd-block-id");
+		var formDetails = {
+			"BlockID": this.BlockID
+		};
+		block.querySelectorAll("[data-jpd-for-form-field]")?.forEach( (element) => {
+			let key = element.getAttribute("data-jpd-for-form-field");
+			let val = element?.value ?? element.innerText;
+			formDetails[key] = val;
+		});
+		this.onShowForm(formDetails);
+    }
+
+	async onShowForm(formDetails) {
+		var template = await MyTemplates.getTemplateAsync(`src/templates/forms/${this.FormTemplate}`, formDetails);
+		MyDom.setContent("#formSection", {"innerHTML":template});
+		MyDom.hideContent(".hideOnForm");
+		MyDom.showContent("#formSection");
+	}
+
+    onCancel() {
+        this.onCloseForm();
+    }
+
+    onDelete(){
+        console.log("Deleting this category");
+        this.onCancel();
+    }
+
+    onSave(){
+        console.log("Saving this category");
+        this.onCancel();
+    }
+
+    onCloseForm () {
+        MyDom.hideContent("#formSection");
+        MyDom.setContent("#formSection", {"innerHTML": ""});
+        MyDom.showContent(`#${this.SectionID}`);
+        try {
+            var scroller = new ScrollManager();
+		    scroller.scrollIntoView(`[data-jpd-block-id="${this.BlockID}"]`);
+        } catch (err){
+            MyLogger.LogError(err);
+        }
+    }
+}
+
+
+class GamePage {
+	constructor(){
+		this.IsLoggedIn = false;
+		this.TrelloCard = undefined;
+		this.Rules = [];
+		this.LoadedTabs = new Set();
+		this.SectionsToSave = new Set();
+	}
+	// Add a section to save
+	addSectionToSave(sectionID){ this.SectionsToSave.add(sectionID); }
 }

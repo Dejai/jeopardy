@@ -1,26 +1,8 @@
 /************************ GLOBAL VARIABLES ****************************************/
-class GamePage {
-	constructor(){
-		this.CurrentTab = "";
-		this.TrelloCard = undefined;
-		this.Rules = [];
-
-		this.Tabs = [];
-		this.IsLoggedIn = false;
-		this.LoadedTabs = new Set();
-
-		// Sections to be saved
-		this.SectionsToSave = new Set();
-	}
-
-	// Add a section to save
-	addSectionToSave(sectionID){
-		this.SectionsToSave.add(sectionID);
-	}
-}
-
 const MyTrello = new TrelloWrapper("jeopardy");
 const MyGamePage = new GamePage();
+// Form managers
+const CategoryForm = new FormManager("categoryForm.html");
 
 /*********************** GETTING STARTED *****************************/
 
@@ -117,153 +99,114 @@ const MyGamePage = new GamePage();
 	// Function to manage loading content of a tab
 	async function loadTabContent(targetSection, isReload=false)
 	{
-		// Check if tab is already loaded; Don't load again if already loaded
-		let sectionLoadedClass = "sectionLoaded"
-		let isLoaded = document.querySelector(`#${targetSection}`)?.classList?.contains(sectionLoadedClass);
-		if(isLoaded) {
+
+		// If tab is already loaded & this is NOT a reload, then nothing to do
+		if(MyGamePage.LoadedTabs.has(targetSection) && !isReload){
 			return new Promise( resolve =>{
-				resolve(true);
-			})
+				resolve("Tab content is already loaded; Skipping");
+			});
 		}
-		// Make sure class is loaded
-		MyDom.addClass(`#${targetSection}`, sectionLoadedClass);
 
-		// Switch on target section to load
-		switch(targetSection)
-		{
-			case "generalDetails":
-				return new Promise ( resolve => {
+		// Try loading the tab
+		try {
+			// Switch on target section to load
+			switch(targetSection)
+			{
+				case "generalDetails":
 					var fileName = (MyGamePage.IsLoggedIn) ? "Edit" : "Overview";
-					var templatePath = `src/templates/game/generalDetails/_section${fileName}.html`;
-					MyTemplates.getTemplate(templatePath, MyGamePage.TrelloCard, (template) => {
-						MyDom.setContent("#generalDetails", {"innerHTML": template});
-						MyGamePage.LoadedTabs.add(targetSection);
-						resolve(true);
-					});
-				});	
-			case "questionsAnswers":
-				var configAttachment = MyGamePage.TrelloCard.getAttachment("categories.json");
-				var content = await configAttachment.getContent();
-				var categoryBlocksHtml = "";
-				if(content?.map != undefined){
-					// The categories
-					var theCategories = content?.map(x => new Category(x)) ?? [];
-
-					// Loop through each category & build HTML templates;
-					for(var idx in theCategories)
-					{
-						var category = theCategories[idx]; 
-						// Get the questions within a certain category, formated in a table
-						var questionRowsHtml = await new Promise( resolve => {
-							MyTemplates.getTemplate("src/templates/game/questionsAnswers/questionRow.html", category.Questions, (template) => {
-								resolve(template);
-							});
-						});
-						// Get the category section/row itself
-						let categoryLabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
-						var categorySectionObj = {
-							"categoryLabel": categoryLabel,
-							"categoryName" : category.Name,
-							"categorySectionBody": questionRowsHtml,
-							"categoryID" : category.CategoryID 
-						};
-						var categoryHTML = await new Promise( resolve =>{
-							MyTemplates.getTemplate("src/templates/game/questionsAnswers/categoryBlock.html", categorySectionObj, (template)=>{
-								resolve(template);
-							});
-						});
-						// Append category to the HTML string being built
-						categoryBlocksHtml += categoryHTML;
+					var templatePath = `src/templates/sections/generalDetails${fileName}.html`;
+					var generalDetailsTemplate = await MyTemplates.getTemplateAsync(templatePath, MyGamePage.TrelloCard);
+					MyDom.setContent("#generalDetails", {"innerHTML": generalDetailsTemplate});
+					break;
+		
+				case "questionsAnswers":
+					var configAttachment = MyGamePage.TrelloCard.getAttachment("categories.json");
+					var content = await configAttachment.getContent();
+					var categoryBlocksHtml = "";
+					if(content?.map != undefined){
+						// Loop through each category & build HTML templates;
+						var theCategories = content?.map(x => new Category(x)) ?? [];
+						for(var idx in theCategories)
+						{
+							var category = theCategories[idx];
+							// Get question rows template
+							var questionRowsTemplate = await MyTemplates.getTemplateAsync("src/templates/rows/questionRow.html", category.Questions);
+							// Setup category details
+							let categoryLabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
+							var categorySectionObj = {
+								"CategoryLabel": categoryLabel,
+								"CategoryName" : category.Name,
+								"CategorySectionBody": questionRowsTemplate,
+								"CategoryID" : category.CategoryID,
+								"CategoryOrder": category.Order
+							};
+							// Get category template
+							var categoryHTML = await MyTemplates.getTemplateAsync("src/templates/blocks/categoryBlock.html", categorySectionObj);
+							// Append category to the HTML string being built
+							categoryBlocksHtml += categoryHTML;
+						}
 					}
-				}
-				// Set the section with the complete HTML string
-				MyTemplates.getTemplate("src/templates/game/questionsAnswers/_section.html", {"ListOfCategoryBlocks": categoryBlocksHtml}, (template)=>{
-					MyDom.setContent("#questionsAnswers", {"innerHTML": template});
-					MyGamePage.LoadedTabs.add(targetSection);
-				});
-				break;
-			case "gameSettings":
-				var configAttachment = MyGamePage.TrelloCard.getAttachment("config.json");
-				var gameConfig = await configAttachment.getContent();
-				var ruleConfig = await MyFetch.call("GET", "src/config/rules.json");
-				MyGamePage.Rules = ruleConfig.map(rc => new Rule(rc, gameConfig));
-				// Get formatted options 
-				for(var idx in MyGamePage.Rules)
-				{
-					var rule = MyGamePage.Rules[idx];
-					rule.FormattedOptions = await new Promise (resolve => {
-						MyTemplates.getTemplate("src/templates/game/gameSettings/ruleOption.html", rule.Options, (template) =>{
-							resolve(template);
-						});
-					});
-				}
-				// Get a unique row for each category;
-				var rulesRows = await new Promise(resolve => {
-					MyTemplates.getTemplate("src/templates/game/gameSettings/ruleRow.html", MyGamePage.Rules, (template) =>{
-						resolve(template);
-					});
-				});
+					// Set the section with the complete HTML string
+					var questionAnswersSection = await MyTemplates.getTemplateAsync("src/templates/sections/questionsAnswers.html", {"ListOfCategoryBlocks": categoryBlocksHtml});
+					MyDom.setContent("#questionsAnswers", {"innerHTML": questionAnswersSection});
+					break;
+			
+				case "gameSettings":
+					var configAttachment = MyGamePage.TrelloCard.getAttachment("config.json");
+					var gameConfig = await configAttachment.getContent();
+					var ruleConfig = await MyFetch.call("GET", "src/config/rules.json");
+					MyGamePage.Rules = ruleConfig.map(rc => new Rule(rc, gameConfig));
+					// Get formatted options 
+					for(var idx in MyGamePage.Rules)
+					{
+						var rule = MyGamePage.Rules[idx];
+						rule.FormattedOptions = await MyTemplates.getTemplateAsync("src/templates/rows/ruleOption.html", rule.Options);
+					}
 
-				// Set the content
-				MyTemplates.getTemplate("src/templates/game/gameSettings/_section.html", {"RuleRows":rulesRows}, (template) =>{
-					MyDom.setContent("#gameSettings", {"innerHTML": template});
-					MyGamePage.LoadedTabs.add(targetSection);
-				});
-				break;
-			case "gameMedia":
-				var mediaAttachments = Object.values(MyGamePage.TrelloCard.Attachments).filter(x => x.MimeType != "application/json");
-				var mediaHTML = "";
-				for(var idx in mediaAttachments){
-					var attachment = mediaAttachments[idx];
-					var content = await attachment.getContent();
-					mediaHTML += content; 
-				}
-				MyTemplates.getTemplate("src/templates/game/gameMedia/_section.html", {"GameMedia": mediaHTML}, (template)=>{
-					MyDom.setContent("#gameMedia", {"innerHTML":template});
-					MyGamePage.LoadedTabs.add(targetSection);
-				});	
-				break;
-			case "testAndPublish":
-				await loadTabContent("questionsAnswers");
-				await loadTabContent("gameSettings");
-				// await loadTabContent("gameMedia");
-				return new Promise(resolve => {
-					MyTemplates.getTemplate("src/templates/game/testAndPublish/_section.html", {}, (template) =>{
-						MyDom.setContent("#testAndPublish", {"innerHTML":template});
-						MyGamePage.LoadedTabs.add(targetSection);
-						resolve(true);
-					});
-				});
-			case "playGame":
-				await loadTabContent("questionsAnswers");
-				await loadTabContent("gameSettings");
-				await loadTabContent("gameMedia");
-				return new Promise(resolve => {
-					MyTemplates.getTemplate("src/templates/game/playGame/_section.html", {}, (template) =>{
-						MyDom.setContent("#playGame", {"innerHTML":template});
-						MyGamePage.LoadedTabs.add(targetSection);
-						resolve(true);
-					});
-				});
-			default:
-				return new Promise( resolve =>{ resolve("Default"); });
-		}
-	}
+					// Get a unique row for each category;
+					var rulesRows = await MyTemplates.getTemplateAsync("src/templates/blocks/ruleBlock.html", MyGamePage.Rules);
 
-	// Get attachment content
-	async function getAttachmentContent(fileName){
-		var content = "";
-		var cardID = MyGamePage.TrelloCard?.CardID;
-		var attachment = MyGamePage.TrelloCard?.getAttachment(fileName) ?? undefined;
-		var attachmentID = attachment?.AttachmentID ?? "";
-		if(attachmentID != "") {
-			var attachmentContent = await MyTrello.GetCardAttachment(cardID, attachmentID, fileName) ?? [];
-			if(attachment != undefined && attachmentContent != undefined){
-				attachment.setContent(attachmentContent);
-				content = attachment.getContent();
+					// Set the content
+					var gameSettingsSection = await MyTemplates.getTemplateAsync("src/templates/sections/gameSettings.html", {"RuleRows":rulesRows})
+					MyDom.setContent("#gameSettings", {"innerHTML": gameSettingsSection});
+					break;
+
+				case "gameMedia":
+					// Get all media that is not a JSON file
+					var mediaAttachments = Object.values(MyGamePage.TrelloCard.Attachments).filter(x => x.MimeType != "application/json");
+					// Make sure all attachments have content;
+					for(var idx in mediaAttachments){
+						var attachment = mediaAttachments[idx];
+						await attachment.getContent();
+					}
+					var mediaHTML = await MyTemplates.getTemplateAsync("src/templates/blocks/mediaItemBlock.html", mediaAttachments);
+					var mediaSectionHTML = await MyTemplates.getTemplateAsync("src/templates/sections/gameMedia.html", {"GameMedia": mediaHTML});
+					MyDom.setContent("#gameMedia", {"innerHTML":mediaSectionHTML});
+					break;
+
+				case "testAndPublish":
+					await loadTabContent("questionsAnswers");
+					await loadTabContent("gameSettings");
+					var testAndPublishHTML = await MyTemplates.getTemplateAsync("src/templates/game/testAndPublish/_section.html", {});
+					MyDom.setContent("#testAndPublish", {"innerHTML":testAndPublishHTML});
+					break;
+
+				case "playGame":
+					await loadTabContent("questionsAnswers");
+					await loadTabContent("gameSettings");
+					var playSectionHTML = await MyTemplates.getTemplateAsync("src/templates/game/playGame/_section.html", {});
+					MyDom.setContent("#playGame", {"innerHTML":playSectionHTML});
+					break;
+
+				default:
+					return new Promise( resolve =>{ resolve("Default"); });
 			}
+			// Make sure tab is marked as loaded is loaded
+			MyGamePage.LoadedTabs.add(targetSection);
+
+		} catch(err){
+			MyLogger.LogError(err)
 		}
-		return content; 
 	}
 
 /******** CHANGES: Capturing changes on the config ******************************/
@@ -294,9 +237,7 @@ const MyGamePage = new GamePage();
 		}
 	}
 
-
 /******** SAVING: Saving changes to the game  ******************************/
-
 
 	// The general save -- keeps track of diffs & saves accordingly
 	async function onSaveGame()

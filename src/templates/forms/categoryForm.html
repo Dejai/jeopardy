@@ -1,0 +1,22 @@
+<h2 style="text-align:left;">Category Details</h2>
+<div class="categoryFormDetails" style="padding-left:5%;text-align:left;">
+    <input id="categoryFormCategoryID" type="text" name="categoryID" value="{{CategoryID}}" hidden disabled>
+    <label for="categoryFormName">Name:</label><br/>
+    <input id="categoryFormName" type="text" name="categoryFormName" placeholder="Enter name of category" value="{{CategoryName}}">
+    <br/><br/>
+    <label for="categoryFormOrder">Order:</label><br/>
+    <input id="categoryFormOrder" type="number" min="1" max="99" name="categoryFormOrder" value="{{CategoryOrder}}">
+    &nbsp; &nbsp;
+    <span id="categoryFormMessage" style="color:red"></span>
+    <br/><br/>
+    <select name="categoryFormFinalJeopardy" id="categoryFormFinalJeopardy" disabled hidden>
+        <option value="No" seleced>No</option>
+        <option value="Yes">Yes</option>
+    </select>
+</div>
+<hr/>
+<div id="categoryFormActions1" style="width:40%; text-align:center;">
+    <button class="dlf_button dlf_button_round_corners dlf_button_limegreen" onclick="CategoryForm.onSave()">SAVE CATEGORY</button>
+    <button class="dlf_button dlf_button_round_corners dlf_button_gray" onclick="CategoryForm.onCancel()">CANCEL</button>
+    <button class="dlf_button dlf_button_round_corners dlf_button_red" onclick="CategoryForm.onDelete()">DELETE</button>
+</div>
