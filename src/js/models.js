@@ -936,7 +936,7 @@ class TrelloCard
 
 	// Set attachment (only save the most recent one)
 	addAttachment(trelloAttachment){
-		var newAtt = new TrelloAttachment(trelloAttachment);
+		var newAtt = new TrelloAttachment(this.CardID, trelloAttachment);
 		var existing = this.Attachments[newAtt.FileName] ?? undefined;
 		if(existing != undefined && existing.Date > newAtt.Date){
 			MyLogger.LogInfo("Not adding this attachment. It is older than the current one");
@@ -955,23 +955,61 @@ class TrelloCard
 /****** CLASS: "TrelloAttachment" ; Represents an attachment on a Trello Card ********/
 class TrelloAttachment
 {
-	constructor(attachmentDetails) {
+	constructor(cardID, attachmentDetails) {
 		this.AttachmentID = attachmentDetails?.id ?? "";
 		this.FileName = attachmentDetails?.fileName ?? ""; 
 		this.MimeType = attachmentDetails?.mimeType ?? ""; 
+		this.CardID  = cardID;
 		this.Url = attachmentDetails?.url ?? ""; 
 		this.Date = new Date(attachmentDetails?.date);
 		this.Name = attachmentDetails?.name ?? ""; 
+
 		this.Content = undefined;
 	}
 
 	// Set the attachment content
-	setContent(jsonObj){
+	setContent(content){
 		try{
-			this.Content = jsonObj;
+			if(typeof(content) == "object"){
+				this.Content = content?.body ?? content;
+			} else {
+				this.Content = JSON.parse(content);
+			}
 		} catch(err) {
 			MyLogger.LogError(err);
+			MyLogger.LogError(content);
 		}
+	}
+
+	// Get the attachment's content
+	async getContent(){ 
+
+		// If this content is not set yet, then go get it
+		if(this.Content == undefined){
+			var attachmentContent = await MyTrello.GetCardAttachment(this.CardID, this.AttachmentID, this.FileName) ?? [];
+			if(attachmentContent != undefined){
+				this.setContent(attachmentContent);
+			}
+		}
+
+		// If content is set, go ahead and parse/return;
+		var returnContent = undefined;
+		if(this.Content != undefined){
+			switch(this.MimeType)
+			{
+				case "image/jpeg":
+					returnContent = `<img src="data:image/png;base64, ${this.Content}" alt="Trivia Image" />`;
+					break;
+				case "audio/mpeg":
+					returnContent = `<audio controls="controls" autobuffer="autobuffer">
+									<source src="data:audio/wav;base64, ${this.Content}" />
+								</audio>`;
+					break;
+				default:
+					returnContent = this.Content;
+			}
+		}
+		return returnContent; 
 	}
 }
 

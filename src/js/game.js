@@ -7,7 +7,7 @@ class GamePage {
 
 		this.Tabs = [];
 		this.IsLoggedIn = false;
-		this.LoadedTabs = [];
+		this.LoadedTabs = new Set();
 
 		// Sections to be saved
 		this.SectionsToSave = new Set();
@@ -48,8 +48,6 @@ const MyGamePage = new GamePage();
 
 			var trelloLabels = await MyTrello.GetLabels();
 			MyGamePage.TrelloCard = new TrelloCard(cardDetails, trelloLabels);
-
-			console.log(MyGamePage.TrelloCard);
 
 			// Set the name before loading tabs (so it's clear what game it is)
 			MyDom.setContent(".triviaGameName", {"innerHTML": MyGamePage.TrelloCard?.Name ?? "" });
@@ -95,15 +93,6 @@ const MyGamePage = new GamePage();
 
 /******** GETTING STARTED: Loading the Adventures & Labels; Check if logged in user***************************/
 
-	// Switch to a tab by default if it is loaded in URL
-	function onSetDefaultSection()
-	{
-		let sectionParam = MyUrls.getSearchParam("section");
-		var requestedTab = document.querySelector(`#navTabs p.tab[data-section-id='${sectionParam}']`);
-		var tabToSet = (requestedTab != undefined) ? sectionParam : document.querySelector("#navTabs p.tab")?.getAttribute("data-section-id");
-		document.querySelector(`#navTabs p.tab[data-section-id="${tabToSet}"]`)?.click();
-	}
-
     // Switch tabs
     async function onSelectTab(tab) {
 		if(tab == undefined) return;
@@ -118,12 +107,6 @@ const MyGamePage = new GamePage();
             var _showHide = (id == sectionID) ? section.classList.remove("hidden") : section.classList.add("hidden");
         });
 
-		// Load the tab content
-		// await loadTabContent(sectionID);
-
-		// Conditional action for syncing media
-		// var syncMedia = (sectionID == "gameMedia") ? onSyncMediaInterval("start") : onSyncMediaInterval("stop");
-
 		// Set the URL, for easy refresh
 		MyUrls.modifySearch({"section":sectionID});
 
@@ -132,7 +115,7 @@ const MyGamePage = new GamePage();
     }
 
 	// Function to manage loading content of a tab
-	async function loadTabContent(targetSection, goToTab=false)
+	async function loadTabContent(targetSection, isReload=false)
 	{
 		// Check if tab is already loaded; Don't load again if already loaded
 		let sectionLoadedClass = "sectionLoaded"
@@ -154,30 +137,100 @@ const MyGamePage = new GamePage();
 					var templatePath = `src/templates/game/generalDetails/_section${fileName}.html`;
 					MyTemplates.getTemplate(templatePath, MyGamePage.TrelloCard, (template) => {
 						MyDom.setContent("#generalDetails", {"innerHTML": template});
+						MyGamePage.LoadedTabs.add(targetSection);
 						resolve(true);
 					});
 				});	
 			case "questionsAnswers":
-				// Load the media first. 
-				await loadTabContent("gameMedia");
-				var content = await getAttachmentContent("categories.json");
-				onLoadCategories(content);
+				var configAttachment = MyGamePage.TrelloCard.getAttachment("categories.json");
+				var content = await configAttachment.getContent();
+				var categoryBlocksHtml = "";
+				if(content?.map != undefined){
+					// The categories
+					var theCategories = content?.map(x => new Category(x)) ?? [];
+
+					// Loop through each category & build HTML templates;
+					for(var idx in theCategories)
+					{
+						var category = theCategories[idx]; 
+						// Get the questions within a certain category, formated in a table
+						var questionRowsHtml = await new Promise( resolve => {
+							MyTemplates.getTemplate("src/templates/game/questionsAnswers/questionRow.html", category.Questions, (template) => {
+								resolve(template);
+							});
+						});
+						// Get the category section/row itself
+						let categoryLabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
+						var categorySectionObj = {
+							"categoryLabel": categoryLabel,
+							"categoryName" : category.Name,
+							"categorySectionBody": questionRowsHtml,
+							"categoryID" : category.CategoryID 
+						};
+						var categoryHTML = await new Promise( resolve =>{
+							MyTemplates.getTemplate("src/templates/game/questionsAnswers/categoryBlock.html", categorySectionObj, (template)=>{
+								resolve(template);
+							});
+						});
+						// Append category to the HTML string being built
+						categoryBlocksHtml += categoryHTML;
+					}
+				}
+				// Set the section with the complete HTML string
+				MyTemplates.getTemplate("src/templates/game/questionsAnswers/_section.html", {"ListOfCategoryBlocks": categoryBlocksHtml}, (template)=>{
+					MyDom.setContent("#questionsAnswers", {"innerHTML": template});
+					MyGamePage.LoadedTabs.add(targetSection);
+				});
 				break;
 			case "gameSettings":
-				var content = await getAttachmentContent("config.json");
-				onLoadGameSettings(content);
+				var configAttachment = MyGamePage.TrelloCard.getAttachment("config.json");
+				var gameConfig = await configAttachment.getContent();
+				var ruleConfig = await MyFetch.call("GET", "src/config/rules.json");
+				MyGamePage.Rules = ruleConfig.map(rc => new Rule(rc, gameConfig));
+				// Get formatted options 
+				for(var idx in MyGamePage.Rules)
+				{
+					var rule = MyGamePage.Rules[idx];
+					rule.FormattedOptions = await new Promise (resolve => {
+						MyTemplates.getTemplate("src/templates/game/gameSettings/ruleOption.html", rule.Options, (template) =>{
+							resolve(template);
+						});
+					});
+				}
+				// Get a unique row for each category;
+				var rulesRows = await new Promise(resolve => {
+					MyTemplates.getTemplate("src/templates/game/gameSettings/ruleRow.html", MyGamePage.Rules, (template) =>{
+						resolve(template);
+					});
+				});
+
+				// Set the content
+				MyTemplates.getTemplate("src/templates/game/gameSettings/_section.html", {"RuleRows":rulesRows}, (template) =>{
+					MyDom.setContent("#gameSettings", {"innerHTML": template});
+					MyGamePage.LoadedTabs.add(targetSection);
+				});
 				break;
 			case "gameMedia":
-				var content = await getAttachmentContent("media.json");
-				onLoadGameMedia(content);
+				var mediaAttachments = Object.values(MyGamePage.TrelloCard.Attachments).filter(x => x.MimeType != "application/json");
+				var mediaHTML = "";
+				for(var idx in mediaAttachments){
+					var attachment = mediaAttachments[idx];
+					var content = await attachment.getContent();
+					mediaHTML += content; 
+				}
+				MyTemplates.getTemplate("src/templates/game/gameMedia/_section.html", {"GameMedia": mediaHTML}, (template)=>{
+					MyDom.setContent("#gameMedia", {"innerHTML":template});
+					MyGamePage.LoadedTabs.add(targetSection);
+				});	
 				break;
 			case "testAndPublish":
 				await loadTabContent("questionsAnswers");
 				await loadTabContent("gameSettings");
-				await loadTabContent("gameMedia");
+				// await loadTabContent("gameMedia");
 				return new Promise(resolve => {
 					MyTemplates.getTemplate("src/templates/game/testAndPublish/_section.html", {}, (template) =>{
 						MyDom.setContent("#testAndPublish", {"innerHTML":template});
+						MyGamePage.LoadedTabs.add(targetSection);
 						resolve(true);
 					});
 				});
@@ -188,6 +241,7 @@ const MyGamePage = new GamePage();
 				return new Promise(resolve => {
 					MyTemplates.getTemplate("src/templates/game/playGame/_section.html", {}, (template) =>{
 						MyDom.setContent("#playGame", {"innerHTML":template});
+						MyGamePage.LoadedTabs.add(targetSection);
 						resolve(true);
 					});
 				});
@@ -198,209 +252,18 @@ const MyGamePage = new GamePage();
 
 	// Get attachment content
 	async function getAttachmentContent(fileName){
+		var content = "";
 		var cardID = MyGamePage.TrelloCard?.CardID;
 		var attachment = MyGamePage.TrelloCard?.getAttachment(fileName) ?? undefined;
 		var attachmentID = attachment?.AttachmentID ?? "";
-		var attachmentContent = "";
-		if(attachmentID != ""){
-			attachmentContent = await MyTrello.GetCardAttachment(cardID, attachmentID, fileName) ?? [];
+		if(attachmentID != "") {
+			var attachmentContent = await MyTrello.GetCardAttachment(cardID, attachmentID, fileName) ?? [];
 			if(attachment != undefined && attachmentContent != undefined){
-				attachmentContent = JSON.parse(attachmentContent);
 				attachment.setContent(attachmentContent);
+				content = attachment.getContent();
 			}
 		}
-		return attachmentContent;
-	}
-
-/******** LOADERS: Load the things based on the section  ******************************/
-
-	// Load the game categories/questions
-	async function onLoadCategories(content)
-	{
-		// The categories
-		var theCategories = content?.map(x => new Category(x)) ?? [];
-
-		// Loop through each category & build HTML templates;
-		var categoryBlocksHtml = "";
-		for(var idx in theCategories)
-		{
-			var category = theCategories[idx]; 
-			var questions = category.Questions;
-
-			var questionRowsHtml = await new Promise( resolve => {
-				MyTemplates.getTemplate("src/templates/game/questionsAnswers/questionRow.html", questions, (template) => {
-					resolve(template);
-				});
-			});
-
-			let categoryLabel = (category.isFinalJeopardy()) ? "Final Jeopardy!" : "Category";
-			var categorySectionObj = {
-				"categoryLabel": categoryLabel,
-				"categoryName" : category.Name,
-				"categorySectionBody": questionRowsHtml,
-				"categoryID" : category.CategoryID 
-			};
-
-			var categoryHTML = await new Promise( resolve =>{
-				MyTemplates.getTemplate("src/templates/game/questionsAnswers/categoryBlock.html", categorySectionObj, (template)=>{
-					resolve(template);
-				});
-			});
-			categoryBlocksHtml += categoryHTML;
-		}
-
-		// Set the section
-		MyTemplates.getTemplate("src/templates/game/questionsAnswers/_section.html", {"ListOfCategoryBlocks": categoryBlocksHtml}, (template)=>{
-			MyDom.setContent("#questionsAnswers", {"innerHTML": template});
-		});
-
-	}
-
-	// Set the game Config/Rules
-	async function onLoadGameSettings(gameConfig)
-	{
-
-		console.log(gameConfig);
-		var ruleConfig = await MyFetch.call("GET", "src/config/rules.json");
-		MyGamePage.Rules = ruleConfig.map(rc => new Rule(rc, gameConfig));
-
-		// From the config from the game, set the rule config options
-		// Object.keys(gameConfig)?.forEach( (key) =>{
-		// 	var conf = gameConfig[key];
-		// 	var option = conf?.option ?? "";
-		// 	var value = conf?.value ?? undefined;
-		// 	var ruleConf = rules.filter(x => x.RuleKey == key)?.[0];
-		// 	if(ruleConf != undefined){
-		// 		ruleConf.setOption(option, value);
-		// 	}
-		// });
-
-		// Get formatted options 
-		for(var idx in MyGamePage.Rules)
-		{
-			var rule = MyGamePage.Rules[idx];
-			rule.FormattedOptions = await new Promise (resolve => {
-				MyTemplates.getTemplate("src/templates/game/gameSettings/ruleOption.html", rule.Options, (template) =>{
-					resolve(template);
-				});
-			});
-		}
-
-		var rulesRows = await new Promise(resolve => {
-			MyTemplates.getTemplate("src/templates/game/gameSettings/ruleRow.html", MyGamePage.Rules, (template) =>{
-				resolve(template);
-			});
-		});
-
-		// Set the content
-		MyTemplates.getTemplate("src/templates/game/gameSettings/_section.html", {"RuleRows":rulesRows}, (template) =>{
-			MyDom.setContent("#gameSettings", {"innerHTML": template});
-		});
-
-		// document.querySelectorAll(".ruleOption")?.forEach( (ruleOpt)=>{
-		// 	onToggleRuleOptionDetails(ruleOpt);
-		// });
-	}
-
-	// Toggle visibility of sections related to selected rule option
-	function onToggleRuleOptionDetails(sourceEle)
-	{
-		// Get the selected option of the element
-		let selectedOption = sourceEle.querySelector("option:checked");
-
-		// Get key values from the selected option;
-		let attr_Description = selectedOption.getAttribute("data-jpd-description");
-		let attr_Suggestion = selectedOption.getAttribute("data-jpd-suggestion");
-		let attr_Type = selectedOption.getAttribute("data-jpd-type");
-		let attr_CustomValue = selectedOption.getAttribute("data-jpd-custom-value");
-
-		// Show the rule description
-		let ruleDescParagraph = HostUtility.getSibling(sourceEle, ".rule_description");
-		if(ruleDescParagraph != undefined)
-		{
-			ruleDescParagraph.innerText = attr_Description;
-		}
-
-		// Decide whether to show the Host View button or not
-		if(sourceEle.id == "AnsweringQuestions")
-		{
-			if(sourceEle.value == "2")
-			{
-				mydoc.removeClass(".host_view_section", "hidden")
-			}
-			else
-			{
-				mydoc.addClass(".host_view_section", "hidden")
-			}
-		}
-
-		// Check if suggestion is included;
-		let suggestionParagraph = HostUtility.getSibling(sourceEle, ".rule_suggestion");
-		let hasSuggestion = attr_Suggestion?.length > 0 ?? false;
-		if(hasSuggestion)
-		{
-			suggestionParagraph.classList.remove("hidden");
-			suggestionParagraph.innerText = "Suggestion: " + attr_Suggestion;
-		}
-		else
-		{
-			suggestionParagraph.classList.add("hidden");
-			suggestionParagraph.innerText = attr_Suggestion;
-		}
-
-		// Next, check if custom value can be input
-		let customInput = HostUtility.getSibling(sourceEle, ".rule_custom");
-		let allowsCustom = attr_Type?.includes("custom") ?? false;
-		if(allowsCustom)
-		{
-			customInput.classList.remove("hidden");
-			customInput.value = attr_CustomValue ?? "";
-		}
-		else
-		{
-			customInput.classList.add("hidden");
-			customInput.value = "";
-		}
-	}
-	
-	// Set the game media
-	async function onLoadGameMedia(content)
-	{
-		var mediaHTML = "";
-		if(content?.map != undefined){
-			var mediaFiles = content.map(x => new Media(x)) ?? [];
-			mediaHTML = await new Promise( resolve => {
-				MyTemplates.getTemplate("src/templates/game/gameMedia/mediaItem.html", mediaFiles, (template)=>{
-					resolve(template);
-				});	
-			});
-		}
-		MyTemplates.getTemplate("src/templates/game/gameMedia/_section.html", {"GameMedia": mediaHTML}, (template)=>{
-			MyDom.setContent("#gameMedia", {"innerHTML":template});
-		});	
-		// Load the game-specific form URL
-		// let formURL = MyGoogleDrive.getFormURL(MyGamePage.TrelloCard.CardID);
-		// MyDom.setContent("#gameFormURL", {"href": formURL});
-		// let aHref =	document.getElementById("gameFormURL");
-		// if (aHref != undefined){ aHref.href = formURL; }
-
-		// // Get the list of media files
-	}
-
-	// Syncing the Game Media (temporary -- I should go back to Trello)
-	// Control the syncing of the game media
-	function onSyncMediaInterval(state)
-	{
-		// Always stop the interval first. ;) 
-		clearInterval(syncMediaInterval);
-
-		// If starting, then setup interval
-		if(state == "start")
-		{
-			// Run it first, then start an Interval
-			onSyncMedia()
-			var syncMediaInterval = setInterval( onSyncMedia, 60000);
-		}
+		return content; 
 	}
 
 /******** CHANGES: Capturing changes on the config ******************************/
@@ -472,7 +335,6 @@ const MyGamePage = new GamePage();
 							configToSave[key]["value"] = optVal;
 						}
 					});
-					console.log(configToSave);
 					await onSaveGameFile(configToSave, "config.json");
 					break;
 				default:
