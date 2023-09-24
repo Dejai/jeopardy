@@ -3,6 +3,7 @@ const MyTrello = new TrelloWrapper("jeopardy");
 const MyGamePage = new GamePage();
 // Form managers
 const CategoryForm = new FormManager("categoryForm.html");
+const QuestionForm = new FormManager("questionsForm.html");
 
 /*********************** GETTING STARTED *****************************/
 
@@ -187,14 +188,14 @@ const CategoryForm = new FormManager("categoryForm.html");
 				case "testAndPublish":
 					await loadTabContent("questionsAnswers");
 					await loadTabContent("gameSettings");
-					var testAndPublishHTML = await MyTemplates.getTemplateAsync("src/templates/game/testAndPublish/_section.html", {});
+					var testAndPublishHTML = await MyTemplates.getTemplateAsync("src/templates/sections/testAndPublish.html", {});
 					MyDom.setContent("#testAndPublish", {"innerHTML":testAndPublishHTML});
 					break;
 
 				case "playGame":
 					await loadTabContent("questionsAnswers");
 					await loadTabContent("gameSettings");
-					var playSectionHTML = await MyTemplates.getTemplateAsync("src/templates/game/playGame/_section.html", {});
+					var playSectionHTML = await MyTemplates.getTemplateAsync("src/templates/sections/playGame.html", {});
 					MyDom.setContent("#playGame", {"innerHTML":playSectionHTML});
 					break;
 

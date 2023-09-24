@@ -8,8 +8,7 @@ const MyLoginDetails = {
 	}
 }
 
-/****** CLASS: "Category" ; For the different categories in a game ********/
-
+// Used to represent a single category in a game
 class Category
 {
 	constructor(jsonObj) {
@@ -119,11 +118,9 @@ class Category
 	getQuestionCount(){ return this.questions.length; }
 }
 
-/****** CLASS: "CategoryQuestion" ; For the different questions in a cetegory ********/
-
+// Represents the question/answer pair within a category
 class CategoryQuestion
 {
-
 	constructor(jsonObj)
 	{
 		// The JSON object from the question
@@ -155,12 +152,12 @@ class CategoryQuestion
 
 }
 
-/****** CLASS: "Question" ; For the question parts of a question ********/
-
+// Represents the question in the category
 class Question 
 {
 	constructor(jsonObj)
 	{
+		this.QuestionID = jsonObj?.id ?? "";
 		this.Text 	= JeopardyHelper.formatContent(jsonObj.Text);
 		this.Audio 	= jsonObj.Audio;
 		this.Image 	= jsonObj.Image;
@@ -208,8 +205,7 @@ class Question
 	}
 }
 
-/****** CLASS: "Answer" ; For the parts of an answer ********/
-
+// The matching answer for the question in the category
 class Answer 
 {
 	constructor(jsonObj)
@@ -314,8 +310,7 @@ class Config
 	}
 }
 
-/****** CLASS: "Media" ; For the media files associated with questions in the game ********/
-
+// REPLACE: This could be done away with? Since I have the TrelloAttachment one? (which is what these really are)
 class Media 
 {
 	constructor(jsonObj)
@@ -357,8 +352,7 @@ class Media
 	}
 }
 
-/****** CLASS: "Jeopardy" ; The main Jeopardy model that connects it all; ********/
-
+// UPDATE: May need to update this to be more generic "Trivia"; And have a type of Jeopardy;
 class Jeopardy
 {
 	constructor()
@@ -641,7 +635,7 @@ class Jeopardy
 };
 
 /****** CLASS: "Game" ; This stores details specific to a single game of Jeopardy ********/
-
+// UPDATE: Need to rework this to make it more clear that it is an INSTANCE of a game (not the game object);
 class Game 
 {
 	constructor(code)

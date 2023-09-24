@@ -1,4 +1,4 @@
-<tr class="questionRow">
+<tr class="questionRow blockSection" data-jpd-block-id="{{Question.QuestionID}}">
     <td class="questionValue">{{Value}}</td>
     <td class="questionText">
         <span class="fa fa-picture-o HasImage{{Question.HasImage}} pointer" title="image"></span>
@@ -21,7 +21,7 @@
         <span class="fa fa-eye pointer" style="font-size:80%;"></span><br/>
         Preview
     </td>
-    <td onclick="onEditQuestion(event)" style="cursor:pointer;">
+    <td onclick="QuestionForm.onEdit(this)" style="cursor:pointer;">
         <span class="fa fa-edit pointer" style="font-size:80%;"></span><br/>
         Edit
     </td>
